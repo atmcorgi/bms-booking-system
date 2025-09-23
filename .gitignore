@@ -9,6 +9,9 @@ backend/.mvn/wrapper/maven-wrapper.jar
 !backend/src/main/**/target/
 !backend/src/test/**/target/
 
+# Build artifacts
+target/
+
 # STS
 backend/.apt_generated
 backend/.classpath
@@ -210,6 +213,11 @@ $RECYCLE.BIN/
 backend/logs/
 *.log
 logs/
+
+# Debug files
+debug-upload.js
+test-upload.sh
+theater_backup.sql
 
 # ============ DATABASE ============
 # Database files
