@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="html">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle} ?: 'Admin'">Admin</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <link rel="stylesheet" th:href="@{/css/shared/admin.css}" />
+  </head>
+  <body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+      <nav th:replace="~{staff/fragments/header :: header}"></nav>
+      <aside th:replace="~{staff/fragments/navbar :: sidebar}"></aside>
+      <div class="content-wrapper" style="padding: 16px">
+        <div th:replace="~{::content}"></div>
+      </div>
+      <footer
+        class="main-footer"
+        th:replace="~{staff/fragments/footer :: footer}"
+      ></footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+    <!-- Notification Badge Script -->
+    <script>
+      function updateNotificationBadge() {
+        fetch("/staff/notifications/unread-count")
+          .then((response) => response.text())
+          .then((count) => {
+            const badge = document.getElementById("notification-badge");
+            if (badge) {
+              if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = "inline";
+              } else {
+                badge.style.display = "none";
+              }
+            }
+          })
+          .catch((error) =>
+            console.error("Error updating notification badge:", error)
+          );
+      }
+
+      // Update badge on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        updateNotificationBadge();
+      });
+
+      // Update badge every 30 seconds
+      setInterval(updateNotificationBadge, 30000);
+    </script>
+
+    <th:block th:replace="~{::scripts} ?: ~{}"></th:block>
+  </body>
+</html>

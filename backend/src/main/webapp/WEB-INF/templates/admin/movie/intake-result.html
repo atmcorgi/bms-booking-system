@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <head>
+    <title>Kết quả nhập dữ liệu - Admin</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0">Kết quả nhập dữ liệu - Admin</h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                  <a th:href="@{/admin}">Admin</a>
+                </li>
+                <li class="breadcrumb-item active">Intake Result</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Tóm tắt</h3>
+            </div>
+            <div class="card-body">
+              <strong th:text="${summary}">Summary</strong>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <div class="info-box bg-warning">
+                <span class="info-box-icon"><i class="fas fa-link"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Bước tiếp theo</span>
+                  <span class="info-box-number">Assign Movies to Theaters</span>
+                  <a th:href="@{/admin/movie-assignment}" class="info-box-link">
+                    Đi tới Assign Movie <i class="fas fa-arrow-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="info-box bg-success">
+                <span class="info-box-icon"><i class="fas fa-list"></i></span>
+                <div class="info-box-content">
+                  <span class="info-box-text">Hoặc</span>
+                  <span class="info-box-number">Xem tất cả assignments</span>
+                  <a
+                    th:href="@{/admin/movie-assignment/list}"
+                    class="info-box-link"
+                  >
+                    View All Assignments <i class="fas fa-arrow-right"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <a
+              th:href="@{/admin/movie/intake/upload}"
+              class="btn btn-secondary"
+            >
+              <i class="fas fa-upload"></i> Nhập thêm
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

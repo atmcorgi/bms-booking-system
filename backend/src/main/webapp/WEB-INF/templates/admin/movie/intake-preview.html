@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <head>
+    <title>Xem trước dữ liệu phim - Admin</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="admin-layout">
+        <aside class="admin-sidebar">
+          <div th:replace="~{admin/fragments/navbar :: sidebar}"></div>
+        </aside>
+        <section class="admin-content">
+          <div class="admin-header">
+            <h1>Xem trước dữ liệu phim - Admin</h1>
+            <form method="post" th:action="@{/admin/movie/intake/commit}">
+              <input type="hidden" name="token" th:value="${token}" />
+              <button class="btn primary" type="submit">
+                Commit tất cả hợp lệ
+              </button>
+            </form>
+          </div>
+          <div class="card">
+            <div class="card-body p-0">
+              <form method="post" th:action="@{/admin/movie/intake/commit}">
+                <input type="hidden" name="token" th:value="${token}" />
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>#</th>
+                      <th>Mã</th>
+                      <th>Tiêu đề</th>
+                      <th>Đạo diễn</th>
+                      <th>Diễn viên</th>
+                      <th>Thời lượng</th>
+                      <th>Ngày phát hành</th>
+                      <th>Age</th>
+                      <th>Thể loại</th>
+                      <th>Lỗi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="r : ${rows}">
+                      <td>
+                        <input
+                          type="checkbox"
+                          name="selected"
+                          th:value="${r.rowNumber}"
+                          th:disabled="${!#lists.isEmpty(r.errors)}"
+                        />
+                      </td>
+                      <td th:text="${r.rowNumber}">1</td>
+                      <td th:text="${r.movieCode}">M001</td>
+                      <td th:text="${r.title}">Avatar</td>
+                      <td th:text="${r.director}">James Cameron</td>
+                      <td th:text="${r.actors}">Sam Worthington</td>
+                      <td th:text="${r.durationMin}">190</td>
+                      <td th:text="${r.releaseDate}">2025-09-15</td>
+                      <td th:text="${r.ageRating}">T13</td>
+                      <td th:text="${#strings.listJoin(r.genreNames, ', ')}">
+                        Action, Adventure
+                      </td>
+                      <td>
+                        <span th:if="${#lists.isEmpty(r.errors)}">OK</span>
+                        <ul th:if="${!#lists.isEmpty(r.errors)}">
+                          <li th:each="e : ${r.errors}" th:text="${e}"></li>
+                        </ul>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div th:if="${page}" class="card-footer">
+                  <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                      <!-- Previous Page -->
+                      <li
+                        class="page-item"
+                        th:classappend="${page.first} ? 'disabled'"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/admin/movie/intake/preview(token=${token}, page=${page.number - 1})}"
+                          th:unless="${page.first}"
+                        >
+                          <i class="fas fa-chevron-left"></i> Trước
+                        </a>
+                        <span class="page-link" th:if="${page.first}">
+                          <i class="fas fa-chevron-left"></i> Trước
+                        </span>
+                      </li>
+
+                      <!-- Page Numbers -->
+                      <li
+                        class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${pageNum == page.number} ? 'active'"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/admin/movie/intake/preview(token=${token}, page=${pageNum})}"
+                          th:text="${pageNum + 1}"
+                          >1</a
+                        >
+                      </li>
+
+                      <!-- Next Page -->
+                      <li
+                        class="page-item"
+                        th:classappend="${page.last} ? 'disabled'"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/admin/movie/intake/preview(token=${token}, page=${page.number + 1})}"
+                          th:unless="${page.last}"
+                        >
+                          Sau <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <span class="page-link" th:if="${page.last}">
+                          Sau <i class="fas fa-chevron-right"></i>
+                        </span>
+                      </li>
+                    </ul>
+                  </nav>
+
+                  <!-- Page Info -->
+                  <div class="text-center mt-2">
+                    <small class="text-muted">
+                      Hiển thị
+                      <span th:text="${page.numberOfElements}">0</span> trong
+                      tổng số
+                      <span th:text="${page.totalElements}">0</span> phim (Trang
+                      <span th:text="${page.number + 1}">1</span> /
+                      <span th:text="${page.totalPages}">1</span>)
+                    </small>
+                  </div>
+                </div>
+
+                <div class="p-2 text-right">
+                  <button class="btn primary" type="submit">
+                    Commit các dòng đã chọn
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

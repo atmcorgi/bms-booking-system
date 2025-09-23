@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{staff/layout/base :: html}"
+>
+  <head>
+    <title>Phim đã assign</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0">Phim đã assign</h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                  <a th:href="@{/staff/workflow}">Workflow</a>
+                </li>
+                <li class="breadcrumb-item active">Assigned Movies</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <!-- Error Message -->
+          <div th:if="${error}" class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span th:text="${error}">Error message</span>
+          </div>
+
+          <!-- Movies List -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Danh sách phim đã được ADMIN assign</h3>
+              <div class="card-tools">
+                <span class="badge badge-primary">Sẵn sàng lập lịch</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div th:if="${movies != null and !movies.empty}">
+                <div class="table-responsive">
+                  <table class="table table-hover">
+                    <thead>
+                      <tr>
+                        <th>Mã phim</th>
+                        <th>Tên phim</th>
+                        <th>Đạo diễn</th>
+                        <th>Thời lượng</th>
+                        <th>Ngày phát hành</th>
+                        <th>Thể loại</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="movie : ${movies}">
+                        <td th:text="${movie.code}">M001</td>
+                        <td th:text="${movie.title}">Avatar</td>
+                        <td th:text="${movie.director}">James Cameron</td>
+                        <td th:text="${movie.duration} + ' phút'">190 phút</td>
+                        <td th:text="${movie.releaseDate}">2025-09-15</td>
+                        <td th:text="${movie.genres}">Action, Adventure</td>
+                        <td>
+                          <span
+                            class="badge"
+                            th:classappend="${movie.status == 'DRAFT'} ? 'badge-warning' : (${movie.status == 'SCHEDULED'} ? 'badge-info' : (${movie.status == 'PUBLISHED'} ? 'badge-success' : 'badge-secondary'))"
+                            th:text="${movie.status}"
+                            >ASSIGNED</span
+                          >
+                        </td>
+                        <td>
+                          <!-- Chỉ hiển thị nút Lập lịch cho phim có status DRAFT -->
+                          <a
+                            th:href="@{/staff/scheduling/auto}"
+                            class="btn btn-sm btn-success"
+                            th:if="${movie.status == 'DRAFT'}"
+                          >
+                            <i class="fas fa-calendar"></i> Lập lịch
+                          </a>
+
+                          <!-- Hiển thị thông báo cho phim đã SCHEDULED -->
+                          <span
+                            class="text-info"
+                            th:if="${movie.status == 'SCHEDULED'}"
+                          >
+                            <i class="fas fa-clock"></i> Đã lập lịch
+                          </span>
+
+                          <!-- Hiển thị thông báo cho phim đã PUBLISHED -->
+                          <span
+                            class="text-success"
+                            th:if="${movie.status == 'PUBLISHED'}"
+                          >
+                            <i class="fas fa-globe"></i> Đã publish
+                          </span>
+
+                          <!-- Hiển thị thông báo cho status khác -->
+                          <span
+                            class="text-muted"
+                            th:if="${movie.status != 'DRAFT' and movie.status != 'SCHEDULED' and movie.status != 'PUBLISHED'}"
+                          >
+                            <i class="fas fa-info-circle"></i> ${movie.status}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${page}" class="card-footer">
+                  <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                      <!-- Previous Page -->
+                      <li
+                        class="page-item"
+                        th:classappend="${page.first} ? 'disabled'"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/staff/workflow/assigned(page=${page.number - 1})}"
+                          th:unless="${page.first}"
+                        >
+                          <i class="fas fa-chevron-left"></i> Trước
+                        </a>
+                        <span class="page-link" th:if="${page.first}">
+                          <i class="fas fa-chevron-left"></i> Trước
+                        </span>
+                      </li>
+
+                      <!-- Page Numbers -->
+                      <li
+                        class="page-item"
+                        th:each="pageNum : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${pageNum == page.number} ? 'active'"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/staff/workflow/assigned(page=${pageNum})}"
+                          th:text="${pageNum + 1}"
+                          >1</a
+                        >
+                      </li>
+
+                      <!-- Next Page -->
+                      <li
+                        class="page-item"
+                        th:classappend="${page.last} ? 'disabled'"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/staff/workflow/assigned(page=${page.number + 1})}"
+                          th:unless="${page.last}"
+                        >
+                          Sau <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <span class="page-link" th:if="${page.last}">
+                          Sau <i class="fas fa-chevron-right"></i>
+                        </span>
+                      </li>
+                    </ul>
+                  </nav>
+
+                  <!-- Page Info -->
+                  <div class="text-center mt-2">
+                    <small class="text-muted">
+                      Hiển thị
+                      <span th:text="${page.numberOfElements}">0</span> trong
+                      tổng số
+                      <span th:text="${page.totalElements}">0</span> phim (Trang
+                      <span th:text="${page.number + 1}">1</span> /
+                      <span th:text="${page.totalPages}">1</span>)
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                th:if="${movies == null or movies.empty}"
+                class="text-center py-4"
+              >
+                <div class="alert alert-info">
+                  <i class="fas fa-info-circle"></i>
+                  <h5>Chưa có phim nào được assign</h5>
+                  <p>
+                    ADMIN chưa assign phim nào cho theater của bạn. Liên hệ
+                    ADMIN để được assign phim.
+                  </p>
+                  <a th:href="@{/staff/workflow}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Quay lại Dashboard
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

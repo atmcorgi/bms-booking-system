@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Movie Workflow Dashboard</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}"></h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item active">Workflow Dashboard</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <!-- Welcome Message -->
+          <div class="row">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <h5>
+                  <i class="fas fa-info-circle"></i> Chào mừng đến với Movie
+                  Workflow!
+                </h5>
+                <p>
+                  Quản lý toàn bộ quy trình từ nhận yêu cầu phim đến khi khách
+                  có thể đặt vé.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-time Statistics -->
+          <div class="row">
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-warning">
+                <div class="inner">
+                  <h3 th:text="${pendingCount}">0</h3>
+                  <p>Yêu cầu chờ duyệt</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <a
+                  th:href="@{/admin/workflow/pending}"
+                  class="small-box-footer"
+                >
+                  Xem chi tiết <i class="fas fa-arrow-circle-right"></i>
+                </a>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-info">
+                <div class="inner">
+                  <h3 th:text="${approvedCount}">0</h3>
+                  <p>Phim đã duyệt</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-check"></i>
+                </div>
+                <a
+                  th:href="@{/admin/movie-assignment}"
+                  class="small-box-footer"
+                >
+                  Assign phim <i class="fas fa-arrow-circle-right"></i>
+                </a>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-success">
+                <div class="inner">
+                  <h3 th:text="${scheduledCount}">0</h3>
+                  <p>Phim đã lập lịch</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-calendar"></i>
+                </div>
+                <a
+                  th:href="@{/admin/movie-assignment/list}"
+                  class="small-box-footer"
+                >
+                  Xem assignments <i class="fas fa-arrow-circle-right"></i>
+                </a>
+              </div>
+            </div>
+            <div class="col-lg-3 col-6">
+              <div class="small-box bg-danger">
+                <div class="inner">
+                  <h3 th:text="${publishedCount}">0</h3>
+                  <p>Phim đã publish</p>
+                </div>
+                <div class="icon">
+                  <i class="fas fa-eye"></i>
+                </div>
+                <a th:href="@{/}" class="small-box-footer">
+                  Xem website <i class="fas fa-arrow-circle-right"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Workflow Progress -->
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-project-diagram"></i> Workflow Progress
+                  </h3>
+                  <div class="card-tools">
+                    <span class="badge badge-info"
+                      >Tổng:
+                      <span th:text="${totalRequests + totalMovies}">0</span>
+                      items</span
+                    >
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="info-box">
+                        <span class="info-box-icon bg-primary">
+                          <i class="fas fa-upload"></i>
+                        </span>
+                        <div class="info-box-content">
+                          <span class="info-box-text">1. Movie Intake</span>
+                          <span
+                            class="info-box-number"
+                            th:text="${totalRequests}"
+                            >0</span
+                          >
+                          <div class="progress">
+                            <div
+                              class="progress-bar bg-primary"
+                              th:style="'width: ' + ${intakeProgress} + '%'"
+                            ></div>
+                          </div>
+                          <span class="progress-description">
+                            <a
+                              th:href="@{/admin/movie/intake/upload}"
+                              class="text-primary"
+                            >
+                              <i class="fas fa-plus"></i> Nhập phim mới
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="info-box">
+                        <span class="info-box-icon bg-warning">
+                          <i class="fas fa-thumbs-up"></i>
+                        </span>
+                        <div class="info-box-content">
+                          <span class="info-box-text">2. Approval</span>
+                          <span
+                            class="info-box-number"
+                            th:text="${approvedCount}"
+                            >0</span
+                          >
+                          <div class="progress">
+                            <div
+                              class="progress-bar bg-warning"
+                              th:style="'width: ' + ${approvalProgress} + '%'"
+                            ></div>
+                          </div>
+                          <span class="progress-description">
+                            <a
+                              th:href="@{/admin/workflow/pending}"
+                              class="text-warning"
+                            >
+                              <i class="fas fa-list"></i> Duyệt yêu cầu
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="info-box">
+                        <span class="info-box-icon bg-success">
+                          <i class="fas fa-calendar-alt"></i>
+                        </span>
+                        <div class="info-box-content">
+                          <span class="info-box-text">3. Scheduling</span>
+                          <span
+                            class="info-box-number"
+                            th:text="${scheduledCount}"
+                            >0</span
+                          >
+                          <div class="progress">
+                            <div
+                              class="progress-bar bg-success"
+                              th:style="'width: ' + ${schedulingProgress} + '%'"
+                            ></div>
+                          </div>
+                          <span class="progress-description">
+                            <a
+                              th:href="@{/admin/movie-assignment}"
+                              class="text-success"
+                            >
+                              <i class="fas fa-link"></i> Assign phim cho
+                              theater
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="info-box">
+                        <span class="info-box-icon bg-danger">
+                          <i class="fas fa-globe"></i>
+                        </span>
+                        <div class="info-box-content">
+                          <span class="info-box-text">4. Publishing</span>
+                          <span
+                            class="info-box-number"
+                            th:text="${publishedCount}"
+                            >0</span
+                          >
+                          <div class="progress">
+                            <div
+                              class="progress-bar bg-danger"
+                              th:style="'width: ' + ${publishingProgress} + '%'"
+                            ></div>
+                          </div>
+                          <span class="progress-description">
+                            <a
+                              th:href="@{/admin/workflow/scheduled}"
+                              class="text-danger"
+                            >
+                              <i class="fas fa-globe"></i> Publish cho khách
+                            </a>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="row">
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                  </h3>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-6">
+                      <a
+                        th:href="@{/admin/movie/intake/upload}"
+                        class="btn btn-primary btn-block mb-2"
+                      >
+                        <i class="fas fa-upload"></i> Nhập phim
+                      </a>
+                    </div>
+                    <div class="col-6">
+                      <a
+                        th:href="@{/admin/workflow/pending}"
+                        class="btn btn-warning btn-block mb-2"
+                      >
+                        <i class="fas fa-thumbs-up"></i> Duyệt yêu cầu
+                      </a>
+                    </div>
+                    <div class="col-6">
+                      <a
+                        th:href="@{/admin/movie-assignment}"
+                        class="btn btn-success btn-block mb-2"
+                      >
+                        <i class="fas fa-link"></i> Assign phim
+                      </a>
+                    </div>
+                    <div class="col-6">
+                      <a
+                        th:href="@{/admin/movie-assignment/list}"
+                        class="btn btn-info btn-block mb-2"
+                      >
+                        <i class="fas fa-list"></i> Xem assignments
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <i class="fas fa-chart-line"></i> Recent Activity
+                  </h3>
+                </div>
+                <div class="card-body">
+                  <div
+                    th:if="${recentPending.empty and recentScheduled.empty}"
+                    class="text-center text-muted"
+                  >
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>Chưa có hoạt động nào</p>
+                  </div>
+                  <div th:if="${!recentPending.empty}">
+                    <h6 class="text-warning">
+                      <i class="fas a-clock"></i> Pending Requests
+                    </h6>
+                    <ul class="list-unstyled">
+                      <li th:each="req : ${recentPending}" class="mb-2">
+                        <i class="fas fa-film text-muted"></i>
+                        <span th:text="${req.title != null ? req.title : 'N/A'}"
+                          >Movie Title</span
+                        >
+                        <small class="text-muted"
+                          >- <span th:text="${req.movieCode}">Code</span></small
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                  <div th:if="${!recentScheduled.empty}">
+                    <h6 class="text-success">
+                      <i class="fas fa-calendar"></i> Recently Scheduled
+                    </h6>
+                    <ul class="list-unstyled">
+                      <li th:each="movie : ${recentScheduled}" class="mb-2">
+                        <i class="fas fa-film text-muted"></i>
+                        <span th:text="${movie.title}">Movie Title</span>
+                        <small class="text-muted"
+                          >- <span th:text="${movie.code}">Code</span></small
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

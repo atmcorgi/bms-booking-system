@@ -1,0 +1,248 @@
+# ===========================================
+# MONOREPO GITIGNORE - BOOKING SYSTEM
+# ===========================================
+
+# ============ BACKEND (Spring Boot) ============
+# Maven
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+!backend/src/main/**/target/
+!backend/src/test/**/target/
+
+# STS
+backend/.apt_generated
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings
+backend/.springBeans
+backend/.sts4-cache
+
+# IntelliJ IDEA
+backend/.idea/
+backend/*.iws
+backend/*.iml
+backend/*.ipr
+
+# NetBeans
+backend/nbproject/private/
+backend/nbbuild/
+backend/dist/
+backend/nbdist/
+backend/.nb-gradle/
+backend/build/
+!backend/src/main/**/build/
+!backend/src/test/**/build/
+
+# ============ FRONTEND (React) ============
+# Dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# Production builds
+frontend/dist/
+frontend/build/
+
+# Environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# Runtime data
+frontend/pids
+frontend/*.pid
+frontend/*.seed
+frontend/*.pid.lock
+
+# Coverage directory used by tools like istanbul
+frontend/coverage/
+frontend/*.lcov
+
+# ESLint cache
+frontend/.eslintcache
+
+# Microbundle cache
+frontend/.rpt2_cache/
+frontend/.rts2_cache_cjs/
+frontend/.rts2_cache_es/
+frontend/.rts2_cache_umd/
+
+# Optional npm cache directory
+frontend/.npm
+
+# Optional eslint cache
+frontend/.eslintcache
+
+# Optional stylelint cache
+frontend/.stylelintcache
+
+# Microbundle cache
+frontend/.rpt2_cache/
+frontend/.rts2_cache_cjs/
+frontend/.rts2_cache_es/
+frontend/.rts2_cache_umd/
+
+# Optional REPL history
+frontend/.node_repl_history
+
+# Output of 'npm pack'
+frontend/*.tgz
+
+# Yarn Integrity file
+frontend/.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+frontend/.cache
+frontend/.parcel-cache
+
+# Next.js build output
+frontend/.next
+frontend/out
+
+# Nuxt.js build / generate output
+frontend/.nuxt
+frontend/dist
+
+# Gatsby files
+frontend/.cache/
+frontend/public
+
+# Storybook build outputs
+frontend/.out
+frontend/.storybook-out
+
+# Temporary folders
+frontend/tmp/
+frontend/temp/
+
+# ============ DOCKER ============
+# Docker volumes
+docker-data/
+mysql-data/
+backend-logs/
+
+# ============ ENVIRONMENT & CONFIG ============
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Configuration files with secrets
+config/secrets.yml
+config/database.yml
+application-prod.properties
+
+# ============ IDE & EDITORS ============
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+.metadata
+.recommenders
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ============ OS GENERATED FILES ============
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ============ LOGS ============
+# Application logs
+backend/logs/
+*.log
+logs/
+
+# ============ DATABASE ============
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# ============ BACKUP FILES ============
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# ============ TESTING ============
+# Test coverage
+coverage/
+*.lcov
+
+# ============ MISC ============
+# Temporary files
+*.tmp
+*.temp
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Security
+*.pem
+*.key
+*.crt
+*.p12
+*.jks

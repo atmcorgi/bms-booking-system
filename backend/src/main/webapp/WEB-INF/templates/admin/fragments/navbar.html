@@ -1,0 +1,49 @@
+<aside
+  th:fragment="sidebar"
+  class="main-sidebar sidebar-dark-primary elevation-4"
+>
+  <a href="/admin" class="brand-link">
+    <span class="brand-text font-weight-light">Admin Console</span>
+  </a>
+  <div class="sidebar">
+    <nav class="mt-2">
+      <ul
+        class="nav nav-pills nav-sidebar flex-column"
+        data-widget="treeview"
+        role="menu"
+        data-accordion="false"
+      >
+        <li class="nav-item">
+          <a href="/admin/genres" class="nav-link"
+            ><i class="nav-icon fas fa-tags"></i>
+            <p>Thể loại</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/admin/theater" class="nav-link"
+            ><i class="nav-icon fas fa-building"></i>
+            <p>Quản lý Rạp (Factory)</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/admin/movie-assignment" class="nav-link"
+            ><i class="nav-icon fas fa-link"></i>
+            <p>Assign Movie</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/admin/movie/intake" class="nav-link"
+            ><i class="nav-icon fas fa-upload"></i>
+            <p>Import CSV</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/admin/workflow" class="nav-link"
+            ><i class="nav-icon fas fa-tasks"></i>
+            <p>Workflow Dashboard</p></a
+          >
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>

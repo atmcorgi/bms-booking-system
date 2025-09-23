@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <div th:fragment="content">
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>Quản lý Rạp</h1>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-7">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">➕ Tạo Rạp Mới</h3>
+              </div>
+              <div class="card-body">
+                <div
+                  th:if="${success}"
+                  class="alert alert-success"
+                  th:text="${success}"
+                ></div>
+                <div
+                  th:if="${error}"
+                  class="alert alert-danger"
+                  th:text="${error}"
+                ></div>
+
+                <form th:action="@{/admin/theater/create}" method="post">
+                  <div class="form-group">
+                    <label>Brand</label>
+                    <div class="d-flex" style="gap: 12px">
+                      <button
+                        type="button"
+                        class="btn btn-outline-primary"
+                        onclick="selectBrand('CGV', this)"
+                      >
+                        CGV
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-success"
+                        onclick="selectBrand('BHD', this)"
+                      >
+                        BHD
+                      </button>
+                    </div>
+                    <input
+                      type="hidden"
+                      name="brand"
+                      id="selectedBrand"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col-md-8">
+                      <label>Tên rạp</label>
+                      <input
+                        type="text"
+                        name="theaterName"
+                        class="form-control"
+                        required
+                      />
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label>Mã rạp</label>
+                      <input
+                        type="text"
+                        name="theaterCode"
+                        class="form-control"
+                        placeholder="CGVHN"
+                        pattern="[A-Z0-9_]+"
+                        title="Chỉ A-Z, 0-9, gạch dưới"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Địa chỉ</label>
+                    <input
+                      type="text"
+                      name="address"
+                      class="form-control"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Điện thoại</label>
+                    <input
+                      type="text"
+                      name="phone"
+                      class="form-control"
+                      required
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Mô tả</label>
+                    <textarea
+                      name="description"
+                      class="form-control"
+                      rows="3"
+                    ></textarea>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label>Tỉnh/Thành</label>
+                      <select
+                        name="provinceId"
+                        class="form-control"
+                        required
+                        id="provinceSelect"
+                      >
+                        <option value="">Chọn Tỉnh/Thành</option>
+                        <option
+                          th:each="province : ${provinces}"
+                          th:value="${province.id}"
+                          th:text="${province.name}"
+                        ></option>
+                      </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label>Quận/Huyện</label>
+                      <select
+                        name="districtId"
+                        class="form-control"
+                        required
+                        id="districtSelect"
+                      >
+                        <option value="">Chọn Quận/Huyện</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="form-row">
+                    <div class="form-group col-md-8">
+                      <label>Tên phòng (phân cách bằng dấu phẩy)</label>
+                      <input
+                        type="text"
+                        name="roomNames"
+                        class="form-control"
+                        placeholder="Phòng 1, Phòng 2, VIP"
+                        required
+                      />
+                    </div>
+                    <div class="form-group col-md-4">
+                      <label>Số ghế/phòng</label>
+                      <input
+                        type="number"
+                        name="seatsPerRoom"
+                        class="form-control"
+                        min="20"
+                        max="200"
+                        value="50"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div class="text-right">
+                    <button type="submit" class="btn btn-primary">Lưu</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-5">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">🏢 Supported Theater Brands</h3>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <h5>🎬 CGV - Premium Cinema Experience</h5>
+                  <div>
+                    <strong>Features:</strong>
+                    <ul class="mb-2">
+                      <li th:each="f : ${cgvFeatures}" th:text="${f}"></li>
+                    </ul>
+                    <strong>Pricing Strategy:</strong>
+                    <span th:text="${cgvPricing}"></span>
+                  </div>
+                </div>
+
+                <div>
+                  <h5>🎭 BHD - Quality Entertainment</h5>
+                  <div>
+                    <strong>Features:</strong>
+                    <ul class="mb-2">
+                      <li th:each="f : ${bhdFeatures}" th:text="${f}"></li>
+                    </ul>
+                    <strong>Pricing Strategy:</strong>
+                    <span th:text="${bhdPricing}"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <th:block th:fragment="scripts">
+    <script>
+      function selectBrand(brand, el) {
+        document
+          .querySelectorAll(
+            "button.btn-outline-primary, button.btn-outline-success"
+          )
+          .forEach((btn) => btn.classList.remove("active"));
+        if (el) el.classList.add("active");
+        document.getElementById("selectedBrand").value = brand;
+        fetchBrandInfo(brand);
+      }
+
+      function fetchBrandInfo(brand) {
+        fetch(`/admin/theater/brand-info/${brand}`)
+          .then((r) => r.text())
+          .then((t) => console.log(`${brand} Info:`, t))
+          .catch((e) => console.error(e));
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        const first = document.querySelector("button.btn-outline-primary");
+        if (first) selectBrand("CGV", first);
+
+        const provinceSelect = document.getElementById("provinceSelect");
+        const districtSelect = document.getElementById("districtSelect");
+        if (provinceSelect && districtSelect) {
+          provinceSelect.addEventListener("change", function () {
+            const provinceId = this.value;
+            districtSelect.innerHTML =
+              '<option value="">Chọn Quận/Huyện</option>';
+            if (!provinceId) return;
+            fetch(`/admin/theater/districts?provinceId=${provinceId}`)
+              .then((res) => res.json())
+              .then((items) => {
+                items.forEach((item) => {
+                  const opt = document.createElement("option");
+                  opt.value = item.id;
+                  opt.textContent = item.name;
+                  districtSelect.appendChild(opt);
+                });
+              })
+              .catch((err) => console.error("Failed to load districts", err));
+          });
+        }
+      });
+    </script>
+  </th:block>
+</html>

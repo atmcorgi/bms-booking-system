@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <body th:replace="layout/base :: html">
+    <div th:fragment="content">
+      <div class="main-content-container">
+        <div class="step-content" id="content-location"></div>
+        <div
+          class="step-content"
+          id="content-district"
+          style="display: none"
+        ></div>
+        <div
+          class="step-content"
+          id="content-theater"
+          style="display: none"
+        ></div>
+        <div
+          class="step-content"
+          id="content-showtime"
+          style="display: none"
+        ></div>
+        <div class="step-content" id="content-seat" style="display: none"></div>
+        <div class="step-content" id="content-pay" style="display: none"></div>
+      </div>
+      <script th:src="@{/resources/js/booking/booking.js}"></script>
+    </div>
+  </body>
+</html>

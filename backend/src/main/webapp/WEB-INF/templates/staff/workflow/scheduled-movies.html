@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{staff/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Scheduled Movies</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}"></h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                  <a th:href="@{/staff/workflow}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active">Scheduled Movies</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message display -->
+      <div th:if="${message}" class="container-fluid">
+        <div
+          class="alert"
+          th:classappend="${messageType == 'success'} ? 'alert-success' : (${messageType == 'warning'} ? 'alert-warning' : 'alert-danger')"
+        >
+          <i
+            class="fas"
+            th:classappend="${messageType == 'success'} ? 'fa-check' : (${messageType == 'warning'} ? 'fa-exclamation-triangle' : 'fa-times')"
+          ></i>
+          <span th:text="${message}">Message</span>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">
+                <i class="fas fa-calendar-alt"></i> Scheduled Movies
+              </h3>
+              <div class="card-tools">
+                <span class="badge badge-warning">
+                  <span th:text="${page.totalElements}">0</span> movies
+                </span>
+              </div>
+            </div>
+
+            <!-- Hidden form for publish -->
+            <form
+              method="post"
+              th:action="@{/staff/workflow/publish}"
+              id="publishForm"
+              style="display: none"
+            ></form>
+            <div class="card-body p-0">
+              <div th:if="${#lists.isEmpty(movies)}" class="text-center p-4">
+                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Chưa có phim nào được lập lịch</h5>
+                <p class="text-muted">
+                  Hãy lập lịch cho các phim đã được assign.
+                </p>
+                <a th:href="@{/staff/scheduling/auto}" class="btn btn-warning">
+                  <i class="fas fa-magic"></i> Lập lịch tự động
+                </a>
+              </div>
+
+              <div
+                th:unless="${#lists.isEmpty(movies)}"
+                class="table-responsive"
+              >
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Code</th>
+                      <th>Title</th>
+                      <th>Director</th>
+                      <th>Duration</th>
+                      <th>Status</th>
+                      <th>Release Date</th>
+                      <th>Genres</th>
+                      <th>Showtimes</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr th:each="movie,idx : ${movies}">
+                      <td th:text="${page.number * page.size + idx.index + 1}">
+                        1
+                      </td>
+                      <td th:text="${movie.code}">M001</td>
+                      <td th:text="${movie.title}">Movie Title</td>
+                      <td th:text="${movie.director}">Director</td>
+                      <td th:text="${movie.duration}">120</td>
+                      <td>
+                        <span
+                          class="badge badge-warning"
+                          th:text="${movie.status}"
+                          >SCHEDULED</span
+                        >
+                      </td>
+                      <td
+                        th:text="${#temporals.format(movie.releaseDate, 'dd/MM/yyyy')}"
+                      >
+                        01/01/2024
+                      </td>
+                      <td th:text="${movie.genres}">Action, Drama</td>
+                      <td>
+                        <span
+                          class="badge badge-info"
+                          th:text="${movie.showtimeCount}"
+                          >5</span
+                        >
+                      </td>
+                      <td>
+                        <button
+                          class="btn btn-success btn-sm publish-btn"
+                          th:data-movie-code="${movie.code}"
+                        >
+                          <i class="fas fa-globe"></i> Publish
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${page.totalPages > 1}" class="card-footer">
+              <nav>
+                <ul class="pagination justify-content-center">
+                  <li
+                    class="page-item"
+                    th:classappend="${page.first} ? 'disabled'"
+                  >
+                    <a
+                      class="page-link"
+                      th:href="@{/staff/workflow/scheduled(page=${page.number - 1})}"
+                      >Previous</a
+                    >
+                  </li>
+                  <li
+                    class="page-item"
+                    th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                    th:classappend="${i == page.number} ? 'active'"
+                  >
+                    <a
+                      class="page-link"
+                      th:href="@{/staff/workflow/scheduled(page=${i})}"
+                      th:text="${i + 1}"
+                      >1</a
+                    >
+                  </li>
+                  <li
+                    class="page-item"
+                    th:classappend="${page.last} ? 'disabled'"
+                  >
+                    <a
+                      class="page-link"
+                      th:href="@{/staff/workflow/scheduled(page=${page.number + 1})}"
+                      >Next</a
+                    >
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <th:block th:fragment="scripts">
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          const publishButtons = document.querySelectorAll(".publish-btn");
+          const publishForm = document.getElementById("publishForm");
+
+          // Handle single publish
+          publishButtons.forEach((btn) => {
+            btn.addEventListener("click", function () {
+              const movieCode = this.getAttribute("data-movie-code");
+              if (
+                confirm("Bạn có chắc chắn muốn publish phim " + movieCode + "?")
+              ) {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "movieCodes";
+                input.value = movieCode;
+                publishForm.appendChild(input);
+                publishForm.submit();
+              }
+            });
+          });
+        });
+      </script>
+    </th:block>
+  </body>
+</html>

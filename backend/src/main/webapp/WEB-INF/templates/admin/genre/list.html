@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <head>
+    <title>Quản lý Thể loại</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="admin-layout">
+        <aside class="admin-sidebar">
+          <div th:replace="~{admin/fragments/navbar :: sidebar}"></div>
+        </aside>
+        <section class="admin-content">
+          <div class="admin-header">
+            <h1 th:text="${archived} ? 'Thể loại đã xóa' : 'Thể loại'"></h1>
+            <div>
+              <a
+                class="btn"
+                th:href="@{/admin/genres/archived}"
+                th:if="${archived} == null or not ${archived}"
+                >Đã xóa</a
+              >
+              <a class="btn" th:href="@{/admin/genres}" th:if="${archived}"
+                >Quay lại</a
+              >
+              <a
+                class="btn primary"
+                th:if="${archived} == null or not ${archived}"
+                href="/admin/genres/create"
+                >Thêm thể loại</a
+              >
+            </div>
+          </div>
+
+          <form
+            class="admin-search"
+            method="get"
+            th:action="@{/admin/genres}"
+            th:if="${archived} == null or not ${archived}"
+          >
+            <input
+              type="text"
+              name="q"
+              th:value="${query}"
+              placeholder="Tìm theo tên..."
+            />
+            <button class="btn" type="submit">Tìm</button>
+          </form>
+
+          <div class="card">
+            <div class="card-body p-0">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 80px">ID</th>
+                    <th>Tên</th>
+                    <th>Mô tả</th>
+                    <th style="width: 220px" class="text-right">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="g : ${genres}">
+                    <td th:text="${g.id}">1</td>
+                    <td th:text="${g.name}">Action</td>
+                    <td th:text="${g.description}">...</td>
+                    <td class="text-right">
+                      <a
+                        class="btn btn-sm btn-secondary"
+                        th:if="${archived} == null or not ${archived}"
+                        th:href="@{'/admin/genres/' + ${g.id} + '/edit'}"
+                        >Sửa</a
+                      >
+                      <form
+                        th:if="${archived} == null or not ${archived}"
+                        th:action="@{'/admin/genres/' + ${g.id} + '/delete'}"
+                        method="post"
+                        style="display: inline"
+                      >
+                        <button
+                          class="btn btn-sm btn-danger"
+                          type="submit"
+                          onclick="return confirm('Xóa (ẩn) thể loại này?')"
+                        >
+                          Xóa
+                        </button>
+                      </form>
+                      <form
+                        th:if="${archived}"
+                        th:action="@{'/admin/genres/' + ${g.id} + '/restore'}"
+                        method="post"
+                        style="display: inline"
+                      >
+                        <button class="btn btn-sm btn-success" type="submit">
+                          Khôi phục
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card-footer clearfix">
+              <ul class="pagination pagination-sm m-0 float-right">
+                <li
+                  class="page-item"
+                  th:classappend="${page.first} ? 'disabled'"
+                >
+                  <a
+                    class="page-link"
+                    th:href="@{${basePath}(q=${query},page=${page.number-1},size=${page.size})}"
+                    >«</a
+                  >
+                </li>
+                <li
+                  class="page-item"
+                  th:each="i : ${#numbers.sequence(0, page.totalPages-1)}"
+                  th:classappend="${i}==${page.number} ? 'active'"
+                >
+                  <a
+                    class="page-link"
+                    th:text="${i+1}"
+                    th:href="@{${basePath}(q=${query},page=${i},size=${page.size})}"
+                    >1</a
+                  >
+                </li>
+                <li
+                  class="page-item"
+                  th:classappend="${page.last} ? 'disabled'"
+                >
+                  <a
+                    class="page-link"
+                    th:href="@{${basePath}(q=${query},page=${page.number+1},size=${page.size})}"
+                    >»</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

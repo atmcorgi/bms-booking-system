@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{staff/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Xem trước lịch tự động</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}"></h1>
+            </div>
+            <div class="col-sm-6 text-right">
+              <form
+                method="post"
+                th:action="@{/staff/scheduling/auto/commit}"
+                id="commitForm"
+              >
+                <input type="hidden" name="token" th:value="${token}" />
+                <button type="submit" class="btn btn-primary">
+                  Commit tất cả hợp lệ
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <!-- Summary -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Cấu hình lập lịch</h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div><strong>Khoảng ngày:</strong></div>
+                  <div th:text="${startDate} + ' → ' + ${endDate}">
+                    2024-09-01 → 2024-09-07
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div><strong>Rạp áp dụng:</strong></div>
+                  <div th:if="${selectedTheaterCount > 0}">
+                    <span th:each="t,idx : ${selectedTheaters}">
+                      <span th:text="${t.name}">CGV</span
+                      ><span th:if="${!idx.last}">, </span>
+                    </span>
+                  </div>
+                  <div th:if="${selectedTheaterCount == 0}">Tất cả rạp</div>
+                </div>
+                <div class="col-md-4">
+                  <div><strong>Phim (codes):</strong></div>
+                  <div th:text="${preselectedCodes} ?: 'Tất cả phim APPROVED'">
+                    M001,M002
+                  </div>
+                </div>
+              </div>
+              <div class="row mt-2">
+                <div class="col-md-4">
+                  <div><strong>Chính sách:</strong></div>
+                  <ul class="mb-0">
+                    <li>Không cho cùng rạp + cùng giờ + cùng phim</li>
+                    <li>Phòng phải khớp định dạng phim</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generated Slots -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Slots được tạo tự động</h3>
+              <div class="card-tools">
+                <span
+                  class="badge badge-info"
+                  th:text="${#lists.size(slots)} + ' slots'"
+                  >0 slots</span
+                >
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Rạp</th>
+                    <th>Phòng</th>
+                    <th>Mã phim</th>
+                    <th>Ngày</th>
+                    <th>Giờ</th>
+                    <th>Giá</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="s,idx : ${slots}">
+                    <td th:text="${idx.index + 1}">1</td>
+                    <td th:text="${s.theaterName}">CGV</td>
+                    <td th:text="${s.roomName}">Phòng 1</td>
+                    <td th:text="${s.movieCode}">M001</td>
+                    <td th:text="${s.showDate}">2024-08-30</td>
+                    <td th:text="${s.showTime}">19:00</td>
+                    <td th:text="${s.priceStandard}">80000</td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(slots)}">
+                    <td colspan="7" class="text-center">
+                      Không có slots nào được tạo
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <div th:if="${page}" class="card-footer">
+                <nav aria-label="Page navigation">
+                  <ul class="pagination justify-content-center mb-0">
+                    <!-- Previous Page -->
+                    <li
+                      class="page-item"
+                      th:classappend="${page.first} ? 'disabled'"
+                    >
+                      <a
+                        class="page-link"
+                        th:href="@{/staff/scheduling/auto/preview(token=${token}, page=${page.number - 1})}"
+                        th:unless="${page.first}"
+                      >
+                        <i class="fas fa-chevron-left"></i> Trước
+                      </a>
+                      <span class="page-link" th:if="${page.first}">
+                        <i class="fas fa-chevron-left"></i> Trước
+                      </span>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    <li
+                      class="page-item"
+                      th:each="pageNum : ${#numbers.sequence(0, page.totalPages - 1)}"
+                      th:classappend="${pageNum == page.number} ? 'active'"
+                    >
+                      <a
+                        class="page-link"
+                        th:href="@{/staff/scheduling/auto/preview(token=${token}, page=${pageNum})}"
+                        th:text="${pageNum + 1}"
+                        >1</a
+                      >
+                    </li>
+
+                    <!-- Next Page -->
+                    <li
+                      class="page-item"
+                      th:classappend="${page.last} ? 'disabled'"
+                    >
+                      <a
+                        class="page-link"
+                        th:href="@{/staff/scheduling/auto/preview(token=${token}, page=${page.number + 1})}"
+                        th:unless="${page.last}"
+                      >
+                        Sau <i class="fas fa-chevron-right"></i>
+                      </a>
+                      <span class="page-link" th:if="${page.last}">
+                        Sau <i class="fas fa-chevron-right"></i>
+                      </span>
+                    </li>
+                  </ul>
+                </nav>
+
+                <!-- Page Info -->
+                <div class="text-center mt-2">
+                  <small class="text-muted">
+                    Hiển thị
+                    <span th:text="${page.numberOfElements}">0</span> trong tổng
+                    số <span th:text="${page.totalElements}">0</span> slots
+                    (Trang <span th:text="${page.number + 1}">1</span> /
+                    <span th:text="${page.totalPages}">1</span>)
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

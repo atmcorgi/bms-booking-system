@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="html">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title
+      th:text="${title} ? ${title} + ' - Movie Booking' : 'Movie Booking System'"
+    >
+      Movie Booking System
+    </title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- Header -->
+    <header
+      class="fd-header"
+      th:replace="shared/fragments/header :: header"
+    ></header>
+
+    <main class="fd-main-content fd-main-no-banner">
+      <div th:replace="~{::content}"></div>
+    </main>
+
+    <footer
+      class="fd-footer"
+      th:replace="shared/fragments/footer :: footer"
+    ></footer>
+
+    <!-- Scripts -->
+    <script th:src="@{/resources/js/shared/navbar-active.js}"></script>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+package fsa.training.repository.booking;
+
+import fsa.training.entity.Showtime;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+ 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+
+public interface ShowtimeRepository extends JpaRepository<Showtime, Long>, JpaSpecificationExecutor<Showtime> {
+    
+
+    Optional<Showtime> findByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
+
+    /**
+     * Find existing showtimes for multiple theaters on a specific date
+     */
+    @Query("SELECT s FROM Showtime s WHERE s.theater.id IN :theaterIds AND s.showDate = :showDate")
+    List<Showtime> findByTheaterIdsAndShowDate(@Param("theaterIds") List<Long> theaterIds, 
+                                              @Param("showDate") LocalDate showDate);
+
+    /**
+     * Find existing showtimes for a specific theater, movie, date and time
+     */
+    @Query("SELECT s FROM Showtime s WHERE s.theater.id = :theaterId AND s.movie.id = :movieId AND s.showDate = :showDate AND s.showTime = :showTime")
+    List<Showtime> findByTheaterIdAndMovieIdAndShowDateAndShowTime(@Param("theaterId") Long theaterId,
+                                                                  @Param("movieId") Long movieId,
+                                                                  @Param("showDate") LocalDate showDate,
+                                                                  @Param("showTime") LocalTime showTime);
+
+    /**
+     * Find all showtimes for a theater on a specific date
+     */
+    @Query("SELECT s FROM Showtime s WHERE s.theater.name = :theaterName AND s.showDate = :showDate ORDER BY s.showTime")
+    List<Showtime> findByTheaterNameAndShowDate(@Param("theaterName") String theaterName,
+                                               @Param("showDate") LocalDate showDate);
+} 

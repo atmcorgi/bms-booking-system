@@ -1,0 +1,40 @@
+<!-- Top Header Bar -->
+<div th:fragment="top-header" class="top-header">
+  <div class="container">
+    <div class="top-header-left">
+      <a href="#" class="app-link">
+        <span class="app-icon">📱</span>
+        My Cinema APP
+      </a>
+      <a href="#" class="facebook-link">
+        <span class="facebook-icon">f</span>
+        My Cinema Facebook
+      </a>
+    </div>
+    <div class="top-header-right">
+      <a href="/login">Đăng nhập</a>
+      <a href="/register">Đăng ký</a>
+      <a href="#">Hỗ trợ khách hàng</a>
+      <button class="language-btn">
+        ENGLISH
+        <span class="arrow-down">▼</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Main Header -->
+<header th:fragment="main-header" class="main-header">
+  <div class="container">
+    <div class="logo">
+      <a href="/">
+        <div class="logo-text">
+          <div class="logo-circle"></div>
+          <span>MY CINEMA</span>
+        </div>
+      </a>
+    </div>
+    <!-- Include Navigation with Active State Logic -->
+            <div th:replace="~{shared/fragments/navbar :: main-nav}"></div>
+  </div>
+</header>

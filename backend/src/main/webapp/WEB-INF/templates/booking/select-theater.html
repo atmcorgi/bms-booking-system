@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Đặt vé - Chọn rạp trước</title>
+    <link rel="stylesheet" th:href="@{/resources/css/shared/style.css}" />
+    <link rel="stylesheet" th:href="@{/resources/css/movie/movie-detail.css}" />
+  </head>
+  <body>
+    <div th:replace="~{shared/fragments/header :: top-header}"></div>
+    <div th:replace="~{shared/fragments/header :: main-header}"></div>
+
+    <main class="container" style="padding: 20px 0">
+      <section class="section-box">
+        <h3 style="margin-bottom: 12px">Các bộ phim đang chiếu tại rạp</h3>
+        <div class="detail-grid">
+          <div>
+            <div class="step-content" id="content-location"></div>
+            <div
+              class="step-content"
+              id="content-district"
+              style="display: none"
+            ></div>
+            <div
+              class="step-content"
+              id="content-theater"
+              style="display: none"
+            ></div>
+            <div
+              class="step-content"
+              id="content-movie"
+              style="display: none"
+            ></div>
+            <div
+              class="step-content"
+              id="content-showtime"
+              style="display: none"
+            ></div>
+            <div
+              class="step-content"
+              id="content-seat"
+              style="display: none"
+            ></div>
+            <div
+              class="step-content"
+              id="content-pay"
+              style="display: none"
+            ></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div th:replace="~{shared/fragments/footer :: footer}"></div>
+
+    <script th:src="@{/resources/js/booking/booking-theater.js}"></script>
+  </body>
+</html>

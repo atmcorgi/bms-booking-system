@@ -1,0 +1,134 @@
+/* Image and video optimization styles */
+
+/* Lazy loading animations */
+.lazy-image {
+  transition: opacity 0.3s ease-in-out;
+  position: relative;
+}
+
+.lazy-image.loading {
+  opacity: 0.7;
+}
+
+.lazy-image.error {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+/* Shimmer loading effect */
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Pulse animation for loading state */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.lazy-image.loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: inherit;
+  z-index: 1;
+}
+
+/* Movie card hover effects */
+.movie-card {
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+
+.movie-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Optimized grid layout */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+@media (max-width: 768px) {
+  .movie-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+  }
+}
+
+/* Video optimization */
+.lazy-video {
+  transition: opacity 0.3s ease-in-out;
+}
+
+.lazy-video.loading {
+  opacity: 0.7;
+}
+
+/* Skeleton loading for better UX */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.skeleton-text.short {
+  width: 60%;
+}
+
+.skeleton-text.medium {
+  width: 80%;
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 2/3;
+  border-radius: 8px;
+}
+
+/* Performance optimizations */
+.movie-poster img {
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .lazy-image,
+  .movie-card,
+  .lazy-video {
+    transition: none;
+  }
+
+  .skeleton {
+    animation: none;
+  }
+}

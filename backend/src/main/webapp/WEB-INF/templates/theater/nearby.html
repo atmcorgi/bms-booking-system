@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rạp Gần Bạn - My Cinema</title>
+    <link rel="stylesheet" th:href="@{/resources/css/shared/style.css}" />
+    <link rel="stylesheet" th:href="@{/resources/css/theater/theater.css}" />
+  </head>
+  <body>
+    <!-- Include Header -->
+    <div th:replace="~{shared/fragments/header :: top-header}"></div>
+    <div th:replace="~{shared/fragments/header :: main-header}"></div>
+
+    <!-- Main Content -->
+    <main>
+      <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+          <h2>Rạp Gần Bạn</h2>
+          <p>Tìm rạp chiếu phim gần nhất để xem phim</p>
+        </div>
+
+        <!-- Location Detection -->
+        <div class="location-section">
+          <div class="location-status" id="location-status">
+            <div class="location-loading">
+              <span class="loading-spinner"></span>
+              <span>Đang xác định vị trí của bạn...</span>
+            </div>
+          </div>
+
+          <div class="location-controls">
+            <button id="detect-location" class="btn btn-primary">
+              <span class="icon">📍</span>
+              Xác định vị trí
+            </button>
+            <button
+              id="refresh-location"
+              class="btn btn-secondary"
+              style="display: none"
+            >
+              <span class="icon">🔄</span>
+              Làm mới
+            </button>
+          </div>
+        </div>
+
+        <!-- Radius Control -->
+        <div class="radius-control">
+          <label for="radius-select">Bán kính tìm kiếm:</label>
+          <select id="radius-select" class="radius-select">
+            <option value="5">5 km</option>
+            <option value="10" selected>10 km</option>
+            <option value="15">15 km</option>
+            <option value="20">20 km</option>
+            <option value="50">50 km</option>
+          </select>
+        </div>
+
+        <!-- Theaters List -->
+        <div class="theaters-container">
+          <div id="theaters-list" class="theaters-list">
+            <!-- Theaters will be loaded here -->
+          </div>
+
+          <div id="no-theaters" class="no-theaters" style="display: none">
+            <div class="no-theaters-content">
+              <span class="icon">🎬</span>
+              <h3>Không tìm thấy rạp nào</h3>
+              <p>
+                Không có rạp chiếu phim nào trong bán kính
+                <span id="current-radius">10</span>km
+              </p>
+              <button id="expand-search" class="btn btn-primary">
+                Mở rộng tìm kiếm
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Include Footer -->
+    <div th:replace="~{shared/fragments/footer :: footer}"></div>
+
+    <!-- Scripts -->
+    <script th:src="@{/resources/js/shared/theater-nearby.js}"></script>
+    <script th:src="@{/resources/js/shared/navbar-active.js}"></script>
+  </body>
+</html>

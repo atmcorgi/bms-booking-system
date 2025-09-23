@@ -1,0 +1,266 @@
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.admin-toolbar .admin-toolbar-actions > * {
+  margin: 0; /* Normalize margins across inputs/labels/buttons */
+}
+.admin-toolbar .admin-search {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  min-width: 260px;
+  background: #ffffff;
+  outline: none;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+  line-height: 1;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+.admin-search:focus {
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
+}
+.admin-table-wrap {
+  overflow-x: auto;
+  overflow-y: visible;
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  /* Force scrollbar to always show */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+  /* Ensure table is wider than container */
+  position: relative;
+  /* Force container to have fixed width */
+  box-sizing: border-box;
+  /* Debug: Add background to see container bounds */
+  background: #f8f9fa;
+}
+
+.admin-table-wrap::-webkit-scrollbar {
+  height: 12px;
+  display: block;
+}
+
+.admin-table-wrap::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.admin-table-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.admin-table-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.admin-table {
+  background: #fff;
+  border: none;
+  border-radius: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed; /* Respect column widths */
+  width: max-content; /* Shrinks when fewer columns visible */
+  min-width: 100%; /* But not smaller than container */
+}
+.admin-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  z-index: 1;
+}
+.admin-table thead th.th-sortable:hover {
+  background: #f3f4f6;
+}
+
+/* Unified button styles for admin toolbar only */
+.admin-toolbar .fd-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+.admin-toolbar .fd-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+.admin-toolbar .fd-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background: #f1f5f9;
+}
+.admin-toolbar .btn-secondary {
+  background: #f8fafc;
+}
+.admin-toolbar .btn-secondary:hover {
+  background: #f1f5f9;
+}
+.sticky-col-left {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
+  box-shadow: 2px 0 0 #f1f3f5; /* subtle separator */
+}
+
+/* Sortable header */
+.th-sortable {
+  user-select: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.th-sortable .sort-icon {
+  margin-left: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.th-sortable.active {
+  color: #334155;
+}
+.th-sortable.active .sort-icon {
+  color: #64748b;
+}
+.admin-table th,
+.admin-table td {
+  border-bottom: 1px solid #f1f3f5;
+  vertical-align: middle;
+  padding: 8px 10px;
+}
+.admin-table tr:hover td {
+  background: #fcfcfd;
+}
+.admin-table tbody tr {
+  height: auto;
+  min-height: 60px;
+}
+.cell-ellipsis-2 {
+  max-width: 420px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cell-ellipsis-1 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.cell-ellipsis-1-wide {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+.cell-strong {
+  font-weight: 600;
+}
+.text-right {
+  text-align: right;
+}
+
+/* Modern minimalist action buttons */
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  background: #ffffff;
+  color: #64748b;
+  height: 32px;
+  min-width: 50px;
+}
+
+.btn-action:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.btn-view {
+  color: #3b82f6;
+  border-color: #dbeafe;
+}
+
+.btn-view:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+.btn-edit {
+  color: #059669;
+  border-color: #d1fae5;
+}
+
+.btn-edit:hover {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.btn-delete {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.btn-delete:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  font-size: 12px;
+}

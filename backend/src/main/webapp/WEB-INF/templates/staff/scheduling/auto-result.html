@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{staff/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Kết quả lập lịch tự động</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}"></h1>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div
+            th:if="${message}"
+            class="alert"
+            th:classappend=" ${messageType == 'success'} ? ' alert-success' : ' alert-danger' "
+          >
+            <i
+              class="fas"
+              th:classappend=" ${messageType == 'success'} ? ' fa-check' : ' fa-exclamation-triangle' "
+            ></i>
+            <span th:text="${message}">Kết quả</span>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Tổng quan kết quả</h3>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-box bg-success">
+                    <span class="info-box-icon"
+                      ><i class="fas fa-check"></i
+                    ></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Thành công</span>
+                      <span
+                        class="info-box-number"
+                        th:text="${successCount ?: 0}"
+                        >0</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-box bg-danger">
+                    <span class="info-box-icon"
+                      ><i class="fas fa-times"></i
+                    ></span>
+                    <div class="info-box-content">
+                      <span class="info-box-text">Thất bại</span>
+                      <span class="info-box-number" th:text="${errorCount ?: 0}"
+                        >0</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div th:if="${errors}">
+                <h4>Chi tiết lỗi</h4>
+                <div class="table-responsive">
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Lỗi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="error,idx : ${errors}">
+                        <td th:text="${idx.index + 1}">1</td>
+                        <td th:text="${error}">Lỗi</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+              <a th:href="@{/staff/scheduling/auto}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Tạo lịch khác
+              </a>
+              <a th:href="@{/staff/workflow/scheduled}" class="btn btn-primary">
+                <i class="fas fa-globe"></i> Tới bước Publish
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Scheduled Movies</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}"></h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                  <a th:href="@{/admin/workflow}">Workflow</a>
+                </li>
+                <li class="breadcrumb-item active">Scheduled Movies</li>
+              </ol>
+            </div>
+            <div class="col-12" th:if="${message}">
+              <div
+                class="alert"
+                th:classappend=" ${messageType == 'success'} ? ' alert-success' : ' alert-danger' "
+              >
+                <i
+                  class="fas"
+                  th:classappend=" ${messageType == 'success'} ? ' fa-check' : ' fa-exclamation-triangle' "
+                ></i>
+                <span th:text="${message}">Message</span>
+              </div>
+            </div>
+            <div class="col-sm-6 text-right">
+              <span class="text-muted">
+                <i class="fas fa-info-circle"></i> Staff sẽ publish phim sau khi
+                lập lịch
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Scheduled Movies Ready for Publishing</h3>
+              <div class="card-tools">
+                <span
+                  class="badge badge-success"
+                  th:text="${#lists.size(movies)} + ' movies'"
+                  >0 movies</span
+                >
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 30px">
+                      <input type="checkbox" id="selectAll" />
+                    </th>
+                    <th>#</th>
+                    <th>Movie Code</th>
+                    <th>Title</th>
+                    <th>Duration</th>
+                    <th>Showtimes</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr th:each="movie,idx : ${movies}">
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="row-checkbox"
+                        name="movieCodes"
+                        th:value="${movie.code}"
+                      />
+                    </td>
+                    <td th:text="${idx.index + 1}">1</td>
+                    <td th:text="${movie.code}">M001</td>
+                    <td th:text="${movie.title}">Movie Title</td>
+                    <td th:text="${movie.duration} + ' min'">120 min</td>
+                    <td>
+                      <span
+                        class="badge badge-info"
+                        th:text="${movie.showtimeCount} + ' showtimes'"
+                        >5 showtimes</span
+                      >
+                    </td>
+                    <td>
+                      <span
+                        class="badge badge-warning"
+                        th:text="${movie.status}"
+                        >SCHEDULED</span
+                      >
+                    </td>
+                    <td>
+                      <span class="text-muted">
+                        <i class="fas fa-clock"></i> Chờ staff lập lịch &
+                        publish
+                      </span>
+                    </td>
+                  </tr>
+                  <tr th:if="${#lists.isEmpty(movies)}">
+                    <td colspan="8" class="text-center">
+                      Không có phim nào đã lập lịch
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Pagination -->
+              <div th:if="${page}" class="card-footer">
+                <nav aria-label="Page navigation">
+                  <ul class="pagination justify-content-center mb-0">
+                    <!-- Previous Page -->
+                    <li
+                      class="page-item"
+                      th:classappend="${page.first} ? 'disabled'"
+                    >
+                      <a
+                        class="page-link"
+                        th:href="@{/admin/workflow/scheduled(page=${page.number - 1})}"
+                        th:unless="${page.first}"
+                      >
+                        <i class="fas fa-chevron-left"></i> Trước
+                      </a>
+                      <span class="page-link" th:if="${page.first}">
+                        <i class="fas fa-chevron-left"></i> Trước
+                      </span>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    <li
+                      class="page-item"
+                      th:each="pageNum : ${#numbers.sequence(0, page.totalPages - 1)}"
+                      th:classappend="${pageNum == page.number} ? 'active'"
+                    >
+                      <a
+                        class="page-link"
+                        th:href="@{/admin/workflow/scheduled(page=${pageNum})}"
+                        th:text="${pageNum + 1}"
+                        >1</a
+                      >
+                    </li>
+
+                    <!-- Next Page -->
+                    <li
+                      class="page-item"
+                      th:classappend="${page.last} ? 'disabled'"
+                    >
+                      <a
+                        class="page-link"
+                        th:href="@{/admin/workflow/scheduled(page=${page.number + 1})}"
+                        th:unless="${page.last}"
+                      >
+                        Sau <i class="fas fa-chevron-right"></i>
+                      </a>
+                      <span class="page-link" th:if="${page.last}">
+                        Sau <i class="fas fa-chevron-right"></i>
+                      </span>
+                    </li>
+                  </ul>
+                </nav>
+
+                <!-- Page Info -->
+                <div class="text-center mt-2">
+                  <small class="text-muted">
+                    Hiển thị
+                    <span th:text="${page.numberOfElements}">0</span> trong tổng
+                    số <span th:text="${page.totalElements}">0</span> phim
+                    (Trang <span th:text="${page.number + 1}">1</span> /
+                    <span th:text="${page.totalPages}">1</span>)
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <th:block th:fragment="scripts">
+      <!-- No JavaScript needed for admin scheduled movies view -->
+    </th:block>
+  </body>
+</html>

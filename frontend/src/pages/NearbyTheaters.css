@@ -1,0 +1,291 @@
+/* Theater Page Styles */
+.page-header {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.page-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #5d4e37;
+  margin-bottom: 10px;
+}
+
+.page-header p {
+  font-size: 1.1rem;
+  color: #8b7355;
+  font-weight: 500;
+}
+
+/* Location Section */
+.location-section {
+  background: #faf9f6;
+  border: 1px solid #d9d2b7;
+  border-radius: 8px;
+  padding: 25px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.location-status {
+  margin-bottom: 20px;
+}
+
+.location-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #8b7355;
+  font-weight: 500;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d9d2b7;
+  border-top: 2px solid #8b7355;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.location-controls {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background: #8b7355;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5d4e37;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background: #d9d2b7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #d9d2b7;
+  color: #5d4e37;
+}
+
+.btn-secondary:hover {
+  background: #c4b8a0;
+}
+
+/* Radius Control */
+.radius-control {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: white;
+  border: 1px solid #d9d2b7;
+  border-radius: 8px;
+}
+
+.radius-control label {
+  font-weight: 600;
+  color: #5d4e37;
+  font-size: 16px;
+}
+
+.radius-select {
+  padding: 8px 12px;
+  border: 1px solid #d9d2b7;
+  border-radius: 4px;
+  background: white;
+  color: #5d4e37;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.radius-select:focus {
+  outline: none;
+  border-color: #8b7355;
+  box-shadow: 0 0 0 2px rgba(139, 115, 85, 0.2);
+}
+
+/* Theaters Container */
+.theaters-container {
+  margin-bottom: 30px;
+}
+
+.theaters-list {
+  display: grid;
+  gap: 20px;
+}
+
+.theater-card {
+  background: white;
+  border: 1px solid #d9d2b7;
+  border-radius: 8px;
+  padding: 25px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.theater-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.theater-info {
+  flex: 1;
+}
+
+.theater-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #5d4e37;
+  margin-bottom: 12px;
+}
+
+.theater-address {
+  color: #8b7355;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.theater-phone {
+  color: #8b7355;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.theater-description {
+  color: #8b7355;
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.theater-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-code {
+  background: #e50914;
+  color: white;
+}
+
+.badge-distance {
+  background: #28a745;
+  color: white;
+}
+
+.theater-actions {
+  margin-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 120px;
+}
+
+/* No Theaters */
+.no-theaters {
+  text-align: center;
+  padding: 60px 20px;
+  background: #faf9f6;
+  border: 1px solid #d9d2b7;
+  border-radius: 8px;
+}
+
+.no-theaters-content {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.no-theaters .icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.no-theaters h3 {
+  font-size: 1.5rem;
+  color: #5d4e37;
+  margin-bottom: 15px;
+}
+
+.no-theaters p {
+  color: #8b7355;
+  margin-bottom: 25px;
+  line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .theater-card {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .theater-actions {
+    margin-left: 0;
+    align-self: stretch;
+    min-width: auto;
+  }
+
+  .theater-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .location-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .radius-control {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}

@@ -1,0 +1,110 @@
+version: "3.8"
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: bms_mysql_prod
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+      - ./backend/src/main/resources/data:/docker-entrypoint-initdb.d
+    networks:
+      - bms_prod_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "0.5"
+
+  # Spring Boot Backend
+  backend:
+    image: ${DOCKER_REGISTRY}/bms-backend:${VERSION}
+    container_name: bms_backend_prod
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      # Security
+      SECURITY_JWT_SECRET: ${JWT_SECRET}
+      # VNPay config
+      DEMO_VNPAY_TMNCODE: ${VNPAY_TMNCODE}
+      DEMO_VNPAY_HASHSECRET: ${VNPAY_HASHSECRET}
+      DEMO_VNPAY_PAYURL: ${VNPAY_PAYURL}
+      DEMO_VNPAY_RETURNURL: ${VNPAY_RETURNURL}
+      DEMO_VNPAY_IPNURL: ${VNPAY_IPNURL}
+      # Cloudinary config
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      # Monitoring
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - bms_prod_network
+    volumes:
+      - backend_logs:/app/logs
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1.0"
+
+  # React Frontend
+  frontend:
+    image: ${DOCKER_REGISTRY}/bms-frontend:${VERSION}
+    container_name: bms_frontend_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - bms_prod_network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: bms_nginx_prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - bms_prod_network
+
+volumes:
+  mysql_prod_data:
+  backend_logs:
+
+networks:
+  bms_prod_network:
+    driver: bridge

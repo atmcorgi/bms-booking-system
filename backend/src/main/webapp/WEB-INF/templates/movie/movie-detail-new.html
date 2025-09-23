@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${movie.title} + ' - Chi tiết phim'">Chi tiết phim</title>
+    <link rel="stylesheet" th:href="@{/resources/css/shared/style.css}" />
+    <link rel="stylesheet" th:href="@{/resources/css/booking/booking.css}" />
+    <link rel="stylesheet" th:href="@{/resources/css/movie/movie-detail.css}" />
+  </head>
+  <body>
+    <div th:replace="~{shared/fragments/header :: top-header}"></div>
+    <div th:replace="~{shared/fragments/header :: main-header}"></div>
+
+    <main class="container" style="padding: 20px 0">
+      <!-- 1) Video/Poster banner -->
+      <section class="detail-hero section-box">
+        <div class="detail-hero-inner">
+          <div class="detail-hero-video">
+            <div class="detail-hero-poster">
+              <img th:src="${movie.posterUrl}" alt="poster" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2) Thông tin chi tiết phim -->
+      <section class="detail-info section-box">
+        <div class="detail-grid">
+          <!-- Poster + nút đặt vé (bên trái) -->
+          <div>
+            <img
+              th:src="${movie.posterUrl}"
+              alt="poster"
+              class="detail-poster"
+            />
+            <button
+              id="btn-open-booking"
+              class="fd-quick-booking-btn"
+              style="display: block; width: 100%; margin-top: 12px"
+            >
+              Đặt vé
+            </button>
+          </div>
+
+          <!-- Thông tin chi tiết (bên phải) -->
+          <div class="movie-info-container">
+            <h1 class="movie-title" th:text="${movie.title}">Tên phim</h1>
+
+            <div class="movie-meta">
+              <div class="meta-item">
+                <span class="meta-label">Ngày phát hành:</span>
+                <span
+                  class="meta-value"
+                  th:text="${movie.releaseDate != null ? movie.releaseDate.toString().substring(0,10) : 'Đang cập nhật'}"
+                  >01/08/2025</span
+                >
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Thời lượng:</span>
+                <span class="meta-value"
+                  ><span th:text="${movie.duration}">113</span> phút</span
+                >
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Thể loại:</span>
+                <span class="meta-value">
+                  <span
+                    th:if="${movie.genres != null and #lists.size(movie.genres) > 0}"
+                    th:text="${#strings.listJoin(movie.genres.![name], ', ')}"
+                    >Drama, Action</span
+                  >
+                  <span
+                    th:if="${movie.genres == null or #lists.size(movie.genres) == 0}"
+                    >Chưa cập nhật</span
+                  >
+                </span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Đạo diễn:</span>
+                <span
+                  class="meta-value"
+                  th:text="${movie.director != null and movie.director != '' ? movie.director : 'Chưa cập nhật'}"
+                  >N/A</span
+                >
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Độ tuổi:</span>
+                <span
+                  class="age-badge"
+                  th:text="${movie.ageRating != null and movie.ageRating != '' ? movie.ageRating : (movie.duration > 120 ? '13' : 'K')}"
+                  >K</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Booking Section -->
+      <section
+        class="section-box section-booking"
+        id="booking-section"
+        style="display: none"
+      >
+        <h3>Đặt vé phim</h3>
+        <div class="booking-container">
+          <div class="step-content" id="content-location">
+            <b>Chọn tỉnh/thành phố:</b><br />
+            <div class="loading">Đang tải...</div>
+          </div>
+          <div class="step-content" id="content-district" style="display: none">
+            <b>Chọn quận/huyện:</b><br />
+          </div>
+          <div class="step-content" id="content-theater" style="display: none">
+            <b>Chọn rạp:</b><br />
+          </div>
+          <div class="step-content" id="content-showtime" style="display: none">
+            <b>Chọn suất chiếu:</b><br />
+          </div>
+          <div class="step-content" id="content-seat" style="display: none">
+            <b>Chọn ghế:</b><br />
+          </div>
+          <div class="step-content" id="content-pay" style="display: none">
+            <b>Thanh toán:</b><br />
+          </div>
+        </div>
+      </section>
+
+      <!-- Tóm tắt -->
+      <section class="detail-summary section-box">
+        <h2>Tóm tắt</h2>
+        <div class="summary-text" th:text="${movie.description}">
+          Mô tả phim...
+        </div>
+      </section>
+
+      <!-- 3-) Sở thích khán giả (tuổi & giới tính) -->
+      <section class="detail-insights section-box">
+        <!-- Titles row -->
+        <div class="insight-titles">
+          <div class="insight-title">Sở thích theo độ tuổi</div>
+          <div class="insight-title">Sở thích theo giới tính</div>
+        </div>
+        <div class="insights-row">
+          <!-- Age preference -->
+          <div class="insight-left">
+            <div class="insight-bars">
+              <!-- 10 tuổi -->
+              <div>
+                <div class="percent">6,1%</div>
+                <div class="bar">
+                  <div
+                    class="bar-fill"
+                    style="height: 18px; background: #b8dd7e"
+                  ></div>
+                </div>
+                <div class="age-label">10 tuổi</div>
+              </div>
+              <!-- 20 tuổi -->
+              <div>
+                <div class="percent">20,8%</div>
+                <div class="bar">
+                  <div
+                    class="bar-fill"
+                    style="height: 20px; background: #7cc0f7"
+                  ></div>
+                </div>
+                <div class="age-label">20 tuổi</div>
+              </div>
+              <!-- 30 tuổi -->
+              <div>
+                <div class="percent">72,4%</div>
+                <div class="bar">
+                  <div
+                    class="bar-fill"
+                    style="height: 124px; background: #9b8bd1"
+                  ></div>
+                </div>
+                <div class="age-label">30 tuổi</div>
+              </div>
+              <!-- 40 tuổi -->
+              <div>
+                <div class="percent">0,7%</div>
+                <div class="bar">
+                  <div
+                    class="bar-fill"
+                    style="height: 4px; background: #f0b37e"
+                  ></div>
+                </div>
+                <div class="age-label">40 tuổi</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gender preference -->
+          <div class="insight-right">
+            <div class="gender-row">
+              <div class="gender-label">Nữ</div>
+              <div class="gender-bar">
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    height: 100%;
+                    width: 12%;
+                    background: #6d5a76;
+                  "
+                ></div>
+              </div>
+              <div class="gender-percent-right">12,2%</div>
+            </div>
+            <div class="gender-row">
+              <div class="gender-label">Nam</div>
+              <div class="gender-bar">
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    height: 100%;
+                    width: 88%;
+                    background: #22343c;
+                  "
+                ></div>
+              </div>
+              <div class="gender-percent-right">87,8%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3) Tổng hợp & Đánh giá -->
+      <section class="detail-ratings section-box">
+        <h2>Xếp hạng và đánh giá phim</h2>
+        <!-- Ô nhập đánh giá đơn giản (demo) -->
+        <div class="rating-input">
+          <div class="rating-left">
+            <div class="text-bold-sm">Xếp hạng</div>
+            <div>★★★★★</div>
+            <div class="text-muted-sm">0 điểm</div>
+          </div>
+          <div class="flex-1">
+            Các đánh giá phim có thể được viết sau khi đăng nhập.
+          </div>
+          <button class="load-more-btn" style="height: 40px">Bình luận</button>
+        </div>
+
+        <!-- Danh sách bình luận mẫu -->
+        <div class="review-item">
+          <div class="text-bold-sm">
+            Khách <span style="margin-left: 10px; color: #f39c12">★★★★☆</span>
+            <span style="margin-left: 10px; color: #555">8</span>
+          </div>
+          <div class="mt-8">Cũng được</div>
+          <div class="text-muted-sm">09/08/2025</div>
+        </div>
+        <div class="review-item">
+          <div class="text-bold-sm">
+            Khách <span style="margin-left: 10px; color: #f39c12">★★★★★</span>
+            <span style="margin-left: 10px; color: #555">10</span>
+          </div>
+          <div class="mt-8">Phim thật sự đáng xem</div>
+          <div class="text-muted-sm">06/08/2025</div>
+        </div>
+        <!-- Phân trang demo -->
+        <div class="pager">
+          <button class="load-more-btn btn-compact">«</button>
+          <button class="load-more-btn btn-compact">‹</button>
+          <button class="load-more-btn btn-compact active">1</button>
+          <button class="load-more-btn btn-compact">2</button>
+          <button class="load-more-btn btn-compact">3</button>
+          <button class="load-more-btn btn-compact">›</button>
+          <button class="load-more-btn btn-compact">»</button>
+        </div>
+      </section>
+
+      <!-- 4) Lưu ý -->
+      <section class="detail-notes section-box">
+        <div class="notes-inner">
+          <div class="notes-icon">⚠</div>
+          <div class="flex-1">
+            <div class="notes-title">Lưu ý</div>
+            <ul class="notes-list">
+              <li class="notes-item">
+                <span class="notes-dot"></span>Mỗi tài khoản chỉ có thể đánh giá
+                một lần cho mỗi lượt truy cập. Đánh giá khi đã thực hiện thì
+                không thể chỉnh sửa.
+              </li>
+              <li class="notes-item">
+                <span class="notes-dot"></span>Tài khoản của bạn phải là thành
+                viên và đã mua vé xem phim mới có thể tham gia đánh giá phim.
+              </li>
+              <li class="notes-item">
+                <span class="notes-dot"></span>Bạn có thể kiểm tra lại phần đánh
+                giá của mình trong My Cinema.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div th:replace="~{shared/fragments/footer :: footer}"></div>
+    <script th:src="@{/resources/js/movie/home.js}"></script>
+    <script th:src="@{/resources/js/booking/booking.js}"></script>
+
+    <!-- Set movie ID for booking flow -->
+    <script th:inline="javascript">
+      window.movieId = /*[[${movie.id}]]*/ null;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{staff/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Auto Scheduling</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}"></h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item">
+                  <a th:href="@{/staff/workflow}">Workflow</a>
+                </li>
+                <li class="breadcrumb-item">
+                  <a th:href="@{/staff/workflow}">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active">Auto Scheduling</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Tự động lập lịch suất chiếu</h3>
+              <div class="card-tools">
+                <span class="badge badge-info">Sử dụng default policy</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div th:if="${preselectedCodes}" class="alert alert-success">
+                <i class="fas fa-film"></i>
+                Đang lập lịch cho các phim:
+                <strong th:text="${preselectedCodes}">M001,M002</strong>
+              </div>
+
+              <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle"></i> Thông tin:</h5>
+                <p>
+                  Rạp áp dụng:
+                  <strong
+                    th:text="${theater != null ? theater.name : 'Chưa gán rạp'}"
+                    >My Theater</strong
+                  ><br />
+                  Nhập khoảng ngày; hệ thống sẽ sinh suất chiếu cho các phim đã
+                  được ADMIN assign (hoặc theo codes).
+                </p>
+              </div>
+
+              <div class="card mb-3">
+                <div class="card-header">
+                  <h3 class="card-title">Phim dự kiến lập lịch (Đã assign)</h3>
+                  <div class="card-tools">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      onclick="selectAllMovies()"
+                    >
+                      <i class="fas fa-check-square"></i> Chọn tất cả
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      onclick="deselectAllMovies()"
+                    >
+                      <i class="fas fa-square"></i> Bỏ chọn tất cả
+                    </button>
+                  </div>
+                </div>
+                <div class="card-body p-0">
+                  <table class="table mb-0">
+                    <thead>
+                      <tr>
+                        <th>
+                          <input
+                            type="checkbox"
+                            id="selectAll"
+                            onchange="toggleAllMovies()"
+                          />
+                        </th>
+                        <th>#</th>
+                        <th>Mã phim</th>
+                        <th>Tiêu đề</th>
+                        <th>Thời lượng</th>
+                        <th>Định dạng</th>
+                        <th>Ngôn ngữ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr th:each="m,idx : ${assignedMovies}">
+                        <td>
+                          <input
+                            type="checkbox"
+                            class="movie-checkbox"
+                            th:value="${m.code}"
+                            checked
+                          />
+                        </td>
+                        <td th:text="${idx.index + 1}">1</td>
+                        <td th:text="${m.code}">M001</td>
+                        <td th:text="${m.title}">Title</td>
+                        <td th:text="${m.duration}">120</td>
+                        <td th:text="${m.formats}">2D</td>
+                        <td th:text="${m.languages}">VI</td>
+                      </tr>
+                      <tr th:if="${#lists.isEmpty(assignedMovies)}">
+                        <td colspan="7" class="text-center text-muted">
+                          Chưa có phim nào được assign
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <form
+                method="post"
+                th:action="@{/staff/scheduling/auto/preview}"
+                id="schedulingForm"
+              >
+                <input
+                  type="hidden"
+                  name="codes"
+                  id="selectedCodes"
+                  th:value="${preselectedCodes}"
+                />
+
+                <div class="form-group">
+                  <label>Rạp áp dụng</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    th:value="${theater != null ? theater.name : ''}"
+                    readonly
+                  />
+                  <!-- assignedTheaterId is resolved server-side; no need to submit -->
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="startDate"
+                        >Ngày bắt đầu <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="date"
+                        class="form-control"
+                        id="startDate"
+                        name="startDate"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="form-group">
+                      <label for="endDate"
+                        >Ngày kết thúc <span class="text-danger">*</span></label
+                      >
+                      <input
+                        type="date"
+                        class="form-control"
+                        id="endDate"
+                        name="endDate"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <span class="mr-2">Preset tuần:</span>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    onclick="applyPreset('this')"
+                  >
+                    Tuần này (Fri→Thu)
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm ml-2"
+                    onclick="applyPreset('next')"
+                  >
+                    Tuần sau (Fri→Thu)
+                  </button>
+                </div>
+
+                <div class="form-group">
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    onclick="updateSelectedCodes()"
+                  >
+                    <i class="fas fa-magic"></i> Tạo lịch tự động
+                  </button>
+                  <a th:href="@{/staff/workflow}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                  </a>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <th:block th:fragment="scripts">
+      <script th:inline="javascript">
+        function applyPreset(which) {
+          const s = document.getElementById("startDate");
+          const e = document.getElementById("endDate");
+          /*<![CDATA[*/
+          var thisStart = /*[[${thisWeekStart}]]*/ "";
+          var thisEnd = /*[[${thisWeekEnd}]]*/ "";
+          var nextStart = /*[[${nextWeekStart}]]*/ "";
+          var nextEnd = /*[[${nextWeekEnd}]]*/ "";
+          if (which === "this") {
+            s.value = thisStart;
+            e.value = thisEnd;
+          } else if (which === "next") {
+            s.value = nextStart;
+            e.value = nextEnd;
+          }
+          /*]]>*/
+        }
+
+        function updateSelectedCodes() {
+          const checkboxes = document.querySelectorAll(
+            ".movie-checkbox:checked"
+          );
+          const codes = Array.from(checkboxes).map((cb) => cb.value);
+          document.getElementById("selectedCodes").value = codes.join(",");
+        }
+
+        function selectAllMovies() {
+          const checkboxes = document.querySelectorAll(".movie-checkbox");
+          checkboxes.forEach((cb) => (cb.checked = true));
+          document.getElementById("selectAll").checked = true;
+        }
+
+        function deselectAllMovies() {
+          const checkboxes = document.querySelectorAll(".movie-checkbox");
+          checkboxes.forEach((cb) => (cb.checked = false));
+          document.getElementById("selectAll").checked = false;
+        }
+
+        function toggleAllMovies() {
+          const selectAll = document.getElementById("selectAll");
+          const checkboxes = document.querySelectorAll(".movie-checkbox");
+          checkboxes.forEach((cb) => (cb.checked = selectAll.checked));
+        }
+
+        // Initialize select all checkbox state
+        document.addEventListener("DOMContentLoaded", function () {
+          const checkboxes = document.querySelectorAll(".movie-checkbox");
+          const selectAll = document.getElementById("selectAll");
+
+          // Set initial state
+          const allChecked = Array.from(checkboxes).every((cb) => cb.checked);
+          selectAll.checked = allChecked;
+
+          // Add change listeners to individual checkboxes
+          checkboxes.forEach((cb) => {
+            cb.addEventListener("change", function () {
+              const allChecked = Array.from(checkboxes).every(
+                (cb) => cb.checked
+              );
+              const someChecked = Array.from(checkboxes).some(
+                (cb) => cb.checked
+              );
+              selectAll.checked = allChecked;
+              selectAll.indeterminate = someChecked && !allChecked;
+            });
+          });
+        });
+      </script>
+    </th:block>
+  </body>
+</html>

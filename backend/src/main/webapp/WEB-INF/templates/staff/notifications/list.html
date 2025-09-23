@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html
+  lang="vi"
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{staff/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Thông báo</title>
+    <style>
+      .notification-item {
+        border-left: 4px solid #007bff;
+        background: #f8f9fa;
+        margin-bottom: 10px;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .notification-item.unread {
+        background: #e3f2fd;
+        border-left-color: #2196f3;
+      }
+      .notification-item.read {
+        background: #f5f5f5;
+        border-left-color: #9e9e9e;
+      }
+      .notification-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .notification-title {
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+      }
+      .notification-time {
+        color: #666;
+        font-size: 0.9em;
+      }
+      .notification-message {
+        color: #555;
+        margin: 8px 0;
+      }
+      .notification-actions {
+        margin-top: 10px;
+      }
+      .btn-mark-read {
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.8em;
+      }
+      .btn-mark-read:hover {
+        background: #218838;
+      }
+      .unread-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        padding: 2px 6px;
+        font-size: 0.7em;
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">
+                  <i class="fas fa-bell"></i> Thông báo
+                  <span
+                    th:if="${unreadCount > 0}"
+                    class="unread-badge"
+                    th:text="${unreadCount}"
+                    >0</span
+                  >
+                </h3>
+                <div class="card-tools">
+                  <button
+                    class="btn btn-sm btn-primary"
+                    onclick="markAllAsRead()"
+                  >
+                    <i class="fas fa-check-double"></i> Đánh dấu tất cả đã đọc
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div
+                  th:if="${#lists.isEmpty(notifications)}"
+                  class="text-center text-muted"
+                >
+                  <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                  <p>Chưa có thông báo nào</p>
+                </div>
+
+                <div
+                  th:each="notification : ${notifications}"
+                  th:class="'notification-item ' + (${notification.isRead} ? 'read' : 'unread')"
+                >
+                  <div class="notification-header">
+                    <h5
+                      class="notification-title"
+                      th:text="${notification.title}"
+                    >
+                      Title
+                    </h5>
+                    <span
+                      class="notification-time"
+                      th:text="${#temporals.format(notification.createdAt, 'dd/MM/yyyy HH:mm')}"
+                      >Time</span
+                    >
+                  </div>
+
+                  <div
+                    class="notification-message"
+                    th:text="${notification.message}"
+                  >
+                    Message
+                  </div>
+
+                  <div class="notification-actions">
+                    <span
+                      th:if="${notification.type.name() == 'MOVIE_ASSIGNED'}"
+                      class="badge badge-info"
+                    >
+                      <i class="fas fa-film"></i> Phim được assign
+                    </span>
+                    <span
+                      th:if="${notification.type.name() == 'MOVIE_SCHEDULED'}"
+                      class="badge badge-success"
+                    >
+                      <i class="fas fa-calendar-check"></i> Phim đã lập lịch
+                    </span>
+                    <span
+                      th:if="${notification.type.name() == 'MOVIE_PUBLISHED'}"
+                      class="badge badge-warning"
+                    >
+                      <i class="fas fa-globe"></i> Phim đã publish
+                    </span>
+
+                    <button
+                      th:if="${!notification.isRead}"
+                      class="btn-mark-read"
+                      th:onclick="'markAsRead(' + ${notification.id} + ')'"
+                    >
+                      <i class="fas fa-check"></i> Đánh dấu đã đọc
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Pagination -->
+                <div
+                  th:if="${page.totalPages > 1}"
+                  class="d-flex justify-content-center mt-3"
+                >
+                  <nav>
+                    <ul class="pagination">
+                      <li
+                        class="page-item"
+                        th:classappend="${page.first} ? 'disabled' : ''"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/staff/notifications(page=${page.number - 1})}"
+                          >Trước</a
+                        >
+                      </li>
+                      <li
+                        class="page-item"
+                        th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+                        th:classappend="${i == page.number} ? 'active' : ''"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/staff/notifications(page=${i})}"
+                          th:text="${i + 1}"
+                          >1</a
+                        >
+                      </li>
+                      <li
+                        class="page-item"
+                        th:classappend="${page.last} ? 'disabled' : ''"
+                      >
+                        <a
+                          class="page-link"
+                          th:href="@{/staff/notifications(page=${page.number + 1})}"
+                          >Sau</a
+                        >
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function markAsRead(notificationId) {
+          fetch("/staff/notifications/" + notificationId + "/read", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.text())
+            .then((data) => {
+              if (data === "success") {
+                location.reload();
+              } else {
+                alert("Có lỗi xảy ra");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Có lỗi xảy ra");
+            });
+        }
+
+        function markAllAsRead() {
+          fetch("/staff/notifications/mark-all-read", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => response.text())
+            .then((data) => {
+              if (data === "success") {
+                location.reload();
+              } else {
+                alert("Có lỗi xảy ra");
+              }
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Có lỗi xảy ra");
+            });
+        }
+      </script>
+    </div>
+  </body>
+</html>

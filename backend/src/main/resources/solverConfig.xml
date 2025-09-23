@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<solver xmlns="https://www.optaplanner.org/xsd/solver" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://www.optaplanner.org/xsd/solver https://www.optaplanner.org/xsd/solver/solver.xsd">
+
+  <solutionClass>fsa.training.scheduling.domain.TheaterScheduleSolution</solutionClass>
+  <entityClass>fsa.training.scheduling.domain.ShowtimeAssignment</entityClass>
+
+  <scoreDirectorFactory>
+    <constraintProviderClass>fsa.training.scheduling.constraints.SchedulingConstraintProvider</constraintProviderClass>
+  </scoreDirectorFactory>
+
+  <termination>
+    <secondsSpentLimit>30</secondsSpentLimit>
+  </termination>
+
+  <constructionHeuristic>
+    <constructionHeuristicType>FIRST_FIT</constructionHeuristicType>
+  </constructionHeuristic>
+
+  <localSearch>
+    <localSearchType>LATE_ACCEPTANCE</localSearchType>
+  </localSearch>
+
+</solver>

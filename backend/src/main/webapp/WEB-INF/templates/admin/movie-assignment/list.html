@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html
+  xmlns:th="http://www.thymeleaf.org"
+  th:replace="~{admin/layout/base :: html}"
+>
+  <head>
+    <title th:text="${pageTitle}">Movie Assignments</title>
+  </head>
+  <body>
+    <div th:fragment="content">
+      <div class="content-header">
+        <div class="container-fluid">
+          <div class="row mb-2">
+            <div class="col-sm-6">
+              <h1 class="m-0" th:text="${pageTitle}">Movie Assignments</h1>
+            </div>
+            <div class="col-sm-6">
+              <ol class="breadcrumb float-sm-right">
+                <li class="breadcrumb-item"><a href="/admin">Admin</a></li>
+                <li class="breadcrumb-item active">Movie Assignments</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <section class="content">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">All Movie Assignments</h3>
+                  <div class="card-tools">
+                    <a
+                      href="/admin/movie-assignment"
+                      class="btn btn-primary btn-sm"
+                    >
+                      <i class="fas fa-plus"></i> New Assignment
+                    </a>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div
+                    th:if="${successMessage}"
+                    class="alert alert-success alert-dismissible"
+                  >
+                    <button type="button" class="close" data-dismiss="alert">
+                      &times;
+                    </button>
+                    <i class="fas fa-check"></i>
+                    <span th:text="${successMessage}">Success message</span>
+                  </div>
+                  <div
+                    th:if="${errorMessage}"
+                    class="alert alert-danger alert-dismissible"
+                  >
+                    <button type="button" class="close" data-dismiss="alert">
+                      &times;
+                    </button>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span th:text="${errorMessage}">Error message</span>
+                  </div>
+                  <div th:if="${theaters != null and !theaters.empty}">
+                    <div th:each="theater : ${theaters}" class="mb-4">
+                      <h5 th:text="${theater.name + ' (' + theater.code + ')'}">
+                        Theater Name
+                      </h5>
+                      <div
+                        th:if="${assignmentsByTheater != null and !assignmentsByTheater.get(theater.id).empty}"
+                      >
+                        <div class="table-responsive">
+                          <table class="table table-striped">
+                            <thead>
+                              <tr>
+                                <th>Movie</th>
+                                <th>Active From</th>
+                                <th>Active To</th>
+                                <th>Formats</th>
+                                <th>Languages</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr
+                                th:each="assignment : ${assignmentsByTheater.get(theater.id)}"
+                              >
+                                <td
+                                  th:text="${assignment.movie.title + ' (' + assignment.movie.code + ')'}"
+                                >
+                                  Movie Title
+                                </td>
+                                <td th:text="${assignment.activeFrom}">
+                                  Active From
+                                </td>
+                                <td th:text="${assignment.activeTo}">
+                                  Active To
+                                </td>
+                                <td th:text="${assignment.formats}">Formats</td>
+                                <td th:text="${assignment.languages}">
+                                  Languages
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                      <div
+                        th:if="${assignmentsByTheater == null or assignmentsByTheater.get(theater.id).empty}"
+                        class="alert alert-info"
+                      >
+                        <i class="fas fa-info-circle"></i>
+                        <span
+                          >No assignments found for this theater. Use the form
+                          to assign movies.</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    th:if="${theaters == null or theaters.empty}"
+                    class="text-center"
+                  >
+                    <div class="alert alert-warning">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      <span
+                        >No theaters found. Please create theaters first.</span
+                      >
+                    </div>
+                    <a href="/admin/theater" class="btn btn-success">
+                      <i class="fas fa-building"></i> Create Theater
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

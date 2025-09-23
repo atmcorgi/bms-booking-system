@@ -1,0 +1,55 @@
+<aside
+  th:fragment="sidebar"
+  class="main-sidebar sidebar-dark-primary elevation-4"
+>
+  <a href="/staff" class="brand-link">
+    <span class="brand-text font-weight-light">Staff Console</span>
+  </a>
+  <div class="sidebar">
+    <nav class="mt-2">
+      <ul
+        class="nav nav-pills nav-sidebar flex-column"
+        data-widget="treeview"
+        role="menu"
+        data-accordion="false"
+      >
+        <li class="nav-item">
+          <a href="/staff/workflow" class="nav-link"
+            ><i class="nav-icon fas fa-gauge"></i>
+            <p>Tổng quan</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/staff/workflow/assigned" class="nav-link"
+            ><i class="nav-icon fas fa-link"></i>
+            <p>Phim đã assign</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/staff/scheduling/auto" class="nav-link"
+            ><i class="nav-icon fas fa-calendar-alt"></i>
+            <p>Lập lịch tự động</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/staff/workflow/scheduled" class="nav-link"
+            ><i class="nav-icon fas fa-calendar-check"></i>
+            <p>Phim đã lập lịch</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/staff/workflow/published" class="nav-link"
+            ><i class="nav-icon fas fa-globe"></i>
+            <p>Phim đã publish</p></a
+          >
+        </li>
+        <li class="nav-item">
+          <a href="/staff/notifications" class="nav-link"
+            ><i class="nav-icon fas fa-bell"></i>
+            <p>Thông báo</p></a
+          >
+        </li>
+      </ul>
+    </nav>
+  </div>
+</aside>
