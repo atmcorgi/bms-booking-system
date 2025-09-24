@@ -3,7 +3,6 @@ package fsa.training.controller.staff;
 import fsa.training.dto.booking.SchedulingUploadDto;
 import fsa.training.dto.admin.SchedulingUploadRequest;
 import fsa.training.security.TheaterPermissionEvaluator;
-import fsa.training.repository.movie.MovieAssignmentRepository;
 import fsa.training.service.scheduling.SchedulingCommitService;
 import fsa.training.scheduling.util.SolverProgressHolder;
 import fsa.training.service.staff.StaffSchedulingService;
