@@ -19,16 +19,13 @@ public class StaffSchedulingApiController {
     private final SchedulingCommitService schedulingCommitService;
     private final StaffSchedulingService staffSchedulingService;
     private final TheaterPermissionEvaluator permissionEvaluator;
-    private final MovieAssignmentRepository movieAssignmentRepository;
 
     public StaffSchedulingApiController(SchedulingCommitService schedulingCommitService,
                                         StaffSchedulingService staffSchedulingService,
-                                        TheaterPermissionEvaluator permissionEvaluator,
-                                        MovieAssignmentRepository movieAssignmentRepository) {
+                                        TheaterPermissionEvaluator permissionEvaluator) {
         this.schedulingCommitService = schedulingCommitService;
         this.staffSchedulingService = staffSchedulingService;
         this.permissionEvaluator = permissionEvaluator;
-        this.movieAssignmentRepository = movieAssignmentRepository;
     }
 
     @PostMapping("/preview")

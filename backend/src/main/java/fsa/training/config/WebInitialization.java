@@ -8,7 +8,6 @@ public class WebInitialization extends AbstractAnnotationConfigDispatcherServlet
     @Override
     protected Class<?>[] getRootConfigClasses() {
         return new Class[]{
-            JpaConfig.class,
             SecurityConfig.class
         } ;
     }

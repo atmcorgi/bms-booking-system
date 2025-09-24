@@ -2,9 +2,7 @@ package fsa.training.service.admin;
 
 import fsa.training.dto.movie.MovieIntakeRowDto;
 import fsa.training.entity.Movie;
-import fsa.training.entity.MovieRequest;
 import fsa.training.repository.movie.MovieRepository;
-import fsa.training.repository.movie.MovieRequestRepository;
 import fsa.training.service.movie.GenreService;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -35,14 +33,12 @@ public class MovieIntakeService {
     private static final Logger logger = LoggerFactory.getLogger(MovieIntakeService.class);
 
     private final MovieRepository movieRepository;
-    private final MovieRequestRepository movieRequestRepository;
     private final GenreService genreService;
     private final TheaterPermissionEvaluator permissionEvaluator;
     private final TheaterRepository theaterRepository;
 
-    public MovieIntakeService(MovieRepository movieRepository, MovieRequestRepository movieRequestRepository, GenreService genreService, TheaterPermissionEvaluator permissionEvaluator, TheaterRepository theaterRepository) {
+    public MovieIntakeService(MovieRepository movieRepository, GenreService genreService, TheaterPermissionEvaluator permissionEvaluator, TheaterRepository theaterRepository) {
         this.movieRepository = movieRepository;
-        this.movieRequestRepository = movieRequestRepository;
         this.genreService = genreService;
         this.permissionEvaluator = permissionEvaluator;
         this.theaterRepository = theaterRepository;

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminGenreApi, type Genre } from "../../services/adminGenreApi";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "../../styles/admin-table.css";
 
 export default function GenreList() {
@@ -17,7 +17,7 @@ export default function GenreList() {
   const [editingValue, setEditingValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ["admin-genres", q, page],
     queryFn: async () => (await adminGenreApi.list({ q, page, size })).data,
   });
@@ -44,15 +44,12 @@ export default function GenreList() {
         description:
           field === "description" ? value : currentGenre?.description || "",
       };
-      console.log("Updating genre:", id, updateData);
       return adminGenreApi.update(id, updateData);
     },
     onSuccess: () => {
-      console.log("Update successful");
       qc.invalidateQueries({ queryKey: ["admin-genres"] });
     },
-    onError: (error) => {
-      console.error("Update failed:", error);
+    onError: () => {
       alert("Có lỗi khi cập nhật thể loại");
     },
   });
@@ -170,9 +167,9 @@ export default function GenreList() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.items || []).map((g: Genre) => (
-                  <tr key={g.id}>
-                    <td>{g.id}</td>
+                {(data?.items || []).map((g: Genre, idx: number) => (
+                  <tr key={g.id ?? `g-${idx}`}>
+                    <td>{g.id ?? "-"}</td>
                     <td className="cell-strong">
                       {editingId === g.id && editingField === "name" ? (
                         <input
@@ -183,9 +180,9 @@ export default function GenreList() {
                             if (e.key === "Enter") {
                               if (
                                 editingValue.trim() &&
-                                editingValue !== g.name
+                                editingValue !== (g.name || "") &&
+                                typeof g.id === "number"
                               ) {
-                                console.log("Saving name:", editingValue);
                                 updateMut.mutate({
                                   id: g.id,
                                   field: "name",
@@ -221,9 +218,9 @@ export default function GenreList() {
                       ) : (
                         <span
                           onClick={() => {
-                            setEditingId(g.id);
+                            setEditingId(typeof g.id === "number" ? g.id : null);
                             setEditingField("name");
-                            setEditingValue(g.name);
+                            setEditingValue(g.name || "");
                           }}
                           style={{
                             cursor: "pointer",
@@ -250,11 +247,10 @@ export default function GenreList() {
                           onChange={(e) => setEditingValue(e.target.value)}
                           onKeyPress={(e) => {
                             if (e.key === "Enter") {
-                              if (editingValue !== (g.description || "")) {
-                                console.log(
-                                  "Saving description:",
-                                  editingValue
-                                );
+                              if (
+                                editingValue !== (g.description || "") &&
+                                typeof g.id === "number"
+                              ) {
                                 updateMut.mutate({
                                   id: g.id,
                                   field: "description",
@@ -292,7 +288,7 @@ export default function GenreList() {
                           className="cell-ellipsis-1-wide"
                           title={g.description || "Không có mô tả"}
                           onClick={() => {
-                            setEditingId(g.id);
+                            setEditingId(typeof g.id === "number" ? g.id : null);
                             setEditingField("description");
                             setEditingValue(g.description || "");
                           }}
@@ -320,7 +316,7 @@ export default function GenreList() {
                             <button
                               className="btn-action btn-delete"
                               onClick={() => {
-                                if (g.id) {
+                                if (typeof g.id === "number") {
                                   removeMut.mutate(g.id);
                                 }
                                 setConfirmDeleteId(null);
@@ -339,7 +335,7 @@ export default function GenreList() {
                         ) : (
                           <button
                             className="btn-action btn-delete"
-                            onClick={() => setConfirmDeleteId(g.id || null)}
+                            onClick={() => setConfirmDeleteId(g.id ?? null)}
                             aria-label={`Xóa thể loại ${g.name}`}
                           >
                             Delete

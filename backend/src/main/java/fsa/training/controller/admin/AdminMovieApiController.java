@@ -7,8 +7,6 @@ import fsa.training.repository.movie.MovieRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URI;
 import java.time.LocalDate;
@@ -163,40 +161,6 @@ public class AdminMovieApiController {
         return map;
     }
 
-    @PostMapping("/import")
-    public ResponseEntity<?> importCsv(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) return ResponseEntity.badRequest().body(Map.of("error", "File rỗng"));
-            List<String> lines = new java.io.BufferedReader(new java.io.InputStreamReader(file.getInputStream()))
-                    .lines().toList();
-            int count = 0;
-            for (String line : lines) {
-                if (line.trim().isEmpty()) continue;
-                // CSV: code,title,duration,releaseDate(YYYY-MM-DD),genres(|-separated),description
-                String[] parts = line.split(",");
-                if (parts.length < 2) continue;
-                Movie m = new Movie();
-                m.setCode(parts[0].trim());
-                m.setTitle(parts[1].trim());
-                if (parts.length > 2 && !parts[2].isBlank()) m.setDuration(Integer.parseInt(parts[2].trim()));
-                if (parts.length > 3 && !parts[3].isBlank()) m.setReleaseDate(LocalDate.parse(parts[3].trim()));
-                if (parts.length > 4 && !parts[4].isBlank()) {
-                    String[] gnames = parts[4].split("\\|");
-                    List<String> names = java.util.Arrays.stream(gnames).map(String::trim).filter(s -> !s.isEmpty()).toList();
-                    List<Genre> genres = genreRepository.findAll().stream()
-                            .filter(g -> names.contains(g.getName()))
-                            .toList();
-                    m.setGenres(genres);
-                }
-                if (parts.length > 5) m.setDescription(parts[5]);
-                movieRepository.save(m);
-                count++;
-            }
-            return ResponseEntity.ok(Map.of("success", true, "imported", count));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
 }
 
 

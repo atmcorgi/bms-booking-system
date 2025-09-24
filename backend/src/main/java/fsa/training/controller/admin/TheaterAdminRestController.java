@@ -7,10 +7,6 @@ import fsa.training.service.theater.TheaterService;
 import fsa.training.repository.theater.ProvinceRepository;
 import fsa.training.repository.theater.DistrictRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -45,11 +41,6 @@ public class TheaterAdminRestController {
             Authentication authentication) {
         
         try {
-            Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
-            
-            Pageable pageable = PageRequest.of(page, size, sort);
-            
             // Get theaters based on user permissions
             List<Theater> theaters = theaterService.getTheatersForUser(authentication.getName());
             

@@ -7,7 +7,6 @@ import fsa.training.repository.theater.DistrictRepository;
 import fsa.training.repository.theater.ProvinceRepository;
 import fsa.training.service.theater.TheaterService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,32 +36,6 @@ public class AdminTheaterApiController {
     @Autowired
     private TheaterRepository theaterRepository;
 
-    @GetMapping("/theaters/brands")
-    public Map<String, Object> brands() {
-        String[] supported = theaterService.getSupportedBrands();
-        Map<String, Object> resp = new HashMap<>();
-        resp.put("brands", supported);
-        return resp;
-    }
-
-    @GetMapping("/theaters/brands/{brand}")
-    public Map<String, Object> brandInfo(@PathVariable String brand) {
-        return Map.of(
-                "brand", brand,
-                "features", theaterService.getBrandFeatures(brand),
-                "pricingStrategy", theaterService.getBrandPricingStrategy(brand)
-        );
-    }
-
-    @GetMapping("/locations/provinces")
-    public List<Map<String, Object>> provinces() {
-        return provinceRepository.findAll().stream().map(this::toProvince).collect(Collectors.toList());
-    }
-
-    @GetMapping("/locations/districts")
-    public List<Map<String, Object>> districts(@RequestParam Long provinceId) {
-        return districtRepository.findByProvinceId(provinceId).stream().map(this::toDistrict).collect(Collectors.toList());
-    }
 
     @GetMapping("/theaters")
     public Map<String, Object> list(Authentication authentication,
@@ -187,14 +160,6 @@ public class AdminTheaterApiController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-    }
-
-    private Map<String, Object> toProvince(Province p) {
-        return Map.of("id", p.getId(), "name", p.getName());
-    }
-
-    private Map<String, Object> toDistrict(District d) {
-        return Map.of("id", d.getId(), "name", d.getName(), "provinceId", d.getProvince().getId());
     }
 
     private Map<String, Object> toTheater(Theater t) {

@@ -1,9 +1,6 @@
 package fsa.training.controller.payment;
 
 import fsa.training.entity.Booking;
-import fsa.training.service.booking.BookingService;
-import fsa.training.service.booking.SeatService;
-import fsa.training.service.booking.ShowtimeService;
 import fsa.training.util.VnpayUtil;
 import fsa.training.service.booking.SeatHoldService;
 import fsa.training.config.VnpayConfig;
@@ -29,19 +26,12 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/vnpay")
 public class PaymentController {
-    private final ShowtimeService showtimeService;
-    private final SeatService seatService;
-    private final BookingService bookingService;
     private final VnpayConfig vnpayConfig;
     private final ZoneId businessZoneId;
     private final SeatHoldService seatHoldService;
 
-    public PaymentController(ShowtimeService showtimeService, SeatService seatService, 
-                           BookingService bookingService, VnpayConfig vnpayConfig, 
+    public PaymentController(VnpayConfig vnpayConfig, 
                            ZoneId businessZoneId, SeatHoldService seatHoldService) {
-        this.showtimeService = showtimeService;
-        this.seatService = seatService;
-        this.bookingService = bookingService;
         this.vnpayConfig = vnpayConfig;
         this.businessZoneId = businessZoneId;
         this.seatHoldService = seatHoldService;

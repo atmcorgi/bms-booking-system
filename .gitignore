@@ -2,6 +2,10 @@
 # MONOREPO GITIGNORE - BOOKING SYSTEM
 # ===========================================
 
+# ============ DATABASE DATA ============
+# MySQL data directory
+mysql-data/
+
 # ============ BACKEND (Spring Boot) ============
 # Maven
 backend/target/

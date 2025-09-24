@@ -2,7 +2,6 @@ package fsa.training.controller.staff;
 
 import fsa.training.dto.movie.MovieStatusProjection;
 import fsa.training.service.movie.MovieService;
-import fsa.training.service.staff.StaffWorkflowService;
 import org.springframework.beans.factory.annotation.Autowired;
 import fsa.training.entity.Movie;
 import fsa.training.entity.MovieRequest;
@@ -25,9 +24,6 @@ public class StaffMovieApiController {
 
     @Autowired
     private MovieService movieService;
-
-    @Autowired
-    private StaffWorkflowService staffWorkflowService;
 
     @Autowired
     private MovieRepository movieRepository;

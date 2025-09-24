@@ -32,7 +32,7 @@ import StaffDashboard from "./pages/staff/Dashboard";
 import StaffMovieManagement from "./pages/staff/MovieManagement";
 import MovieIntakeForm from "./pages/admin/MovieIntakeForm";
 import NearbyTheaters from "./pages/NearbyTheaters";
-import CloudinaryTest from "./components/CloudinaryTest";
+// import CloudinaryTest from "./components/CloudinaryTest";
 
 type PagedMovies = {
   movies: MovieItem[];
@@ -349,7 +349,7 @@ export default function App() {
       <Route path="/booking/failed" element={<BookingFailed />} />
       <Route path="/booking/tickets" element={<Tickets />} />
       <Route path="/theaters/nearby" element={<NearbyTheatersPage />} />
-      <Route path="/test-cloudinary" element={<CloudinaryTest />} />
+      {/* <Route path="/test-cloudinary" element={<CloudinaryTest />} /> */}
       <Route path="/login" element={<LoginPage />} />
       {/* Staff layout with nested routes */}
       <Route

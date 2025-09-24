@@ -1,6 +1,5 @@
 package fsa.training.controller.movie;
 
-import fsa.training.entity.Movie;
 import fsa.training.service.movie.MovieService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
