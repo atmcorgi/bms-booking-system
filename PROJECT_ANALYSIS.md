@@ -7,7 +7,7 @@
 - **Frontend**: React 19 (TypeScript) - Single Page Application
 - **Database**: MySQL 8.0
 - **Containerization**: Docker + Docker Compose
-- **Payment**: VNPAY integration
+- **Payment**: SePay (VietQR) integration
 
 ---
 

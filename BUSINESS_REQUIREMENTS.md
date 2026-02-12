@@ -23,7 +23,7 @@ Hệ thống quản lý đặt vé rạp chiếu phim với 3 vai trò chính:
 - **Backend**: Spring Boot (Java 17)
 - **Frontend**: React + TypeScript
 - **Database**: MySQL 8.0
-- **Payment**: VNPAY Integration
+- **Payment**: SePay (VietQR) Integration
 - **Authentication**: JWT Token
 
 ---

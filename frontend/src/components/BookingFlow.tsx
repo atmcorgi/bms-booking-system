@@ -351,7 +351,7 @@ export default function BookingFlow({
       };
 
       // Creating booking with validated data
-      // Gọi API tạo booking và thanh toán VNPay
+      // Gọi API tạo booking và thanh toán SePay
       const response = await bookingApi.createBooking(bookingData);
       // Booking created successfully
 

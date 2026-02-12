@@ -28,7 +28,6 @@ function isPublicEndpoint(url?: string): boolean {
       path.startsWith("/api/booking/") ||
       path.startsWith("/booking/api/") ||
       path.startsWith("/movies/") ||
-      path.startsWith("/vnpay/") ||
       path === "/api/auth/login" ||
       path === "/api/auth/google" ||
       path === "/api/auth/signup" ||
