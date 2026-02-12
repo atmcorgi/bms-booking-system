@@ -822,9 +822,6 @@ public class BookingController {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Error loading history: " + e.getMessage());
         }
-        response.put("totalItems", pageResult.getTotalElements());
-        response.put("totalPages", pageResult.getTotalPages());
-        
-        return ResponseEntity.ok(response);
+
     }
 }
