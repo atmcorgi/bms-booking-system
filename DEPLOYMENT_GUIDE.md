@@ -19,7 +19,7 @@ cp .env.example .env
 Cập nhật trong file `.env`:
 - `SPRING_DATASOURCE_URL`: Giữ nguyên nếu dùng container db.
 - `FRONTEND_BASE_URL`: **QUAN TRỌNG**. Đặt là URL của Frontend trên Vercel (ví dụ: `https://my-bms-frontend.vercel.app`). API sẽ dùng giá trị này để cấu hình CORS, cho phép Frontend gọi vào.
-- Các biến khác (VNPAY, Cloudinary, Mail...): Cấu hình như bình thường.
+- Các biến khác (SePay, Cloudinary, Mail...): Cấu hình như bình thường.
 
 ### 3. Chạy Backend
 Sử dụng file `docker-compose.prod.yaml` (đã loại bỏ frontend):

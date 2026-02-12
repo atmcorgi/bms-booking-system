@@ -40,7 +40,7 @@ docker-compose up -d
 - **Language**: Java 21
 - **Database**: MySQL 8.0
 - **Security**: Spring Security + JWT
-- **Payment**: VNPay integration
+- **Payment**: SePay (VietQR) integration
 - **File Upload**: Cloudinary
 - **Optimization**: OptaPlanner
 
@@ -65,7 +65,7 @@ docker-compose up -d
 - ✅ Tìm kiếm và lọc phim
 - ✅ Chi tiết phim
 - ✅ Đặt vé online
-- ✅ Thanh toán VNPay
+- ✅ Thanh toán SePay (VietQR)
 - ✅ Xem vé đã đặt
 
 ### 🎭 Admin Features
@@ -117,7 +117,8 @@ nano .env
 - `MYSQL_ROOT_PASSWORD`: Database root password
 - `MYSQL_DATABASE`: Database name
 - `JWT_SECRET`: JWT secret key
-- `VNPAY_TMNCODE`: VNPay terminal code
+- `SEPAY_BANK_ACC`: Bank account number
+- `SEPAY_API_KEY`: SePay API Key
 - `CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name
 
 ## 🔄 CI/CD Pipeline

@@ -16,12 +16,12 @@ SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/bms_db?useSSL=false&serverTimezone=UT
 SPRING_DATASOURCE_USERNAME=root
 SPRING_DATASOURCE_PASSWORD=root123
 
-# VNPAY Configuration
-VNPAY_TMN_CODE=
-VNPAY_HASH_SECRET=
-VNPAY_PAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
-VNPAY_RETURN_URL=http://localhost:8080/vnpay/return
-VNPAY_IPN_URL=http://localhost:8080/vnpay/ipn
+# SePay Configuration (VietQR)
+SEPAY_BANK_ACC=
+SEPAY_BANK_NAME=
+SEPAY_API_KEY=
+SEPAY_MERCHANT_ID=
+SEPAY_SECRET_KEY=
 
 # Security
 SECURITY_JWT_SECRET=change-me
@@ -48,7 +48,7 @@ cp .env.example .env
 Mở file `.env` và thay thế các giá trị placeholder bằng thông tin thực tế:
 
 - **Database**: Cập nhật thông tin kết nối database
-- **VNPAY**: Thêm mã TMN và hash secret từ VNPAY
+- **SePay**: Thêm thông tin tài khoản ngân hàng và API Key từ SePay Dashboard
 - **JWT Secret**: Tạo một secret key mạnh cho JWT
 - **Cloudinary**: Thêm thông tin API từ Cloudinary dashboard
 
@@ -68,7 +68,7 @@ backend:
     SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
     SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
     SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-    VNPAY_TMN_CODE: ${VNPAY_TMN_CODE}
+    SEPAY_BANK_ACC: ${SEPAY_BANK_ACC}
     # ... các biến khác
 ```
 
@@ -110,11 +110,10 @@ Docker Compose sẽ tự động load file `.env` ở cùng thư mục và thay 
 - Đảm bảo database container đang chạy
 - Kiểm tra username/password
 
-### Lỗi VNPAY
+### Lỗi SePay
+- Kiểm tra `SEPAY_API_KEY` và `SEPAY_SECRET_KEY`
+- Đảm bảo Webhook URL trong SePay Dashboard đã trỏ đúng về server
 
-- Kiểm tra `VNPAY_TMN_CODE` và `VNPAY_HASH_SECRET`
-- Đảm bảo URL callback đúng
-- Kiểm tra network connectivity
 
 ## Cách hoạt động
 
