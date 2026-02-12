@@ -73,7 +73,7 @@ public class SchedulingConstraintProvider implements ConstraintProvider {
     // Ensure end-time within operating hours (simple cap at 23:00)
     private Constraint endWithinOperatingHours(ConstraintFactory factory) {
         final java.time.LocalTime CLOSE = java.time.LocalTime.of(23, 0);
-        final int BUFFER_MIN = 15;
+        final int BUFFER_MIN = 5;
         return factory.forEach(ShowtimeAssignment.class)
                 .filter(a -> {
                     if (a.getTimeGrain() == null || a.getMovieRequest() == null || a.getMovieRequest().getMovie() == null) return false;

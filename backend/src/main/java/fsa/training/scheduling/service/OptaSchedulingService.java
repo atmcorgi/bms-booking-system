@@ -68,7 +68,7 @@ public class OptaSchedulingService {
                         int duration = existing.getMovie().getDuration() > 0 
                             ? existing.getMovie().getDuration() 
                             : 120;
-                        LocalTime existingEnd = existingStart.plusMinutes(duration + 15); // +15 buffer
+                        LocalTime existingEnd = existingStart.plusMinutes(duration + 5); // +5 buffer synced
                         
                         // Check if current time slot overlaps with existing showtime
                         return !currentTime.isBefore(existingStart) && currentTime.isBefore(existingEnd);
@@ -174,7 +174,7 @@ public class OptaSchedulingService {
                 int assignmentStartMins = assignmentStart.getHour() * 60 + assignmentStart.getMinute();
                 int duration = a.getMovieRequest().getMovie().getDuration();
                 if (duration <= 0) duration = 120;
-                int assignmentEndMins = assignmentStartMins + duration + 10; // +10 buffer
+                int assignmentEndMins = assignmentStartMins + duration + 5; // +5 buffer synced
                 
                 boolean conflict = existingShowtimes.stream().anyMatch(ex -> {
                     if (!ex.getRoom().getId().equals(a.getRoom().getId())) return false;
@@ -183,7 +183,7 @@ public class OptaSchedulingService {
                     LocalTime exStart = ex.getShowTime();
                     int exStartMins = exStart.getHour() * 60 + exStart.getMinute();
                     int exDur = ex.getMovie().getDuration() > 0 ? ex.getMovie().getDuration() : 120;
-                    int exEndMins = exStartMins + exDur + 10;
+                    int exEndMins = exStartMins + exDur + 5;
                     
                     // Check overlap: StartA < EndB && StartB < EndA
                     return assignmentStartMins < exEndMins && exStartMins < assignmentEndMins;
@@ -212,13 +212,13 @@ public class OptaSchedulingService {
                         int s1Mins = s1Time.getHour() * 60 + s1Time.getMinute();
                         int dur1 = a1.getMovieRequest().getMovie().getDuration();
                         if (dur1 <= 0) dur1 = 120;
-                        int e1Mins = s1Mins + dur1 + 10;
+                        int e1Mins = s1Mins + dur1 + 5;
                         
                         LocalTime s2Time = a2.getTimeGrain().getStart();
                         int s2Mins = s2Time.getHour() * 60 + s2Time.getMinute();
                         int dur2 = a2.getMovieRequest().getMovie().getDuration();
                         if (dur2 <= 0) dur2 = 120;
-                        int e2Mins = s2Mins + dur2 + 10;
+                        int e2Mins = s2Mins + dur2 + 5;
                         
                         // Check overlap using raw minutes (e.g. e1Mins can be > 1440)
                         if (s1Mins < e2Mins && s2Mins < e1Mins) {

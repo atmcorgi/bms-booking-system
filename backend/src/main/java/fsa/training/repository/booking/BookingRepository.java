@@ -34,23 +34,25 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByStatusAndBookingTimeBefore(String status, java.time.Instant time);
     
     // Pagination support
-    @Query("select distinct b from Booking b " +
+    @Query(value = "select distinct b from Booking b " +
            "join fetch b.showtime s " +
            "left join fetch s.movie m " +
            "left join fetch s.room r " +
            "left join fetch s.theater t " +
            "join fetch b.seat seat " +
            "where b.account.id = :accountId " +
-           "order by b.bookingTime desc")
+           "order by b.bookingTime desc",
+           countQuery = "select count(b) from Booking b where b.account.id = :accountId")
     org.springframework.data.domain.Page<Booking> findByAccountIdWithDetails(@Param("accountId") Long accountId, org.springframework.data.domain.Pageable pageable);
 
-    @Query("select distinct b from Booking b " +
+    @Query(value = "select distinct b from Booking b " +
            "join fetch b.showtime s " +
            "left join fetch s.movie m " +
            "left join fetch s.room r " +
            "left join fetch s.theater t " +
            "join fetch b.seat seat " +
            "where b.account.id = :accountId and b.status = :status " +
-           "order by b.bookingTime desc")
+           "order by b.bookingTime desc",
+           countQuery = "select count(b) from Booking b where b.account.id = :accountId and b.status = :status")
     org.springframework.data.domain.Page<Booking> findByAccountIdAndStatusWithDetails(@Param("accountId") Long accountId, @Param("status") String status, org.springframework.data.domain.Pageable pageable);
 } 

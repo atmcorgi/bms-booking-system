@@ -738,11 +738,12 @@ public class BookingController {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
         org.springframework.data.domain.Page<Booking> pageResult;
 
-        if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status)) {
-            pageResult = bookingRepository.findByAccountIdAndStatusWithDetails(account.getId(), status, pageable);
-        } else {
-            pageResult = bookingRepository.findByAccountIdWithDetails(account.getId(), pageable);
-        }
+        try {
+            if (status != null && !status.isEmpty() && !"ALL".equalsIgnoreCase(status)) {
+                pageResult = bookingRepository.findByAccountIdAndStatusWithDetails(account.getId(), status, pageable);
+            } else {
+                pageResult = bookingRepository.findByAccountIdWithDetails(account.getId(), pageable);
+            }
 
         List<Booking> bookings = pageResult.getContent();
 
@@ -768,10 +769,25 @@ public class BookingController {
                 dto.put("paymentCode", first.getPaymentCode());
                 dto.put("bookingTime", first.getBookingTime());
                 dto.put("status", first.getStatus());
-                dto.put("movieTitle", showtime.getMovie().getTitle());
-                dto.put("posterUrl", showtime.getMovie().getPosterUrl());
-                dto.put("theaterName", showtime.getTheater().getName());
-                dto.put("roomName", showtime.getRoom().getName());
+                if (showtime.getMovie() != null) {
+                    dto.put("movieTitle", showtime.getMovie().getTitle());
+                    dto.put("posterUrl", showtime.getMovie().getPosterUrl());
+                } else {
+                    dto.put("movieTitle", "Unknown Movie");
+                    dto.put("posterUrl", "");
+                }
+                
+                if (showtime.getTheater() != null) {
+                    dto.put("theaterName", showtime.getTheater().getName());
+                } else {
+                    dto.put("theaterName", "Unknown Theater");
+                }
+
+                if (showtime.getRoom() != null) {
+                    dto.put("roomName", showtime.getRoom().getName());
+                } else {
+                    dto.put("roomName", "Unknown Room");
+                }
                 dto.put("showDate", showtime.getShowDate());
                 dto.put("showTime", showtime.getShowTime());
                 dto.put("ticketCount", group.size());
@@ -795,9 +811,17 @@ public class BookingController {
                 history.add(dto);
             });
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", history);
-        response.put("currentPage", pageResult.getNumber());
+            Map<String, Object> response = new HashMap<>();
+            response.put("content", history);
+            response.put("currentPage", pageResult.getNumber());
+            response.put("totalItems", pageResult.getTotalElements());
+            response.put("totalPages", pageResult.getTotalPages());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error loading history: " + e.getMessage());
+        }
         response.put("totalItems", pageResult.getTotalElements());
         response.put("totalPages", pageResult.getTotalPages());
         

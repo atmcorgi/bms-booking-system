@@ -139,7 +139,7 @@ public class SchedulingCommitService {
      * Checks both exact time match and overlap with movie duration + buffer.
      */
     private void validateNoConflict(Room room, Movie movie, LocalDate date, LocalTime time) {
-        final int BUFFER_MINUTES = 15; // Cleanup time between movies
+        final int BUFFER_MINUTES = 5; // Cleanup time between movies
         
         // Get all existing showtimes for this room on this date
         List<Showtime> existingShowtimes = showtimeRepository.findByRoomIdAndShowDate(room.getId(), date);
