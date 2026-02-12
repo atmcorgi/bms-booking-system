@@ -9,9 +9,7 @@ declare global {
   }
 }
 
-const GOOGLE_CLIENT_ID =
-  import.meta.env.VITE_GOOGLE_CLIENT_ID || 
-  "3972139470-isfbtc5arpssbk5p8qa4aojgug2fqv4i.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function Login() {
   const navigate = useNavigate();
