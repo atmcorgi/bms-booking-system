@@ -1,0 +1,784 @@
+/* Main Container Scoped */
+.booking-flow-container.main-content-container {
+  max-width: 1000px;
+  margin: 40px auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  padding: 40px;
+  border: 1px solid #e9ecef;
+}
+
+/* Page Header - Scoped to Theater First flow */
+.booking-flow-container.theater-first .page-header-container {
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.booking-flow-container.theater-first .page-header-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #2e2b29;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.booking-flow-container.theater-first .page-header-title::before {
+  content: '';
+  display: block;
+  width: 6px;
+  height: 28px;
+  background: #E50914;
+  border-radius: 3px;
+}
+
+/* Booking Guideline - Scoped to Theater First flow */
+.booking-flow-container.theater-first .booking-guideline {
+  background: #fffcf5; /* Light gold tint consistent with brand */
+  border: 1px solid #e3dac9;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 35px;
+}
+
+.booking-flow-container.theater-first .guideline-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #8b7355;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.booking-flow-container.theater-first .guideline-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.booking-flow-container.theater-first .g-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #555;
+  font-weight: 500;
+}
+
+.booking-flow-container.theater-first .g-step-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e9ecef;
+  color: #666;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.booking-flow-container.theater-first .g-step.current .g-step-number {
+  background: #E50914;
+  color: #fff;
+}
+
+.booking-flow-container.theater-first .g-step.current {
+  color: #E50914;
+  font-weight: 700;
+}
+
+.booking-flow-container.theater-first .g-arrow {
+  color: #ccc;
+  font-size: 12px;
+}
+
+
+/* Stepper Navigation Scoped */
+.booking-flow-container .stepper {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 40px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 20px;
+}
+
+.booking-flow-container .step {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  color: #6c757d;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.booking-flow-container .step.active {
+  background: #8b7355;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(139, 115, 85, 0.2);
+}
+
+.booking-flow-container .step.done {
+  background: #e9ecef;
+  color: #8b7355;
+}
+
+/* Common Section Headers Scoped */
+.booking-flow-container h3 {
+  color: #2e2b29;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.booking-flow-container h3::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 24px;
+  background: #E50914;
+  border-radius: 2px;
+}
+
+/* Step Buttons Scoped */
+.booking-flow-container .step-btn {
+  margin: 0;
+  padding: 10px 20px;
+  border-radius: 4px; /* Sharper corners */
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.booking-flow-container .step-btn:hover {
+  border-color: #E50914;
+  color: #E50914;
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.booking-flow-container .step-btn.active {
+  background: #E50914; /* Red active state to match action button */
+  color: #ffffff;
+  border-color: #E50914;
+  box-shadow: 0 4px 10px rgba(229, 9, 20, 0.3);
+}
+
+.booking-flow-container .step-btn:disabled {
+  background: #f8f9fa;
+  color: #adb5bd;
+  border-color: #f1f3f5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Primary Action Button Scoped */
+.booking-flow-container .fd-btn {
+  background: #E50914; /* Flat Red */
+  color: #fff;
+  border: none;
+  border-radius: 4px; /* Slight radius creates the modern look */
+  padding: 16px 40px; /* Taller button */
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 24px;
+  transition: background 0.2s ease;
+  box-shadow: none; /* Flat style */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 100%; /* Make it full width or let layout handle it. User image looks wide. */
+  max-width: 300px; /* Constrain width */
+  display: block;
+}
+
+.booking-flow-container .fd-btn:hover {
+  background: #c40710; /* Darker red on hover */
+  transform: none;
+  box-shadow: none;
+}
+
+.booking-flow-container .fd-btn:disabled {
+  background: #e9ecef;
+  color: #adb5bd;
+}
+
+/* Date Navigation Grid */
+.date-navigation {
+  margin-bottom: 30px;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.date-nav-label {
+  font-weight: 700;
+  color: #2e2b29;
+  margin-bottom: 15px;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.date-nav-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.date-nav-btn {
+  min-width: 80px;
+  height: 70px;
+  padding: 8px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* First div inside date-nav-btn is Day of Week (T2, T3) */
+.date-nav-btn div:first-child {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* Second div inside date-nav-btn is Date (16/01) */
+.date-nav-btn div:last-child {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+}
+
+.date-nav-btn:hover {
+  border-color: #8b7355;
+  background: #fffcf5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.date-nav-btn.active {
+  background: #E50914; /* Red active style */
+  border: 1px solid #E50914;
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.25);
+}
+
+.date-nav-btn.active div:first-child,
+.date-nav-btn.active div:last-child {
+  color: #ffffff; /* White text on red background */
+}
+
+
+/* Seat Map Layout - Updated to match Reference Image */
+.seat-layout {
+  margin-top: 20px;
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.03);
+}
+
+.seat-screen {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  font-weight: 600;
+  color: #adb5bd;
+  margin-bottom: 50px;
+  padding-bottom: 10px;
+  border-bottom: 4px solid #e9ecef;
+  border-radius: 50% 50% 0 0 / 15px 15px 0 0; /* More subtle curve */
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.seat-screen::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; 
+    height: 0; 
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #e9ecef; /* Arrow pointing to seats */
+    display: none; /* Hide if not needed, just playing with design */
+}
+
+.seat-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Tighter gap */
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.seat-row-label {
+  width: 25px;
+  text-align: center;
+  font-weight: 600;
+  color: #868e96;
+  font-size: 13px;
+}
+
+.seat-row-seats {
+  display: grid;
+  gap: 5px; /* Tighter gap matching reference */
+  --seat-size: 34px; /* Optimal size */
+}
+
+.seat-btn span {
+  width: var(--seat-size);
+  height: var(--seat-size);
+  border-radius: 4px; /* Rounded corners as in image */
+  font-size: 10px; /* Smaller text */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  color: #495057;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.seat-btn:hover span {
+  transform: scale(1.1);
+  border-color: #8b7355;
+  z-index: 10;
+}
+
+/* Seat Types mapping */
+.seat-type-standard span {
+  border-color: #ced4da;
+  color: #495057;
+}
+
+/* VIP Seats - Gold/Brown */
+.seat-type-vip span {
+  border-color: #8b7355; 
+  color: #8b7355;
+  background: #fffcf5;
+  font-weight: 700;
+}
+
+/* Couple Seats - Pink/Sweet */
+.seat-type-couple {
+  grid-column: span 2;
+  width: 100%;
+}
+.seat-type-couple span {
+  width: 100%;
+  border-color: #ff6b6b;
+  color: #c92a2a;
+  background: #fff5f5;
+  font-weight: 700;
+}
+
+/* States */
+.seat-btn.booked span {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: #fff !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+
+.seat-btn.held-others span {
+  background-color: #e67e22 !important; /* Orange for active hold by others */
+  border-color: #e67e22 !important;
+  color: #fff !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+.seat-btn.booked:hover span {
+    transform: none;
+    border-color: #e9ecef;
+}
+
+/* Selected Seat - Solid Red */
+.seat-btn input:checked + span {
+  background: #E50914;
+  color: #ffffff;
+  border-color: #E50914;
+  box-shadow: 0 2px 5px rgba(229, 9, 20, 0.4);
+}
+
+/* Legend */
+.seat-legend {
+  margin-top: 50px;
+  background: #f8f9fa;
+  padding: 10px 30px;
+  border-radius: 50px;
+  border: 1px solid #e9ecef;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap; /* In case items overflow */
+}
+
+.legend-item {
+  color: #495057;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+.legend-standard { border: 1px solid #ced4da; background: #fff; }
+.legend-vip { border: 2px solid #8b7355; background: #fffcf5; }
+.legend-couple { border: 1px solid #ff6b6b; background: #fff5f5; width: 36px; /* wider for couple */ }
+.legend-selected { background: #E50914; border: 1px solid #E50914; }
+.legend-box.legend-booked { background-color: #6c757d; }
+.legend-box.legend-held { background-color: #e67e22; }
+.legend-booked { background: #e9ecef; border: 1px solid #e9ecef; }
+
+
+
+/* Booking Summary Box */
+.booking-summary {
+  background: #faf9f6; /* Light beige/gold tint */
+  border: 1px solid #e3dac9;
+  border-radius: 12px;
+  padding: 25px;
+  margin-top: 40px;
+}
+
+.booking-summary h3 {
+  color: #8b7355;
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.booking-summary h3::before {
+  display: none; /* Remove default red bar for this specific header */
+}
+
+.booking-summary p {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dashed #e3dac9;
+  padding: 12px 0;
+  margin: 0;
+  font-size: 15px;
+}
+
+.booking-summary p:last-of-type {
+  border-bottom: none;
+  font-size: 18px;
+  color: #E50914;
+  font-weight: 700;
+  margin-top: 10px;
+  padding-top: 20px;
+  border-top: 2px solid #e3dac9;
+}
+
+.booking-summary strong {
+  color: #5d4e37;
+}
+
+/* Payment Form */
+.payment-form {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 8px;
+  margin-top: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+}
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+.form-group input:focus {
+    border-color: #8b7355;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .main-content-container {
+    padding: 20px;
+    margin: 20px;
+  }
+  
+  .seat-layout {
+    padding: 20px 10px;
+    overflow-x: auto;
+  }
+}
+
+/* Lotte Movie Grid (Theater First Flow) - Scoped to avoid Home Page impact */
+.booking-flow-container.theater-first .lotte-movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 25px;
+  margin-top: 25px;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  background: #fff;
+  border: 2px solid transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: rgba(229, 9, 20, 0.3);
+}
+
+.booking-flow-container.theater-first .lotte-movie-card.selected {
+  border-color: #e50914;
+  background: #fdf2f2;
+}
+
+.booking-flow-container.theater-first .lotte-movie-poster {
+  position: relative;
+  aspect-ratio: 2/3;
+  width: 100%;
+  overflow: hidden;
+}
+
+.booking-flow-container.theater-first .lotte-movie-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card:hover .lotte-movie-poster img {
+  transform: scale(1.05);
+}
+
+.booking-flow-container.theater-first .lotte-movie-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 20px;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card:hover .lotte-movie-overlay {
+  opacity: 1;
+}
+
+.booking-flow-container.theater-first .lotte-movie-buttons {
+  transform: translateY(10px);
+  transition: transform 0.3s ease;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card:hover .lotte-movie-buttons {
+  transform: translateY(0);
+}
+
+.booking-flow-container.theater-first .lotte-btn-book {
+  background: #e50914;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(229, 9, 20, 0.4);
+  transition: all 0.2s;
+}
+
+.booking-flow-container.theater-first .lotte-btn-book:hover {
+  background: #c40710;
+  transform: scale(1.05);
+}
+
+.booking-flow-container.theater-first .lotte-movie-info {
+  padding: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eee;
+}
+
+.booking-flow-container.theater-first .lotte-movie-rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  min-height: 50px;
+}
+
+.booking-flow-container.theater-first .lotte-age-rating {
+  background: #28a745;
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 11px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Age Rating Variants */
+.booking-flow-container.theater-first .lotte-age-rating.rating-k { background: #28a745; }
+.booking-flow-container.theater-first .lotte-age-rating.rating-p { background: #007bff; }
+.booking-flow-container.theater-first .lotte-age-rating.rating-13 { background: #ffc107; color: #333; }
+.booking-flow-container.theater-first .lotte-age-rating.rating-16 { background: #fd7e14; }
+.booking-flow-container.theater-first .lotte-age-rating.rating-18 { background: #dc3545; }
+
+.booking-flow-container.theater-first .lotte-movie-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.booking-flow-container.theater-first .lotte-movie-meta {
+  padding: 10px 12px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-flow-container.theater-first .lotte-movie-duration {
+  font-size: 13px;
+  color: #666;
+  font-weight: 600;
+}
+
+.booking-flow-container.theater-first .movie-genres-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.booking-flow-container.theater-first .movie-genre-tag {
+  display: inline-block;
+  background: #fff;
+  color: #8b7355;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid #d9d2b7;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card:hover .movie-genre-tag {
+  background: #8b7355;
+  color: #fff;
+}
+
+
+.booking-flow-container.theater-first .movie-selected-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background-color: #28a745;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.main-content-container.booking-flow-container {
+  border-radius: 0 !important; 
+  padding: 40px !important;
+}
+
+.booking-flow-container.theater-first .lotte-movie-card:hover .movie-genre-tag {
+  background: #fff;
+  border-color: #8b7355;
+  color: #8b7355;
+}
