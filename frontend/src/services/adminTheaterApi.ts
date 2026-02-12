@@ -27,15 +27,19 @@ export const adminTheaterApi = {
     api.get(`/api/admin/theaters/${theaterId}/movies`),
   getStaff: (theaterId: number) =>
     api.get(`/api/admin/theaters/${theaterId}/staff`),
-  // Room management (v2)
+  getShowtimes: (
+    theaterId: number,
+    params?: { startDate?: string; endDate?: string; roomId?: number; page?: number; size?: number }
+  ) => api.get(`/api/admin/theaters/${theaterId}/showtimes`, { params }),
+  // Room management
   getRoom: (_theaterId: number, roomId: number) =>
-    api.get(`/api/admin/rooms/v2/${roomId}`),
+    api.get(`/api/admin/rooms/${roomId}`),
   createRoom: (theaterId: number, data: any) =>
-    api.post(`/api/admin/rooms/v2`, { ...data, theaterId }),
+    api.post(`/api/admin/theaters/${theaterId}/rooms`, data),
   updateRoom: (_theaterId: number, roomId: number, data: any) =>
-    api.put(`/api/admin/rooms/v2/${roomId}`, data),
+    api.put(`/api/admin/rooms/${roomId}`, data),
   deleteRoom: (_theaterId: number, roomId: number) =>
-    api.delete(`/api/admin/rooms/v2/${roomId}`),
+    api.delete(`/api/admin/rooms/${roomId}`),
   // Seat management
   createSeats: (theaterId: number, roomId: number, data: any) =>
     api.post(`/api/admin/theaters/${theaterId}/rooms/${roomId}/seats`, data),

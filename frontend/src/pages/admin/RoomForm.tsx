@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminTheaterApi } from "../../services/adminTheaterApi";
+import CustomSelect, { type SelectOption } from "../../components/shared/CustomSelect";
+import ErrorModal from "../../components/shared/ErrorModal";
 
 interface RoomFormData {
   name: string;
@@ -23,16 +25,7 @@ const RoomForm: React.FC = () => {
     supportedFormats: "2D",
     theaterId: Number(theaterId!),
   });
-
-  // Load theater info
-  const { data: theater } = useQuery({
-    queryKey: ["theater", theaterId],
-    queryFn: async () => {
-      const res = await adminTheaterApi.getById(Number(theaterId!));
-      return res.data;
-    },
-    enabled: !!theaterId,
-  });
+  const [errorModal, setErrorModal] = useState({ show: false, message: "", title: "Lỗi" });
 
   // Load room data for editing
   const { data: room } = useQuery<{ name?: string; supportedFormats?: string }>(
@@ -79,14 +72,15 @@ const RoomForm: React.FC = () => {
       navigate(`/admin/theaters/${theaterId}/detail`);
     },
     onError: (error: any) => {
-      alert("Lỗi lưu phòng: " + (error?.message || "Không thể lưu phòng"));
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "Lỗi lưu phòng: " + (error?.message || "Không thể lưu phòng")
+      });
     },
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
+  const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -95,13 +89,14 @@ const RoomForm: React.FC = () => {
     mutation.mutate(formData);
   };
 
-  const formatOptions = [
+  const formatOptions: SelectOption[] = [
     { value: "2D", label: "2D" },
     { value: "3D", label: "3D" },
     { value: "2D|3D", label: "2D + 3D" },
     { value: "IMAX", label: "IMAX" },
     { value: "2D|3D|IMAX", label: "2D + 3D + IMAX" },
   ];
+  const selectedFormat = formatOptions.find(opt => opt.value === formData.supportedFormats);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -125,18 +120,9 @@ const RoomForm: React.FC = () => {
             }}
           >
             {isEditMode
-              ? "✏️ Chỉnh sửa phòng chiếu"
-              : "➕ Thêm phòng chiếu mới"}
+              ? "Chỉnh sửa phòng chiếu"
+              : "Thêm phòng chiếu mới"}
           </h1>
-          <p
-            style={{
-              margin: "4px 0 0 0",
-              color: "#6b7280",
-              fontSize: "14px",
-            }}
-          >
-            Rạp: {theater?.name}
-          </p>
         </div>
         <button
           onClick={() => navigate(`/admin/theaters/${theaterId}/detail`)}
@@ -179,7 +165,7 @@ const RoomForm: React.FC = () => {
             type="text"
             name="name"
             value={formData.name}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
             required
             placeholder="VD: Phòng 1, Phòng VIP, IMAX..."
             style={{
@@ -204,26 +190,12 @@ const RoomForm: React.FC = () => {
           >
             Định dạng hỗ trợ *
           </label>
-          <select
-            name="supportedFormats"
-            value={formData.supportedFormats}
-            onChange={handleInputChange}
-            required
-            style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #d1d5db",
-              borderRadius: "6px",
-              fontSize: "14px",
-              boxSizing: "border-box",
-            }}
-          >
-            {formatOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            instanceId="format-select"
+            options={formatOptions}
+            value={selectedFormat}
+            onChange={(option: SelectOption | null) => handleSelectChange('supportedFormats', option?.value.toString() || '')}
+          />
         </div>
 
         <div
@@ -264,13 +236,20 @@ const RoomForm: React.FC = () => {
             }}
           >
             {mutation.isPending
-              ? "⏳ Đang lưu..."
+              ? "Đang lưu..."
               : isEditMode
-                ? "💾 Cập nhật phòng"
-                : "💾 Tạo phòng"}
+                ? "Cập nhật phòng"
+                : "Tạo phòng"}
           </button>
         </div>
       </form>
+
+      <ErrorModal
+        isOpen={errorModal.show}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ show: false, message: "", title: "Lỗi" })}
+      />
     </div>
   );
 };

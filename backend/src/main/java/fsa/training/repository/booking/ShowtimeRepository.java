@@ -10,11 +10,19 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long>, JpaSpecificationExecutor<Showtime> {
     
 
     Optional<Showtime> findByRoomIdAndShowDateAndShowTime(Long roomId, LocalDate showDate, LocalTime showTime);
+
+    /**
+     * Find all showtimes for a specific room on a specific date
+     * Used for conflict detection when scheduling new showtimes
+     */
+    List<Showtime> findByRoomIdAndShowDate(Long roomId, LocalDate showDate);
 
     /**
      * Find existing showtimes for multiple theaters on a specific date
@@ -38,4 +46,17 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long>, JpaSp
     @Query("SELECT s FROM Showtime s WHERE s.theater.name = :theaterName AND s.showDate = :showDate ORDER BY s.showTime")
     List<Showtime> findByTheaterNameAndShowDate(@Param("theaterName") String theaterName,
                                                @Param("showDate") LocalDate showDate);
-} 
+    long countByTheaterId(Long theaterId);
+    
+    List<Showtime> findByTheaterIdOrderByShowDateDescShowTimeDesc(Long theaterId);
+
+    @Query("SELECT s FROM Showtime s WHERE s.theater.id = :theaterId " +
+           "AND (:roomId IS NULL OR s.room.id = :roomId) " +
+           "AND (:startDate IS NULL OR s.showDate >= :startDate) " +
+           "AND (:endDate IS NULL OR s.showDate <= :endDate)")
+    Page<Showtime> findShowtimes(@Param("theaterId") Long theaterId, 
+                                 @Param("roomId") Long roomId,
+                                 @Param("startDate") LocalDate startDate, 
+                                 @Param("endDate") LocalDate endDate, 
+                                 Pageable pageable);
+}

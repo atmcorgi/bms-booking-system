@@ -13,10 +13,10 @@ import org.springframework.data.domain.Page;
 
 @RestController
 @RequestMapping("/api")
-public class HomeController {
+public class MovieHomeController {
     private final MovieService movieService;
 
-    public HomeController(MovieService movieService) {
+    public MovieHomeController(MovieService movieService) {
         this.movieService = movieService;
     }
 
@@ -28,10 +28,12 @@ public class HomeController {
         Page<MovieCardProjection> moviePage = movieService.getNowShowingProjections(page, 8);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("movies", moviePage.getContent());
+        response.put("content", moviePage.getContent());
         response.put("hasMore", !moviePage.isLast());
-        response.put("currentPage", page);
+        response.put("page", page);
         response.put("totalPages", moviePage.getTotalPages());
+        response.put("totalItems", moviePage.getTotalElements());
+        response.put("size", moviePage.getSize());
         
         return response;
     }
@@ -43,11 +45,14 @@ public class HomeController {
         Page<MovieCardProjection> moviePage = movieService.getComingSoonProjections(page, 8);
         
         Map<String, Object> response = new HashMap<>();
-        response.put("movies", moviePage.getContent());
+        response.put("content", moviePage.getContent());
         response.put("hasMore", !moviePage.isLast());
-        response.put("currentPage", page);
+        response.put("page", page);
         response.put("totalPages", moviePage.getTotalPages());
+        response.put("totalItems", moviePage.getTotalElements());
+        response.put("size", moviePage.getSize());
         
         return response;
     }
 }
+

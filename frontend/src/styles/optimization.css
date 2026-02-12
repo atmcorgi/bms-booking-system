@@ -128,7 +128,16 @@
     transition: none;
   }
 
-  .skeleton {
-    animation: none;
-  }
+}
+
+/* Auth link styling */
+.auth-link {
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease-in-out;
+}
+
+.auth-link:hover {
+  color: #dc2626; /* text-red-600 */
 }

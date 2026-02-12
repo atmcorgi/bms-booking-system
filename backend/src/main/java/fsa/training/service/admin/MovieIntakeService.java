@@ -232,7 +232,16 @@ public class MovieIntakeService {
         movie.setDirector(row.getDirector());
         movie.setActors(row.getActors());
         movie.setReleaseDate(row.getReleaseDate());
+        movie.setReleaseDate(row.getReleaseDate());
         movie.setAgeRating(row.getAgeRating());
+        // Set trailer URL if present
+        if (row.getTrailerUrl() != null && !row.getTrailerUrl().isBlank()) {
+            movie.setTrailerUrl(row.getTrailerUrl());
+        }
+        // Set youtube URL if present
+        if (row.getYoutubeUrl() != null && !row.getYoutubeUrl().isBlank()) {
+            movie.setYoutubeUrl(row.getYoutubeUrl());
+        }
 
         // Process genres
         if (row.getGenreNames() != null && !row.getGenreNames().isEmpty()) {
@@ -305,6 +314,8 @@ public class MovieIntakeService {
         if (cols.length > 11) parseNumericField(cols[11], dto::setPriority, null);
         if (cols.length > 12) parseDoubleField(cols[12], dto::setDemandScore, null);
         if (cols.length > 13 && cols[13] != null && !cols[13].isEmpty()) dto.setGenreNames(Arrays.asList(cols[13].split("\\|")));
+        if (cols.length > 14) dto.setTrailerUrl(cols[14].trim());
+        if (cols.length > 15) dto.setYoutubeUrl(cols[15].trim());
     }
 
     private void parseNumericField(String value, java.util.function.Consumer<Integer> setter, String errorMessage) {

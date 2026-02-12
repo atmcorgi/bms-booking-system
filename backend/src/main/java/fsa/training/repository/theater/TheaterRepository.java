@@ -49,4 +49,4 @@ public interface TheaterRepository extends JpaRepository<Theater, Long>, JpaSpec
     @Modifying
     @Query("DELETE FROM AccountPermission ap WHERE ap.assignedTheaterId = :theaterId")
     void deleteAccountPermissionsByTheaterId(@Param("theaterId") Long theaterId);
-} 
+}

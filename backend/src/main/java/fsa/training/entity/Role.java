@@ -6,7 +6,7 @@ import lombok.*;
 import java.util.Set;
 
 @Entity
-@Table(name = "role")
+// Default table name "Role" to match FK constraint case sensitivity
 @Getter
 @Setter
 @NoArgsConstructor

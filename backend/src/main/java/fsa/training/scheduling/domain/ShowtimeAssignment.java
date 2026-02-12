@@ -30,6 +30,13 @@ public class ShowtimeAssignment {
     public TimeGrain getTimeGrain() { return timeGrain; }
     public void setTimeGrain(TimeGrain timeGrain) { this.timeGrain = timeGrain; }
     
+    // Transient field to hold validation errors from solver
+    private java.util.List<String> planningErrors = new java.util.ArrayList<>();
+
+    public java.util.List<String> getPlanningErrors() { return planningErrors; }
+    public void setPlanningErrors(java.util.List<String> planningErrors) { this.planningErrors = planningErrors; }
+    public void addPlanningError(String error) { this.planningErrors.add(error); }
+
     // Difficulty comparison for FIRST_FIT_DECREASING
     public int getDifficulty() {
         if (movieRequest == null) return 0;

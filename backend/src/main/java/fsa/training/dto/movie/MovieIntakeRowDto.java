@@ -25,6 +25,8 @@ public class MovieIntakeRowDto {
     private String languages; // e.g., "VI|EN"
     private Integer priority;
     private Double demandScore;
+    private String trailerUrl;
+    private String youtubeUrl;
     private List<String> genreNames = new ArrayList<>();
 
     // CSV of theater names/codes allowed (e.g., "CGV Vincom|BHD Bitexco")

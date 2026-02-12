@@ -3,8 +3,12 @@ package fsa.training.controller.admin;
 import fsa.training.entity.District;
 import fsa.training.entity.Province;
 import fsa.training.entity.Theater;
+import fsa.training.repository.booking.BookingRepository;
+import fsa.training.repository.booking.SeatRepository;
+import fsa.training.repository.booking.ShowtimeRepository;
 import fsa.training.repository.theater.DistrictRepository;
 import fsa.training.repository.theater.ProvinceRepository;
+import fsa.training.repository.theater.RoomRepository;
 import fsa.training.service.theater.TheaterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +23,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import fsa.training.repository.theater.TheaterRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -35,6 +44,18 @@ public class AdminTheaterApiController {
 
     @Autowired
     private TheaterRepository theaterRepository;
+
+    @Autowired
+    private RoomRepository roomRepository;
+
+    @Autowired
+    private SeatRepository seatRepository;
+
+    @Autowired
+    private ShowtimeRepository showtimeRepository;
+
+    @Autowired
+    private BookingRepository bookingRepository;
 
 
     @GetMapping("/theaters")
@@ -120,7 +141,7 @@ public class AdminTheaterApiController {
     @PostMapping("/theaters")
     public ResponseEntity<?> create(@RequestBody Map<String, Object> body) {
         try {
-            String brand = String.valueOf(body.get("brand"));
+            String brand = String.valueOf(body.getOrDefault("brand", "CGV"));
             String theaterName = String.valueOf(body.get("name"));
             String theaterCode = String.valueOf(body.get("code"));
             String address = String.valueOf(body.get("address"));
@@ -172,16 +193,64 @@ public class AdminTheaterApiController {
         m.put("description", t.getDescription());
         m.put("latitude", t.getLatitude());
         m.put("longitude", t.getLongitude());
-        m.put("openTime", t.getOpenTime());
-        m.put("closeTime", t.getCloseTime());
+        m.put("openTime", t.getOpenTime() != null ? t.getOpenTime().toString() : null);
+        m.put("closeTime", t.getCloseTime() != null ? t.getCloseTime().toString() : null);
         if (t.getProvince() != null) {
             m.put("province", Map.of("id", t.getProvince().getId(), "name", t.getProvince().getName()));
         }
         if (t.getDistrict() != null) {
             m.put("district", Map.of("id", t.getDistrict().getId(), "name", t.getDistrict().getName()));
         }
+        m.put("roomCount", roomRepository.countByTheaterId(t.getId()));
+        m.put("seatCount", seatRepository.countByTheaterId(t.getId()));
+        m.put("showtimeCount", showtimeRepository.countByTheaterId(t.getId()));
+        m.put("bookingCount", bookingRepository.countByShowtime_Theater_Id(t.getId()));
         return m;
     }
-}
 
+
+
+    @GetMapping("/theaters/{id}/showtimes")
+    public ResponseEntity<?> getShowtimes(@PathVariable Long id,
+                                          @RequestParam(required = false) Long roomId,
+                                          @RequestParam(required = false) String startDate,
+                                          @RequestParam(required = false) String endDate,
+                                          @RequestParam(defaultValue = "0") int page,
+                                          @RequestParam(defaultValue = "10") int size) {
+        
+        LocalDate start = (startDate != null && !startDate.isBlank()) ? LocalDate.parse(startDate) : null;
+        LocalDate end = (endDate != null && !endDate.isBlank()) ? LocalDate.parse(endDate) : null;
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "showDate", "showTime"));
+        
+        Page<fsa.training.entity.Showtime> showtimePage = showtimeRepository.findShowtimes(id, roomId, start, end, pageable);
+        
+        List<Map<String, Object>> items = showtimePage.getContent().stream().map(s -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", s.getId());
+            m.put("showDate", s.getShowDate());
+            m.put("showTime", s.getShowTime());
+            m.put("priceStandard", s.getPriceStandard());
+            m.put("priceVip", s.getPriceVip());
+            if (s.getMovie() != null) {
+                m.put("movieCode", s.getMovie().getCode());
+                m.put("movieTitle", s.getMovie().getTitle());
+            }
+             if (s.getRoom() != null) {
+                m.put("roomId", s.getRoom().getId());
+                m.put("roomName", s.getRoom().getName());
+            }
+            return m;
+        }).collect(Collectors.toList());
+        
+        return ResponseEntity.ok(Map.of(
+            "items", items,
+            "page", showtimePage.getNumber(),
+            "size", showtimePage.getSize(),
+            "totalPages", showtimePage.getTotalPages(),
+            "totalItems", showtimePage.getTotalElements()
+        ));
+    }
+
+}
 

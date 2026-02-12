@@ -42,7 +42,12 @@ export default function MovieCard({
       >
         <div
           className="movie-poster"
-          style={{ position: "relative", aspectRatio: "2/3" }}
+          style={{
+            position: "relative",
+            width: "100%",
+            paddingBottom: "150%",
+            overflow: "hidden",
+          }}
         >
           <LazyImage
             src={movie.posterUrl}
@@ -50,11 +55,6 @@ export default function MovieCard({
             width={300}
             height={450}
             quality={85}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
           />
 
           {/* Age rating badge */}
@@ -92,7 +92,7 @@ export default function MovieCard({
                 justifyContent: "center",
               }}
             >
-              ▶️
+              ▶
             </div>
           )}
         </div>

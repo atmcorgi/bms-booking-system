@@ -7,6 +7,20 @@ import {
 } from "react-router-dom";
 import { useState } from "react";
 import { authApi } from "../services/authApi";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChartBar,
+  faTags,
+  faBuilding,
+  faFilm,
+  faImage,
+  faUsers,
+  faClipboardCheck,
+  faClipboardList,
+} from "@fortawesome/free-solid-svg-icons";
+import UserDropdown from "../components/UserDropdown";
+import { useQuery } from "@tanstack/react-query";
+import { profileApi } from "../services/profileApi";
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -14,6 +28,13 @@ export default function AdminLayout() {
   const path = location.pathname.replace(/^\/admin\/?/, "");
   const crumbs = ["admin", ...path.split("/").filter(Boolean)];
   const [collapsed, setCollapsed] = useState(false);
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const { data: user } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => (await profileApi.getProfile()).data,
+    enabled: !!token,
+  });
 
   const handleLogout = () => {
     authApi.logout();
@@ -107,7 +128,7 @@ export default function AdminLayout() {
               gap: 8,
             })}
           >
-            <span aria-hidden>📊</span>
+            <FontAwesomeIcon icon={faChartBar} />
             {!collapsed && <span>Dashboard</span>}
           </NavLink>
           <NavLink
@@ -125,7 +146,7 @@ export default function AdminLayout() {
               gap: 8,
             })}
           >
-            <span aria-hidden>🏷️</span>
+            <FontAwesomeIcon icon={faTags} />
             {!collapsed && <span>Thể loại</span>}
           </NavLink>
           <NavLink
@@ -143,7 +164,7 @@ export default function AdminLayout() {
               gap: 8,
             })}
           >
-            <span aria-hidden>🏢</span>
+            <FontAwesomeIcon icon={faBuilding} />
             {!collapsed && <span>Rạp</span>}
           </NavLink>
           <NavLink
@@ -161,8 +182,80 @@ export default function AdminLayout() {
               gap: 8,
             })}
           >
-            <span aria-hidden>🎞️</span>
-            {!collapsed && <span>Movies</span>}
+            <FontAwesomeIcon icon={faFilm} />
+            {!collapsed && <span>Phim</span>}
+          </NavLink>
+          <NavLink
+            to="/admin/banners"
+            style={({ isActive }) => ({
+              color: "#333",
+              textDecoration: "none",
+              padding: "8px 10px",
+              borderLeft: isActive
+                ? "3px solid #d9d2b7"
+                : "3px solid transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            })}
+          >
+            <FontAwesomeIcon icon={faImage} />
+            {!collapsed && <span>Banners</span>}
+          </NavLink>
+          <NavLink
+            to="/admin/accounts"
+            style={({ isActive }) => ({
+              color: "#333",
+              textDecoration: "none",
+              padding: "8px 10px",
+              borderLeft: isActive
+                ? "3px solid #d9d2b7"
+                : "3px solid transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            })}
+          >
+            <FontAwesomeIcon icon={faUsers} />
+            {!collapsed && <span>Tài khoản</span>}
+          </NavLink>
+          <NavLink
+            to="/admin/movie-assignments"
+            style={({ isActive }) => ({
+              color: "#333",
+              textDecoration: "none",
+              padding: "8px 10px",
+              borderLeft: isActive
+                ? "3px solid #d9d2b7"
+                : "3px solid transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            })}
+          >
+            <FontAwesomeIcon icon={faClipboardCheck} />
+            {!collapsed && <span>Phim đã gán</span>}
+          </NavLink>
+          <NavLink
+            to="/admin/movie-requests"
+            style={({ isActive }) => ({
+              color: "#333",
+              textDecoration: "none",
+              padding: "8px 10px",
+              borderLeft: isActive
+                ? "3px solid #d9d2b7"
+                : "3px solid transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            })}
+          >
+            <FontAwesomeIcon icon={faClipboardList} />
+            {!collapsed && <span>Request phim</span>}
           </NavLink>
         </nav>
       </aside>
@@ -192,6 +285,10 @@ export default function AdminLayout() {
                     return "Thể loại";
                   case "theaters":
                     return "Rạp";
+                  case "banners":
+                    return "Quản lý Banners";
+                  case "accounts":
+                    return "Quản lý Tài khoản";
                   default:
                     return "Bảng điều khiển";
                 }
@@ -204,8 +301,11 @@ export default function AdminLayout() {
                   movies: "Phim",
                   genres: "Thể loại",
                   theaters: "Rạp",
+                  banners: "Banners",
+                  accounts: "Tài khoản",
                   create: "Tạo mới",
                   edit: "Chỉnh sửa",
+                  new: "Tạo mới",
                 };
                 const parts = crumbs.filter(Boolean);
                 const acc: string[] = [];
@@ -235,20 +335,24 @@ export default function AdminLayout() {
             </div>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: "#dc3545",
-                color: "white",
-                border: "none",
-                padding: "6px 10px",
-                borderRadius: "4px",
-                cursor: "pointer",
-                height: 36,
-              }}
-            >
-              Đăng xuất
-            </button>
+            {user ? (
+               <UserDropdown user={user} onLogout={handleLogout} />
+            ) : (
+              <button
+                onClick={handleLogout}
+                style={{
+                  background: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  height: 36,
+                }}
+              >
+                Đăng xuất
+              </button>
+            )}
           </div>
         </header>
         <div

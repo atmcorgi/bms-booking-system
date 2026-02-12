@@ -5,9 +5,12 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "movie_request", indexes = {
-        @Index(name = "idx_movie_request_code", columnList = "movie_code", unique = true)
-})
+@Table(name = "movie_request", 
+    uniqueConstraints = @UniqueConstraint(columnNames = {"movie_code", "theater_id"}),
+    indexes = {
+        @Index(name = "idx_movie_request_code_theater", columnList = "movie_code,theater_id")
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,7 +22,7 @@ public class MovieRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "movie_code", nullable = false, unique = true)
+    @Column(name = "movie_code", nullable = false)
     private String movieCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,7 +38,7 @@ public class MovieRequest {
     private Double demandScore; // 0.0 - 1.0
 
     @Column(name = "status")
-    private String status;      // PENDING, SCHEDULED, APPROVED, REJECTED
+    private String status;      // PENDING, SCHEDULED, PUBLISHED
 
     // Target theater for this request
     @ManyToOne(fetch = FetchType.LAZY)

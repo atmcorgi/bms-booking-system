@@ -2,6 +2,8 @@ package fsa.training.service.booking;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,15 +41,13 @@ public class SeatHoldService {
     }
 
     public boolean hold(Long showtimeId, Long seatId, String ownerKey) {
-
         ReentrantLock lock = lockForShowtime(showtimeId);
-        if (!lock.tryLock()) return false;
+        lock.lock(); // Use lock() instead of tryLock() to wait for other concurrent operations
         try {
             long expiresAt = now() + ttlMs;
             ConcurrentMap<Long, SeatHold> map = holdsByShowtime.computeIfAbsent(showtimeId, id -> new ConcurrentHashMap<>());
             SeatHold existing = map.get(seatId);
             if (existing != null && !existing.isExpired(now())) {
-                // allow re-hold by same owner to refresh TTL
                 if (existing.ownerKey.equals(ownerKey)) {
                     map.put(seatId, new SeatHold(ownerKey, expiresAt));
                     return true;
@@ -63,7 +63,7 @@ public class SeatHoldService {
 
     public boolean release(Long showtimeId, Long seatId, String ownerKey) {
         ReentrantLock lock = lockForShowtime(showtimeId);
-        if (!lock.tryLock()) return false;
+        lock.lock();
         try {
             ConcurrentMap<Long, SeatHold> map = holdsByShowtime.get(showtimeId);
             if (map == null) return true;
@@ -79,13 +79,38 @@ public class SeatHoldService {
         }
     }
 
+    /**
+     * Returns a map of seatId -> ownerKey for all active holds in a showtime
+     */
+    public Map<Long, String> getHolds(Long showtimeId) {
+        ConcurrentMap<Long, SeatHold> map = holdsByShowtime.get(showtimeId);
+        if (map == null) return Collections.emptyMap();
+        
+        long now = now();
+        Map<Long, String> activeHolds = new HashMap<>();
+        for (Map.Entry<Long, SeatHold> entry : map.entrySet()) {
+            if (!entry.getValue().isExpired(now)) {
+                activeHolds.put(entry.getKey(), entry.getValue().ownerKey);
+            }
+        }
+        return activeHolds;
+    }
+
     public boolean validateOwnedHolds(Long showtimeId, List<Long> seatIds, String ownerKey) {
         ConcurrentMap<Long, SeatHold> map = holdsByShowtime.get(showtimeId);
-        if (map == null) return false;
+        if (map == null) {
+            return false;
+        }
         long now = now();
         for (Long seatId : seatIds) {
             SeatHold h = map.get(seatId);
-            if (h == null || h.isExpired(now) || !h.ownerKey.equals(ownerKey)) {
+            if (h == null) {
+                return false;
+            }
+            if (h.isExpired(now)) {
+                return false;
+            }
+            if (!h.ownerKey.equals(ownerKey)) {
                 return false;
             }
         }
@@ -94,7 +119,7 @@ public class SeatHoldService {
 
     public void releaseAll(Long showtimeId, List<Long> seatIds) {
         ReentrantLock lock = lockForShowtime(showtimeId);
-        if (!lock.tryLock()) return;
+        lock.lock();
         try {
             ConcurrentMap<Long, SeatHold> map = holdsByShowtime.get(showtimeId);
             if (map == null) return;

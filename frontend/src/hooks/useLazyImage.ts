@@ -66,8 +66,18 @@ export function useLazyImage({
         }
 
         await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error("Image load failed"));
+          const timeout = setTimeout(() => {
+            reject(new Error("Image load timeout"));
+          }, 15000); // 15 second timeout
+
+          img.onload = () => {
+            clearTimeout(timeout);
+            resolve();
+          };
+          img.onerror = () => {
+            clearTimeout(timeout);
+            reject(new Error("Image load failed"));
+          };
           img.src = imageUrl;
         });
 
@@ -117,42 +127,50 @@ export function useLazyImage({
 
   // Load image when in view
   useEffect(() => {
-    if (isInView && src && !isLoading && !hasError) {
-      const optimizedSrc = getOptimizedImageUrl(src, {
-        width,
-        height,
-        quality,
-      });
+    if (!isInView || !src || isLoading || hasError) {
+      return;
+    }
 
-      loadImage(optimizedSrc).catch(() => {
+    let isMounted = true;
+    const optimizedSrc = getOptimizedImageUrl(src, {
+      width,
+      height,
+      quality,
+    });
+
+    const attemptLoad = async () => {
+      try {
+        await loadImage(optimizedSrc);
+      } catch (error) {
+        if (!isMounted) return;
+
         // Try fallback to original URL if optimized fails
         if (optimizedSrc !== src) {
-          loadImage(src).catch(() => {
+          try {
+            await loadImage(src);
+          } catch (fallbackError) {
+            if (!isMounted) return;
             // Final fallback to placeholder
             setImageSrc(placeholder || generateImagePlaceholder(width, height));
             setHasError(true);
             onError?.();
-          });
+          }
         } else {
           // Direct fallback to placeholder
           setImageSrc(placeholder || generateImagePlaceholder(width, height));
           setHasError(true);
           onError?.();
         }
-      });
-    }
-  }, [
-    isInView,
-    src,
-    placeholder,
-    width,
-    height,
-    quality,
-    isLoading,
-    hasError,
-    loadImage,
-    onError,
-  ]);
+      }
+    };
+
+    attemptLoad();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInView, src, placeholder, width, height, quality]);
 
   return {
     imageSrc,

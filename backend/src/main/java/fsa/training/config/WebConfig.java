@@ -7,11 +7,17 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
+import jakarta.servlet.MultipartConfigElement;
+
 @Configuration
 @ComponentScan(basePackages = {"fsa.training"})
 @org.springframework.context.annotation.PropertySource("classpath:application.properties")
 public class WebConfig implements WebMvcConfigurer {
 
+    @Bean
+    public MultipartConfigElement multipartConfigElement() {
+        return new MultipartConfigElement("", 100000000, 100000000, 0);
+    }
     // Enable multipart (file upload)
     @Bean
     public StandardServletMultipartResolver multipartResolver() {

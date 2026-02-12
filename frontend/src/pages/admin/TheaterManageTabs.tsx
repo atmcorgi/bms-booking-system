@@ -4,6 +4,21 @@ import { adminTheaterApi } from "../../services/adminTheaterApi";
 import { adminMovieAssignmentApi } from "../../services/adminMovieAssignmentApi";
 import { adminStaffApi } from "../../services/adminStaffApi";
 import apiClient from "../../services/apiClient";
+import CustomSelect from "../../components/shared/CustomSelect";
+import AssignMovieModal from "../../components/admin/AssignMovieModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCog,
+  faFilm,
+  faTheaterMasks,
+  faUsers,
+  faSave,
+  faTimes,
+  faEdit,
+  faTrash,
+  faLightbulb,
+  faPencilAlt,
+} from "@fortawesome/free-solid-svg-icons";
 
 type TheaterManageTabsProps = {
   theater: any;
@@ -13,6 +28,10 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
   const [activeTab, setActiveTab] = useState<
     "rooms" | "seats" | "movies" | "staff"
   >("rooms");
+
+  const [assignedMoviesPage, setAssignedMoviesPage] = useState(0);
+  const [isAssignMovieModalOpen, setIsAssignMovieModalOpen] = useState(false);
+
   // Prefer rooms from theater payload; fallback to API if missing
   const theaterId = theater?.id as number | undefined;
   const qc = useQueryClient();
@@ -35,8 +54,8 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
     queryKey: ["theater-movies", theaterId],
     queryFn: async () => {
       if (!theaterId) return [];
-      const res = await adminMovieAssignmentApi.list(theaterId);
-      return res.data as any[];
+      const res = await adminMovieAssignmentApi.listByTheater(theaterId);
+      return res.data;
     },
     enabled: !!theaterId,
   });
@@ -63,22 +82,6 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
   });
 
   // Movie assignment mutations
-  const assignMovieMutation = useMutation({
-    mutationFn: async (payload: {
-      movieCode: string;
-      activeFrom?: string;
-      activeTo?: string;
-      formats?: string;
-      languages?: string;
-    }) => {
-      if (!theaterId) throw new Error("Missing theaterId");
-      return adminMovieAssignmentApi.assign(theaterId, payload);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["theater-movies", theaterId] });
-    },
-  });
-
   const unassignMovieMutation = useMutation({
     mutationFn: async (movieCode: string) => {
       if (!theaterId) throw new Error("Missing theaterId");
@@ -230,19 +233,19 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
     queryKey: ["theater-seats", theaterId],
     queryFn: async () => {
       if (!theaterId) return [];
-      console.log("🔍 Loading seats for theater:", theaterId, "rooms:", rooms);
+      console.log("Loading seats for theater:", theaterId, "rooms:", rooms);
 
       // Load seats for each room in this theater
-      const roomIds = rooms.map((r: any) => r.id);
-      console.log("🔍 Room IDs:", roomIds);
+      const roomIds = (rooms || []).map((r: any) => r.id);
+      console.log("Room IDs:", roomIds);
 
       const seatPromises = roomIds.map(async (roomId: number) => {
         try {
-          console.log("🔍 Loading seats for room:", roomId);
+          console.log(" Loading seats for room:", roomId);
           const res = await apiClient.get(
             `/api/admin/rooms/v2/${roomId}/seats`
           );
-          console.log("🔍 Room", roomId, "seats:", res.data?.length);
+          console.log(" Room", roomId, "seats:", res.data?.length);
           // Add roomId to each seat
           const seats = (res.data || []).map((seat: any) => ({
             ...seat,
@@ -257,7 +260,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
 
       const seatResults = await Promise.all(seatPromises);
       const allSeats = seatResults.flat();
-      console.log("🔍 Total seats loaded:", allSeats.length);
+      console.log(" Total seats loaded:", allSeats.length);
       return allSeats;
     },
     enabled: !!theaterId && Array.isArray(rooms) && rooms.length > 0,
@@ -267,7 +270,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
 
   useEffect(() => {
     console.log(
-      "🔍 useEffect triggered - theaterSeats:",
+      " useEffect triggered - theaterSeats:",
       theaterSeats?.length,
       "rooms:",
       rooms?.length
@@ -286,11 +289,11 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
         Array<{ id: number; seatNumber: string; seatType?: string }>
       > = {};
 
-      console.log("🔍 Processing theaterSeats:", theaterSeats.length);
+      console.log(" Processing theaterSeats:", theaterSeats.length);
       theaterSeats.forEach((seat: any) => {
-        console.log("🔍 Seat data structure:", seat);
+        console.log(" Seat data structure:", seat);
         const roomId = seat.room?.id || seat.roomId;
-        console.log("🔍 Seat room ID:", roomId, "seat:", seat);
+        console.log(" Seat room ID:", roomId, "seat:", seat);
         if (roomId) {
           if (!seatsByRoom[roomId]) {
             seatsByRoom[roomId] = [];
@@ -303,17 +306,17 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
         }
       });
 
-      console.log("🔍 Seats by room:", seatsByRoom);
+      console.log(" Seats by room:", seatsByRoom);
 
       // Set counts and seats for each room
       rooms.forEach((room: any) => {
         const roomSeats = seatsByRoom[room.id] || [];
         newSeatCounts[room.id] = roomSeats.length;
         newAllSeats[room.id] = roomSeats;
-        console.log("🔍 Room", room.id, "seats count:", roomSeats.length);
+        console.log(" Room", room.id, "seats count:", roomSeats.length);
       });
 
-      console.log("🔍 Final seat counts:", newSeatCounts);
+      console.log(" Final seat counts:", newSeatCounts);
       setSeatCounts(newSeatCounts);
       setAllSeats(newAllSeats);
     }
@@ -362,7 +365,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <span style={{ fontSize: "20px" }}>⚙️</span>
+          <FontAwesomeIcon icon={faCog} style={{ fontSize: "18px", color: "#6366f1" }} />
           <div>
             <h2
               style={{
@@ -429,7 +432,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
             {
               id: "rooms",
               label: "Phòng chiếu",
-              icon: "🎬",
+              icon: faFilm,
               count: rooms.length,
             },
             {
@@ -444,13 +447,13 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
             {
               id: "movies",
               label: "Phim & Suất",
-              icon: "🎭",
+              icon: faTheaterMasks,
               count: assignedMovies?.length || 0,
             },
             {
               id: "staff",
               label: "Nhân viên",
-              icon: "👥",
+              icon: faUsers,
               count: assignedStaff?.length || 0,
             },
           ].map((t: any) => (
@@ -543,7 +546,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                       fontSize: "18px",
                     }}
                   >
-                    🎬
+                    <FontAwesomeIcon icon={faFilm} style={{ color: "#fff" }} />
                   </div>
                   <div>
                     <h3
@@ -576,8 +579,8 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                   onClick={() => {
                     const name = prompt("Tên phòng mới:");
                     if (name && name.trim()) {
-                      // TODO: Implement create room functionality
-                      alert("Tính năng thêm phòng sẽ được triển khai sớm!");
+                      // Room creation is now handled by RoomModal in TheaterDetail
+                      console.log("Use RoomModal for creating rooms");
                     }
                   }}
                   style={{
@@ -623,7 +626,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                   }}
                 >
                   <div style={{ fontSize: "64px", marginBottom: "20px" }}>
-                    🎬
+                    <FontAwesomeIcon icon={faFilm} style={{ color: "#fff" }} />
                   </div>
                   <h3
                     style={{
@@ -654,7 +657,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                     gap: "20px",
                   }}
                 >
-                  {rooms.map((r: any) => {
+                  {(rooms || []).map((r: any) => {
                     const seat = buildSeatGrid(r.id);
                     return (
                       <div
@@ -746,7 +749,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                   >
                                     {updateRoomMutation.isPending
                                       ? "Đang lưu..."
-                                      : "💾 Lưu"}
+                                      : (<><FontAwesomeIcon icon={faSave} /> Lưu</>)}
                                   </button>
                                   <button
                                     onClick={cancelEdit}
@@ -761,7 +764,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                       transition: "all 0.2s ease",
                                     }}
                                   >
-                                    ❌ Hủy
+                                    <FontAwesomeIcon icon={faTimes} /> Hủy
                                   </button>
                                 </>
                               ) : (
@@ -779,7 +782,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                       transition: "all 0.2s ease",
                                     }}
                                   >
-                                    ✏️ Sửa
+                                    <FontAwesomeIcon icon={faEdit} /> Sửa
                                   </button>
                                   <button
                                     onClick={() => {
@@ -803,7 +806,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                   >
                                     {deleteRoomMutation.isPending
                                       ? "Đang xóa..."
-                                      : "🗑️ Xóa"}
+                                      : (<><FontAwesomeIcon icon={faTrash} /> Xóa</>)}
                                   </button>
                                 </>
                               )}
@@ -823,31 +826,26 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                             }}
                           >
                             <div>
+import CustomSelect from "../../components/shared/CustomSelect";
+// ...
                               {editingId === r.id ? (
-                                <select
-                                  value={editForm.supportedFormats}
-                                  onChange={(e) =>
+                                <CustomSelect
+                                  instanceId={`format-select-${r.id}`}
+                                  options={[
+                                    { value: "2D", label: "2D" },
+                                    { value: "3D", label: "3D" },
+                                    { value: "2D|3D", label: "2D + 3D" },
+                                    { value: "IMAX", label: "IMAX" },
+                                    { value: "2D|3D|IMAX", label: "2D + 3D + IMAX" },
+                                  ]}
+                                  value={{ value: editForm.supportedFormats, label: editForm.supportedFormats }}
+                                  onChange={(option) =>
                                     setEditForm((p) => ({
                                       ...p,
-                                      supportedFormats: e.target.value,
+                                      supportedFormats: String(option?.value) || '',
                                     }))
                                   }
-                                  style={{
-                                    padding: "8px 12px",
-                                    border: "1px solid #d9d2b7",
-                                    fontSize: "14px",
-                                    background: "#faf9f6",
-                                    outline: "none",
-                                  }}
-                                >
-                                  <option value="2D">2D</option>
-                                  <option value="3D">3D</option>
-                                  <option value="2D|3D">2D + 3D</option>
-                                  <option value="IMAX">IMAX</option>
-                                  <option value="2D|3D|IMAX">
-                                    2D + 3D + IMAX
-                                  </option>
-                                </select>
+                                />
                               ) : (
                                 <span
                                   style={{
@@ -1050,36 +1048,34 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                           >
                                             <div
                                               style={{
-                                                width: "24px",
-                                                height: "24px",
-                                                background:
-                                                  item.seatType === "VIP"
-                                                    ? "#fef7e0"
-                                                    : item.seatType ===
-                                                        "Premium"
-                                                      ? "#f0f4ff"
-                                                      : "#f8fafc",
-                                                border:
-                                                  item.seatType === "VIP"
-                                                    ? "1px solid #e5a50a"
-                                                    : item.seatType ===
-                                                        "Premium"
-                                                      ? "1px solid #6366f1"
-                                                      : "1px solid #cbd5e1",
-                                                borderRadius: "4px",
-                                                fontSize: "10px",
-                                                fontWeight: "600",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                color:
-                                                  item.seatType === "VIP"
-                                                    ? "#a16207"
-                                                    : item.seatType ===
-                                                        "Premium"
-                                                      ? "#4338ca"
-                                                      : "#475569",
-                                                cursor:
+                                                                                                  width:
+                                                                                                    item.seatType === "COUPLE" ? "48px" : "24px",
+                                                                                                  height: "24px",                                                                                                                                                    border:
+                                                                                                                                                      item.seatType === "VIP"
+                                                                                                                                                        ? "1px solid #A1343A"
+                                                                                                                                                        : item.seatType ===
+                                                                                                                                                            "COUPLE"
+                                                                                                                                                          ? "1px solid #7e22ce" // Darker purple for Couple
+                                                                                                                                                          : item.seatType ===
+                                                                                                                                                              "Premium"
+                                                                                                                                                            ? "1px solid #6366f1"
+                                                                                                                                                            : "1px solid #cbd5e1",
+                                                                                                                                                    borderRadius: "4px",
+                                                                                                                                                    fontSize: "10px",
+                                                                                                                                                    fontWeight: "600",
+                                                                                                                                                    display: "flex",
+                                                                                                                                                    alignItems: "center",
+                                                                                                                                                    justifyContent: "center",
+                                                                                                                                                    color:
+                                                                                                                                                      item.seatType === "VIP"
+                                                                                                                                                        ? "#FFFFFF"
+                                                                                                                                                        : item.seatType ===
+                                                                                                                                                            "COUPLE"
+                                                                                                                                                          ? "#FFFFFF" // White text for Couple
+                                                                                                                                                          : item.seatType ===
+                                                                                                                                                              "Premium"
+                                                                                                                                                            ? "#4338ca"
+                                                                                                                                                            : "#475569",                                                cursor:
                                                   editingSeats === r.id
                                                     ? "pointer"
                                                     : "default",
@@ -1250,7 +1246,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                               "0 1px 3px rgba(239, 68, 68, 0.3)";
                                           }}
                                         >
-                                          🗑️ Xóa hàng
+                                          <FontAwesomeIcon icon={faTrash} /> Xóa hàng
                                         </button>
                                       )}
                                     </div>
@@ -1298,7 +1294,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                       fontWeight: "600",
                                     }}
                                   >
-                                    💡 Hướng dẫn sử dụng
+                                    <FontAwesomeIcon icon={faLightbulb} style={{ color: "#f59e0b" }} /> Hướng dẫn sử dụng
                                   </h5>
                                 </div>
 
@@ -1363,7 +1359,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                         fontWeight: "600",
                                       }}
                                     >
-                                      📝
+                                      <FontAwesomeIcon icon={faPencilAlt} />
                                     </span>
                                     Click <strong>"Thêm hàng"</strong> để tạo
                                     hàng mới
@@ -1385,7 +1381,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                         fontWeight: "600",
                                       }}
                                     >
-                                      🗑️
+                                      <FontAwesomeIcon icon={faTrash} />
                                     </span>
                                     Click <strong>"Xóa hàng"</strong> để xóa
                                     toàn bộ hàng
@@ -1477,7 +1473,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                 </div>
               ) : (
                 <div style={{ display: "grid", gap: 16 }}>
-                  {rooms.map((room: any) => {
+                  {(rooms || []).map((room: any) => {
                     const seatGrid = buildSeatGrid(room.id);
                     return (
                       <div
@@ -1540,20 +1536,32 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                                     key={seat.id}
                                     title={`${seat.seatNumber} - ${seat.seatType || "Standard"}`}
                                     style={{
-                                      minWidth: 28,
+                                      minWidth:
+                                        seat.seatType === "COUPLE" ? 48 : 28,
                                       height: 24,
                                       padding: "2px 6px",
                                       borderRadius: 4,
-                                      border: "1px solid #d1d5db",
+                                      border:
+                                        seat.seatType === "VIP"
+                                          ? "1px solid #A1343A"
+                                          : seat.seatType === "COUPLE"
+                                            ? "1px solid #7e22ce"
+                                            : "1px solid #d1d5db",
                                       background:
                                         seat.seatType === "VIP"
-                                          ? "#fef3c7"
-                                          : "#f9fafb",
+                                          ? "#CA444A"
+                                          : seat.seatType === "COUPLE"
+                                            ? "#9333ea"
+                                            : "#f9fafb",
                                       fontSize: 12,
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
-                                      color: "#374151",
+                                      color:
+                                        seat.seatType === "VIP" ||
+                                        seat.seatType === "COUPLE"
+                                          ? "#FFFFFF"
+                                          : "#374151",
                                     }}
                                   >
                                     {seat.seatNumber.replace(/^[A-Z]+/i, "")}
@@ -1592,7 +1600,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                     gap: "8px",
                   }}
                 >
-                  <span style={{ fontSize: "24px" }}>🎭</span>
+                  <FontAwesomeIcon icon={faTheaterMasks} style={{ fontSize: "20px", marginRight: "8px", color: "#6366f1" }} />
                   Phim & Suất chiếu
                 </h3>
                 <p
@@ -1626,171 +1634,29 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                 >
                   Gán phim cho rạp
                 </h4>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const movieCode = formData.get("movieCode") as string;
-                    const activeFrom = formData.get("activeFrom") as string;
-                    const activeTo = formData.get("activeTo") as string;
-                    const formats = formData.get("formats") as string;
-                    const languages = formData.get("languages") as string;
-
-                    if (movieCode) {
-                      assignMovieMutation.mutate({
-                        movieCode,
-                        activeFrom: activeFrom || undefined,
-                        activeTo: activeTo || undefined,
-                        formats: formats || undefined,
-                        languages: languages || undefined,
-                      });
-                      e.currentTarget.reset();
-                    }
+                <button
+                  onClick={() => setIsAssignMovieModalOpen(true)}
+                  style={{
+                    padding: "8px 16px",
+                    background: "#fff",
+                    color: "#059669",
+                    border: "1px solid #059669",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
                   }}
-                  style={{ display: "flex", gap: "12px", alignItems: "end" }}
                 >
-                  <div style={{ flex: 1 }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                      }}
-                    >
-                      Mã phim
-                    </label>
-                    <input
-                      name="movieCode"
-                      type="text"
-                      required
-                      placeholder="VD: AVENGERS_001"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e2e8f0",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                      }}
-                    >
-                      Từ ngày
-                    </label>
-                    <input
-                      name="activeFrom"
-                      type="date"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e2e8f0",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                      }}
-                    >
-                      Đến ngày
-                    </label>
-                    <input
-                      name="activeTo"
-                      type="date"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e2e8f0",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                      }}
-                    >
-                      Định dạng
-                    </label>
-                    <input
-                      name="formats"
-                      type="text"
-                      placeholder="VD: 2D,3D,IMAX"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e2e8f0",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "4px",
-                        fontSize: "12px",
-                        fontWeight: "500",
-                        color: "#374151",
-                      }}
-                    >
-                      Ngôn ngữ
-                    </label>
-                    <input
-                      name="languages"
-                      type="text"
-                      placeholder="VD: VI,EN"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e2e8f0",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={assignMovieMutation.isPending}
-                    style={{
-                      padding: "8px 16px",
-                      background: "#fff",
-                      color: "#059669",
-                      border: "1px solid #059669",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    {assignMovieMutation.isPending ? "Đang gán..." : "Gán phim"}
-                  </button>
-                </form>
+                  + Gán phim mới
+                </button>
               </div>
+
+              {isAssignMovieModalOpen && theaterId && (
+                <AssignMovieModal
+                  theaterId={theaterId}
+                  onClose={() => setIsAssignMovieModalOpen(false)}
+                />
+              )}
 
               {/* Assigned Movies List */}
               <div
@@ -1800,97 +1666,135 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                   padding: "20px",
                 }}
               >
-                <h4
-                  style={{
-                    margin: "0 0 16px 0",
-                    color: "#1f2937",
-                    fontSize: "16px",
-                    fontWeight: "600",
-                  }}
-                >
-                  Phim đã gán ({assignedMovies?.length || 0})
-                </h4>
-                {assignedMovies && assignedMovies.length > 0 ? (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "12px",
-                    }}
-                  >
-                    {assignedMovies.map((movie: any) => (
-                      <div
-                        key={movie.movieCode}
-                        style={{
-                          padding: "12px 16px",
-                          background: "#f8fafc",
-                          border: "1px solid #e2e8f0",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <div>
-                          <div
-                            style={{
-                              fontWeight: "600",
-                              color: "#1f2937",
-                              fontSize: "14px",
-                            }}
-                          >
-                            {movie.movieCode}
-                          </div>
-                          <div
-                            style={{
-                              fontSize: "12px",
-                              color: "#64748b",
-                              marginTop: "2px",
-                            }}
-                          >
-                            {movie.activeFrom && movie.activeTo
-                              ? `${movie.activeFrom} - ${movie.activeTo}`
-                              : "Không giới hạn thời gian"}
-                            {movie.formats && ` • ${movie.formats}`}
-                            {movie.languages && ` • ${movie.languages}`}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (confirm(`Bỏ gán phim "${movie.movieCode}"?`)) {
-                              unassignMovieMutation.mutate(movie.movieCode);
-                            }
-                          }}
-                          disabled={unassignMovieMutation.isPending}
-                          style={{
-                            padding: "4px 8px",
-                            background: "#fff",
-                            color: "#dc2626",
-                            border: "1px solid #dc2626",
-                            fontSize: "12px",
-                            fontWeight: "500",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                          }}
-                        >
-                          Bỏ gán
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      textAlign: "center",
-                      padding: "40px 20px",
-                      color: "#64748b",
-                      fontSize: "14px",
-                    }}
-                  >
-                    Chưa có phim nào được gán cho rạp này
-                  </div>
-                )}
-              </div>
-            </div>
+                                <h4
+                                  style={{
+                                    margin: "0 0 16px 0",
+                                    color: "#1f2937",
+                                    fontSize: "16px",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  Phim đã gán ({assignedMovies?.length || 0})
+                                </h4>
+                                {assignedMovies && assignedMovies.length > 0 ? (
+                                  <>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "12px",
+                                      }}
+                                    >
+                                      {(assignedMovies || [])
+                                        .slice(assignedMoviesPage * 5, (assignedMoviesPage + 1) * 5)
+                                        .map((movie: any) => (
+                                          <div
+                                            key={movie.movieCode}
+                                            style={{
+                                              padding: "12px 16px",
+                                              background: "#f8fafc",
+                                              border: "1px solid #e2e8f0",
+                                              display: "flex",
+                                              justifyContent: "space-between",
+                                              alignItems: "center",
+                                            }}
+                                          >
+                                            <div>
+                                              <div
+                                                style={{
+                                                  fontWeight: "600",
+                                                  color: "#1f2937",
+                                                  fontSize: "14px",
+                                                }}
+                                              >
+                                                {movie.movieCode}
+                                              </div>
+                                              <div
+                                                style={{
+                                                  fontSize: "12px",
+                                                  color: "#64748b",
+                                                  marginTop: "2px",
+                                                }}
+                                              >
+                                                {movie.activeFrom && movie.activeTo
+                                                  ? `${movie.activeFrom} - ${movie.activeTo}`
+                                                  : "Không giới hạn thời gian"}
+                                                {movie.formats && ` • ${movie.formats}`}
+                                                {movie.languages && ` • ${movie.languages}`}
+                                              </div>
+                                            </div>
+                                            <button
+                                              onClick={() => {
+                                                if (
+                                                  confirm(`Bỏ gán phim "${movie.movieCode}"?`)
+                                                ) {
+                                                  unassignMovieMutation.mutate(movie.movieCode);
+                                                }
+                                              }}
+                                              disabled={unassignMovieMutation.isPending}
+                                              style={{
+                                                padding: "4px 8px",
+                                                background: "#fff",
+                                                color: "#dc2626",
+                                                border: "1px solid #dc2626",
+                                                fontSize: "12px",
+                                                fontWeight: "500",
+                                                cursor: "pointer",
+                                                transition: "all 0.2s ease",
+                                              }}
+                                            >
+                                              Bỏ gán
+                                            </button>
+                                          </div>
+                                        ))}
+                                    </div>
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        marginTop: "16px",
+                                        fontSize: "12px",
+                                      }}
+                                    >
+                                      <button
+                                        onClick={() =>
+                                          setAssignedMoviesPage((p) => Math.max(0, p - 1))
+                                        }
+                                        disabled={assignedMoviesPage === 0}
+                                      >
+                                        Trước
+                                      </button>
+                                      <span>
+                                        Trang {assignedMoviesPage + 1} /{" "}
+                                        {Math.ceil((assignedMovies?.length || 0) / 5)}
+                                      </span>
+                                      <button
+                                        onClick={() =>
+                                          setAssignedMoviesPage((p) => p + 1)
+                                        }
+                                        disabled={
+                                          (assignedMoviesPage + 1) * 5 >=
+                                          (assignedMovies?.length || 0)
+                                        }
+                                      >
+                                        Sau
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div
+                                    style={{
+                                      textAlign: "center",
+                                      padding: "40px 20px",
+                                      color: "#64748b",
+                                      fontSize: "14px",
+                                    }}
+                                  >
+                                    Chưa có phim nào được gán cho rạp này
+                                  </div>
+                                )}
+                              </div>            </div>
           )}
 
           {activeTab === "staff" && (
@@ -1914,7 +1818,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                     gap: "8px",
                   }}
                 >
-                  <span style={{ fontSize: "24px" }}>👥</span>
+                  <FontAwesomeIcon icon={faUsers} style={{ fontSize: "20px", marginRight: "8px", color: "#6366f1" }} />
                   Quản lý nhân viên
                 </h3>
                 <p
@@ -2006,19 +1910,15 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                     >
                       Vai trò
                     </label>
-                    <select
+                    <CustomSelect
+                      instanceId="role-select"
                       name="role"
-                      style={{
-                        width: "100%",
-                        padding: "8px 12px",
-                        border: "1px solid #e2e8f0",
-                        fontSize: "14px",
-                        outline: "none",
-                      }}
-                    >
-                      <option value="STAFF">Nhân viên</option>
-                      <option value="MANAGER">Quản lý</option>
-                    </select>
+                      options={[
+                        { value: "STAFF", label: "Nhân viên" },
+                        { value: "MANAGER", label: "Quản lý" },
+                      ]}
+                      defaultValue={{ value: "STAFF", label: "Nhân viên" }}
+                    />
                   </div>
                   <button
                     type="submit"
@@ -2034,9 +1934,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                       transition: "all 0.2s ease",
                     }}
                   >
-                    {assignStaffMutation.isPending
-                      ? "Đang gán..."
-                      : "Gán nhân viên"}
+                    {assignStaffMutation.isPending ? "Đang gán..." : "Gán nhân viên"}
                   </button>
                 </form>
               </div>
@@ -2067,7 +1965,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                       gap: "12px",
                     }}
                   >
-                    {assignedStaff.map((staff: any) => (
+                    {(assignedStaff || []).map((staff: any) => (
                       <div
                         key={staff.id}
                         style={{
@@ -2124,7 +2022,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
                             transition: "all 0.2s ease",
                           }}
                         >
-                          Bỏ gán
+                          {unassignStaffMutation.isPending ? "Đang xóa..." : "Bỏ gán"}
                         </button>
                       </div>
                     ))}

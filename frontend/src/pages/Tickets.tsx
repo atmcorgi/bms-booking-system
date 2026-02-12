@@ -58,7 +58,7 @@ export default function Tickets() {
       <main className="tickets-container" style={{ padding: "20px 0" }}>
         <section className="section-box">
           <div style={{ textAlign: "center", padding: "40px" }}>
-            <div style={{ fontSize: "60px", marginBottom: "20px" }}>⏳</div>
+            <div style={{ fontSize: "60px", marginBottom: "20px" }}>⏱</div>
             <h2>Đang tải vé...</h2>
           </div>
         </section>
@@ -71,7 +71,7 @@ export default function Tickets() {
       <main className="tickets-container" style={{ padding: "20px 0" }}>
         <section className="section-box">
           <div style={{ textAlign: "center", padding: "40px" }}>
-            <div style={{ fontSize: "60px", marginBottom: "20px" }}>❌</div>
+            <div style={{ fontSize: "60px", marginBottom: "20px" }}>✕</div>
             <h2>Không tìm thấy vé</h2>
             <p>Có lỗi xảy ra khi tải thông tin vé.</p>
             <div className="booking-actions" style={{ marginTop: "20px" }}>
@@ -97,7 +97,7 @@ export default function Tickets() {
           }}
         >
           <div>
-            <h2 style={{ marginBottom: "4px" }}>🎉 Đặt vé thành công!</h2>
+            <h2 style={{ marginBottom: "4px" }}>✓ Đặt vé thành công!</h2>
             <p className="text-muted-sm">
               Cảm ơn bạn đã sử dụng My Cinema. Dưới đây là vé của bạn.
             </p>

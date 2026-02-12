@@ -1,0 +1,149 @@
+/* Booking Result - Brand Aligned Styles */
+
+/* Container - let MainLayout handle the page background */
+.booking-result-page {
+  padding: 4rem 1rem;
+  display: flex;
+  justify-content: center;
+  background-color: #faf9f6; /* Off-white from Home */
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.booking-result-card {
+  background: #ffffff;
+  border: 1px solid #d9d2b7; /* Gold border from Home */
+  padding: 3rem;
+  text-align: center;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 4px; /* Slight radius, consistent with buttons */
+}
+
+/* Icons */
+.result-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  display: inline-block;
+}
+
+.result-icon.success {
+  color: #8b7355; /* Gold Brand Color */
+}
+
+.result-icon.error {
+  color: #b91c1c; /* Dark Red */
+}
+
+.result-icon.loading {
+  color: #8b7355;
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Typography */
+.booking-result-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #8b7355; /* Gold Brand Color */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.booking-result-message {
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* Transaction Info Box */
+.transaction-box {
+  background: #faf9f6;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.transaction-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+  border-bottom: 1px dashed #d9d2b7;
+  padding-bottom: 0.5rem;
+}
+
+.transaction-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.t-label {
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.t-value {
+  color: #1f2937;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+/* Buttons */
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.result-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px; /* Matches Home buttons */
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.result-btn.primary {
+  background: #8b7355; /* Gold Brand Color */
+  color: white;
+  border: 1px solid #8b7355;
+}
+
+.result-btn.primary:hover {
+  background: #705d44;
+  border-color: #705d44;
+}
+
+.result-btn.secondary {
+  background: transparent;
+  color: #8b7355;
+  border: 1px solid #8b7355;
+}
+
+.result-btn.secondary:hover {
+  background: #fdfbf7;
+  color: #705d44;
+  border-color: #705d44;
+}
+
+.result-btn i {
+  margin-right: 0.5rem;
+}

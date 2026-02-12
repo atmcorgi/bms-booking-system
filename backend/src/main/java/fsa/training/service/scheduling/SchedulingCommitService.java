@@ -7,6 +7,8 @@ import fsa.training.repository.movie.MovieRequestRepository;
 import fsa.training.repository.theater.RoomRepository;
 import fsa.training.repository.theater.TheaterRepository;
 import fsa.training.repository.booking.ShowtimeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,20 +21,18 @@ import java.util.List;
 @Service
 public class SchedulingCommitService {
 
+    private static final Logger logger = LoggerFactory.getLogger(SchedulingCommitService.class);
+
     @Autowired
     private TheaterRepository theaterRepository;
-
     @Autowired
     private RoomRepository roomRepository;
-
     @Autowired
     private MovieRepository movieRepository;
-
-    @Autowired
-    private MovieRequestRepository movieRequestRepository;
-
     @Autowired
     private ShowtimeRepository showtimeRepository;
+    @Autowired
+    private MovieRequestRepository movieRequestRepository;
 
     @Transactional
     public CommitResult processCommitSlots(List<SchedulingUploadDto> slots) {
@@ -45,11 +45,7 @@ public class SchedulingCommitService {
                 processSingleSlot(slot);
                 successCount++;
             } catch (Exception e) {
-                // Debug log
-                System.out.println("DEBUG: Exception in processSingleSlot: " + e.getClass().getSimpleName() + " - " + e.getMessage());
-                e.printStackTrace();
-                
-                String error = String.format("%s-%s-%s: %s", 
+                String error = String.format("%s-%s-%s: %s",
                     slot.getTheaterName(), slot.getRoomName(), slot.getMovieCode(), e.getMessage());
                 errors.add(error);
                 errorCount++;
@@ -60,22 +56,10 @@ public class SchedulingCommitService {
     }
 
     private void processSingleSlot(SchedulingUploadDto slot) {
-        // Debug log
-        System.out.println("DEBUG: Processing slot - theaterId=" + slot.getTheaterId() +
-            ", roomId=" + slot.getRoomId() +
-            ", movieId=" + slot.getMovieId() +
-            ", showDate=" + slot.getShowDate() +
-            ", showTime=" + slot.getShowTime() +
-            ", theaterName=" + slot.getTheaterName() +
-            ", roomName=" + slot.getRoomName() +
-            ", movieCode=" + slot.getMovieCode());
-        
-        // Validate required fields
         if (slot.getShowDate() == null || slot.getShowTime() == null) {
             throw new IllegalArgumentException("showDate và showTime không được null");
         }
         
-        // Validate entities
         Theater theater = validateTheater(slot);
         Room room = validateRoom(slot, theater);
         Movie movie = validateMovie(slot);
@@ -83,7 +67,9 @@ public class SchedulingCommitService {
         LocalDate date = LocalDate.parse(slot.getShowDate());
         LocalTime time = LocalTime.parse(slot.getShowTime());
         
-        // Create showtime
+        // ✅ FIX: Check conflict with existing showtimes
+        validateNoConflict(room, movie, date, time);
+        
         Showtime showtime = new Showtime();
         showtime.setTheater(theater);
         showtime.setRoom(room);
@@ -95,14 +81,18 @@ public class SchedulingCommitService {
         
         showtimeRepository.save(showtime);
         
-        // Update movie request status if needed
-        if (slot.getMovieRequestId() != null) {
-            movieRequestRepository.findById(slot.getMovieRequestId())
+        // --- CORRECT WORKFLOW LOGIC ---
+        // Find the corresponding MovieRequest and update its status if it's PENDING
+        movieRequestRepository.findFirstByMovie_CodeAndTheater_Id(movie.getCode(), theater.getId())
                 .ifPresent(request -> {
-                    request.setStatus("SCHEDULED");
-                    movieRequestRepository.save(request);
+                    if ("PENDING".equals(request.getStatus())) {
+                        request.setStatus("SCHEDULED");
+                        movieRequestRepository.save(request);
+                        logger.info("✅ Scheduling: MovieRequest for '{}' at theater '{}' status updated to SCHEDULED.",
+                                movie.getTitle(), theater.getName());
+                    }
                 });
-        }
+        // --- END CORRECT WORKFLOW LOGIC ---
     }
     
     private Theater validateTheater(SchedulingUploadDto slot) {
@@ -114,12 +104,6 @@ public class SchedulingCommitService {
             theater = theaterRepository.findByName(slot.getTheaterName());
         }
         if (theater == null) {
-            // Debug log
-            System.out.println("DEBUG: Theater validation failed for slot: " + 
-                "theaterId=" + slot.getTheaterId() + 
-                ", theaterName=" + slot.getTheaterName() + 
-                ", roomName=" + slot.getRoomName() + 
-                ", movieCode=" + slot.getMovieCode());
             throw new IllegalArgumentException("Rạp không tồn tại");
         }
         return theater;
@@ -148,6 +132,60 @@ public class SchedulingCommitService {
                 .orElseThrow(() -> new IllegalArgumentException("Phim không tồn tại"));
         }
         throw new IllegalArgumentException("Thiếu thông tin phim");
+    }
+    
+    /**
+     * Validates that there's no conflict with existing showtimes.
+     * Checks both exact time match and overlap with movie duration + buffer.
+     */
+    private void validateNoConflict(Room room, Movie movie, LocalDate date, LocalTime time) {
+        final int BUFFER_MINUTES = 15; // Cleanup time between movies
+        
+        // Get all existing showtimes for this room on this date
+        List<Showtime> existingShowtimes = showtimeRepository.findByRoomIdAndShowDate(room.getId(), date);
+        
+        int newMovieDuration = movie.getDuration() > 0 ? movie.getDuration() : 120;
+        LocalTime newEndTime = time.plusMinutes(newMovieDuration + BUFFER_MINUTES);
+        
+        for (Showtime existing : existingShowtimes) {
+            LocalTime existingStart = existing.getShowTime();
+            
+            // Check exact time match
+            if (existingStart.equals(time)) {
+                throw new IllegalArgumentException(String.format(
+                    "Conflict: Phòng '%s' đã có suất chiếu '%s' vào %s %s",
+                    room.getName(), 
+                    existing.getMovie().getTitle(),
+                    date, 
+                    time
+                ));
+            }
+            
+            // Check overlap with duration + buffer
+            int existingDuration = existing.getMovie().getDuration() > 0 
+                ? existing.getMovie().getDuration() 
+                : 120;
+            LocalTime existingEndTime = existingStart.plusMinutes(existingDuration + BUFFER_MINUTES);
+            
+            // Overlap if: newStart < existingEnd AND existingStart < newEnd
+            boolean overlaps = time.isBefore(existingEndTime) && existingStart.isBefore(newEndTime);
+            
+            if (overlaps) {
+                throw new IllegalArgumentException(String.format(
+                    "Conflict: Phòng '%s' có suất '%s' (%s-%s) trùng với '%s' (%s-%s)",
+                    room.getName(),
+                    existing.getMovie().getTitle(),
+                    existingStart,
+                    existingEndTime.minusMinutes(BUFFER_MINUTES), // Show actual movie end
+                    movie.getTitle(),
+                    time,
+                    newEndTime.minusMinutes(BUFFER_MINUTES)
+                ));
+            }
+        }
+        
+        logger.debug("✅ No conflict: Room '{}' is available at {} on {}", 
+            room.getName(), time, date);
     }
 
     public static class CommitResult {

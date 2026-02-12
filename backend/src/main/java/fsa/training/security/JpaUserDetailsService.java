@@ -20,7 +20,7 @@ public class JpaUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return accountRepository.findByUsername(username)
+        return accountRepository.findByUsernameOrEmail(username, username)
                 .map(u -> new UserDetails() {
                     @Override
                     public Collection<? extends GrantedAuthority> getAuthorities() {

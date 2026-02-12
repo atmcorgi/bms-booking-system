@@ -38,4 +38,16 @@ public interface MovieRequestRepository extends JpaRepository<MovieRequest, Long
     @EntityGraph(attributePaths = {"movie"})
     List<MovieRequest> findByStatusAndTheater_Id(String status, Long theaterId);
 
+    @EntityGraph(attributePaths = {"movie"})
+    List<MovieRequest> findByTheater_Id(Long theaterId);
+
+    // Alias methods for cleaner code
+    default List<MovieRequest> findByTheaterId(Long theaterId) {
+        return findByTheater_Id(theaterId);
+    }
+
+    default List<MovieRequest> findByTheaterIdAndStatus(Long theaterId, String status) {
+        return findByStatusAndTheater_Id(status, theaterId);
+    }
+
 }

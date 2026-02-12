@@ -9,4 +9,5 @@ import java.util.Optional;
 public interface AccountPermissionRepository extends JpaRepository<AccountPermission, Long> {
     List<AccountPermission> findByAssignedTheaterId(Long theaterId);
     Optional<AccountPermission> findFirstByAccount_IdAndRole_RoleName(Long accountId, String roleName);
+    List<AccountPermission> findByRole(fsa.training.entity.Role role);
 }

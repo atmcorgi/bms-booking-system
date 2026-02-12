@@ -46,6 +46,10 @@ public class Movie {
 
     @Column(name = "trailer_url")
     private String trailerUrl;
+
+    @Column(name = "youtube_url")
+    private String youtubeUrl;
+
     private int duration;
     private String director;
     private String actors;

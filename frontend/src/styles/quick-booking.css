@@ -1,0 +1,193 @@
+.quick-booking-section {
+    position: relative;
+    padding: 80px 0;
+    background: radial-gradient(circle at center, #2c241e 0%, #1a1614 100%);
+    color: #fff;
+    overflow: hidden;
+}
+
+/* Subtle cinematic light effect */
+.quick-booking-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(circle at 30% 30%, rgba(139, 115, 85, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.quick-booking-container {
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.quick-booking-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.quick-booking-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #d9d2b7;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    margin-bottom: 15px;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #d9d2b7 0%, #8b7355 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.quick-booking-subtitle {
+    font-size: 1.1rem;
+    color: #a89a8e;
+    font-weight: 400;
+    letter-spacing: 1px;
+}
+
+.quick-booking-grid {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+.quick-booking-card {
+    position: relative;
+    flex: 1;
+    min-width: 320px;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(217, 210, 183, 0.15);
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.quick-booking-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(217, 210, 183, 0.1) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.quick-booking-card:hover {
+    transform: translateY(-12px);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(217, 210, 183, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.quick-booking-card:hover::after {
+    opacity: 1;
+}
+
+.card-icon-wrapper {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: rgba(139, 115, 85, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    font-size: 3rem;
+    color: #d9d2b7;
+    transition: all 0.5s ease;
+}
+
+.quick-booking-card:hover .card-icon-wrapper {
+    background: #8b7355;
+    color: #fff;
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 0 30px rgba(139, 115, 85, 0.4);
+}
+
+.card-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.card-description {
+    font-size: 0.95rem;
+    color: #a89a8e;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    max-width: 250px;
+}
+
+.card-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    color: #d9d2b7;
+    border: 1px solid #d9d2b7;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.quick-booking-card:hover .card-action-btn {
+    background: #d9d2b7;
+    color: #1a1614;
+    transform: scale(1.05);
+}
+
+/* Floating animation for subtle life */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0px); }
+}
+
+.quick-booking-card:nth-child(2) .card-icon-wrapper {
+    animation: float 4s ease-in-out infinite;
+}
+.quick-booking-card:nth-child(1) .card-icon-wrapper {
+    animation: float 4s ease-in-out infinite 2s;
+}
+
+@media (max-width: 768px) {
+    .quick-booking-title {
+        font-size: 2rem;
+    }
+    .quick-booking-grid {
+        gap: 20px;
+    }
+    .quick-booking-card {
+        padding: 30px;
+        min-width: 100%;
+    }
+}

@@ -21,6 +21,25 @@ public class Account {
     private String password;
     private boolean enabled;
 
-    @OneToMany(mappedBy = "account", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Column(unique = true)
+    private String email;
+
+    private String fullName;
+    
+    private String phone;
+
+    @Column(name = "email_verified")
+    private Boolean emailVerified = false;
+
+    @Column(name = "google_sub", unique = true)
+    private String googleSub;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider")
+    private AuthProvider authProvider;
+
+    private String avatar;
+
+    @OneToMany(mappedBy = "account", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AccountPermission> accountPermissions;
 }

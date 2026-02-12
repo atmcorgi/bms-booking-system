@@ -1,9 +1,11 @@
 package fsa.training.controller.staff;
 
+import fsa.training.entity.Room;
 import fsa.training.entity.Showtime;
 import fsa.training.entity.Theater;
 import fsa.training.repository.booking.ShowtimeRepository;
 import fsa.training.repository.movie.MovieAssignmentRepository;
+import fsa.training.repository.theater.RoomRepository;
 import fsa.training.repository.theater.TheaterRepository;
 import fsa.training.security.TheaterPermissionEvaluator;
 import org.springframework.http.ResponseEntity;
@@ -18,24 +20,27 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/staff/dashboard")
+@RequestMapping("/api/staff")
 public class StaffDashboardApiController {
     private final TheaterPermissionEvaluator permissionEvaluator;
     private final TheaterRepository theaterRepository;
     private final MovieAssignmentRepository movieAssignmentRepository;
     private final ShowtimeRepository showtimeRepository;
+    private final RoomRepository roomRepository;
 
     public StaffDashboardApiController(TheaterPermissionEvaluator permissionEvaluator,
                                        TheaterRepository theaterRepository,
                                        MovieAssignmentRepository movieAssignmentRepository,
-                                       ShowtimeRepository showtimeRepository) {
+                                       ShowtimeRepository showtimeRepository,
+                                       RoomRepository roomRepository) {
         this.permissionEvaluator = permissionEvaluator;
         this.theaterRepository = theaterRepository;
         this.movieAssignmentRepository = movieAssignmentRepository;
         this.showtimeRepository = showtimeRepository;
+        this.roomRepository = roomRepository;
     }
 
-    @GetMapping
+    @GetMapping("/dashboard")
     public ResponseEntity<?> get(Authentication auth) {
         Long theaterId = permissionEvaluator.getAssignedTheaterId(auth.getName());
         if (theaterId == null || !permissionEvaluator.canManageTheater(auth.getName(), theaterId)) {
@@ -49,8 +54,9 @@ public class StaffDashboardApiController {
         var assignments = movieAssignmentRepository.findAllWithMovieByTheater(theaterId).stream()
                 .map(ma -> {
                     java.util.Map<String, Object> m = new java.util.HashMap<>();
-                    m.put("code", ma.getMovie().getCode());
-                    m.put("title", ma.getMovie().getTitle());
+                    m.put("movieId", ma.getMovie().getId());
+                    m.put("movieCode", ma.getMovie().getCode());
+                    m.put("movieTitle", ma.getMovie().getTitle());
                     m.put("activeFrom", ma.getActiveFrom());
                     m.put("activeTo", ma.getActiveTo());
                     return m;
@@ -73,6 +79,11 @@ public class StaffDashboardApiController {
             cur = cur.plusDays(1);
         }
 
+        // Get rooms for this theater
+        List<Room> rooms = roomRepository.findAll().stream()
+                .filter(r -> r.getTheater() != null && r.getTheater().getId().equals(theaterId))
+                .toList();
+
         Map<String, Object> out = new java.util.HashMap<>();
         {
             java.util.Map<String, Object> t = new java.util.HashMap<>();
@@ -83,6 +94,12 @@ public class StaffDashboardApiController {
             out.put("theater", t);
         }
         out.put("assignments", assignments);
+        out.put("rooms", rooms.stream().map(r -> {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", r.getId());
+            m.put("name", r.getName());
+            return m;
+        }).toList());
         out.put("todayShowtimes", todayShows.stream().map(s -> {
             java.util.Map<String, Object> m = new java.util.HashMap<>();
             m.put("time", s.getShowTime().toString());
@@ -92,6 +109,41 @@ public class StaffDashboardApiController {
         }).toList());
         out.put("weekShowtimes", weekShows);
         return ResponseEntity.ok(out);
+    }
+
+    @GetMapping("/movies/assigned")
+    public ResponseEntity<?> getAssignedMovies(Authentication auth) {
+        Long theaterId = permissionEvaluator.getAssignedTheaterId(auth.getName());
+        if (theaterId == null || !permissionEvaluator.canManageTheater(auth.getName(), theaterId)) {
+            return ResponseEntity.status(403).body(Map.of("error", "No theater assigned"));
+        }
+        Theater theater = theaterRepository.findById(theaterId).orElse(null);
+        if (theater == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Theater not found"));
+        }
+
+        var assignments = movieAssignmentRepository.findAllWithMovieByTheater(theaterId).stream()
+                .map(ma -> {
+                    java.util.Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("id", ma.getMovie().getId());
+                    m.put("code", ma.getMovie().getCode());
+                    m.put("title", ma.getMovie().getTitle());
+                    String status = ma.getMovie().getStatus();
+                    m.put("status", status != null ? status : "SCHEDULED");
+                    m.put("activeFrom", ma.getActiveFrom());
+                    m.put("activeTo", ma.getActiveTo());
+                    return m;
+                }).collect(Collectors.toList());
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("movies", assignments);
+        
+        java.util.Map<String, Object> t = new java.util.HashMap<>();
+        t.put("name", theater.getName());
+        t.put("code", theater.getCode());
+        response.put("theater", t);
+
+        return ResponseEntity.ok(response);
     }
 }
 

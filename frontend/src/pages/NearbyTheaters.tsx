@@ -2,6 +2,19 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../services/apiClient";
 import "./NearbyTheaters.css";
+import CustomSelect, { type SelectOption } from "../components/shared/CustomSelect";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faLocationCrosshairs, 
+  faSync, 
+  faMapMarkerAlt, 
+  faPhone, 
+  faInfoCircle, 
+  faTicketAlt, 
+  faDirections,
+  faTheaterMasks,
+  faSearchPlus
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function NearbyTheaters() {
   const [userLocation, setUserLocation] = useState<{
@@ -11,7 +24,16 @@ export default function NearbyTheaters() {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [radius, setRadius] = useState(10);
 
-  // Get user's current location
+  const radiusOptions: SelectOption[] = [
+    { value: 5, label: "5 km" },
+    { value: 10, label: "10 km" },
+    { value: 15, label: "15 km" },
+    { value: 20, label: "20 km" },
+    { value: 50, label: "50 km" },
+  ];
+
+  const selectedRadius = radiusOptions.find(opt => opt.value === radius);
+
   const detectLocation = () => {
     setIsDetectingLocation(true);
     if (navigator.geolocation) {
@@ -25,7 +47,6 @@ export default function NearbyTheaters() {
         },
         (error) => {
           console.error("Error getting location:", error);
-          // Default to Ho Chi Minh City if location access denied
           setUserLocation({
             latitude: 10.8231,
             longitude: 106.6297,
@@ -34,7 +55,6 @@ export default function NearbyTheaters() {
         }
       );
     } else {
-      // Default to Ho Chi Minh City if geolocation not supported
       setUserLocation({
         latitude: 10.8231,
         longitude: 106.6297,
@@ -43,12 +63,10 @@ export default function NearbyTheaters() {
     }
   };
 
-  // Auto-detect location on component mount
   useEffect(() => {
     detectLocation();
   }, []);
 
-  // Fetch nearby theaters
   const {
     data: theaters,
     isLoading,
@@ -75,7 +93,7 @@ export default function NearbyTheaters() {
     lat2: number,
     lon2: number
   ) => {
-    const R = 6371; // Radius of the Earth in km
+    const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
@@ -89,164 +107,196 @@ export default function NearbyTheaters() {
   };
 
   return (
-    <div className="container">
-      {/* Page Header */}
-      <div className="page-header">
-        <h2>Rạp Gần Bạn</h2>
-        <p>Tìm rạp chiếu phim gần nhất để xem phim</p>
-      </div>
-
-      {/* Location Detection */}
-      <div className="location-section">
-        <div className="location-status">
-          {isDetectingLocation ? (
-            <div className="location-loading">
-              <span className="loading-spinner"></span>
-              <span>Đang xác định vị trí của bạn...</span>
-            </div>
-          ) : userLocation ? (
-            <div style={{ color: "#8b7355", fontWeight: "500" }}>
-              📍 Vị trí hiện tại: {userLocation.latitude.toFixed(4)},{" "}
-              {userLocation.longitude.toFixed(4)}
-            </div>
-          ) : (
-            <div style={{ color: "#8b7355", fontWeight: "500" }}>
-              Chưa xác định được vị trí
-            </div>
-          )}
+    <div className="nearby-theaters-page">
+      <div className="container">
+        {/* Page Header */}
+        <div className="page-header">
+          <h2 className="page-header-title">Rạp Gần Bạn</h2>
+          <p className="page-header-subtitle">Khám phá không gian điện ảnh gần nhất với vị trí của bạn</p>
         </div>
 
-        <div className="location-controls">
-          <button
-            id="detect-location"
-            className="btn btn-primary"
-            onClick={detectLocation}
-            disabled={isDetectingLocation}
-          >
-            <span className="icon">📍</span>
-            Xác định vị trí
-          </button>
-          {userLocation && (
-            <button
-              id="refresh-location"
-              className="btn btn-secondary"
-              onClick={detectLocation}
-            >
-              <span className="icon">🔄</span>
-              Làm mới
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Radius Control */}
-      <div className="radius-control">
-        <label htmlFor="radius-select">Bán kính tìm kiếm:</label>
-        <select
-          id="radius-select"
-          className="radius-select"
-          value={radius}
-          onChange={(e) => setRadius(Number(e.target.value))}
-        >
-          <option value={5}>5 km</option>
-          <option value={10}>10 km</option>
-          <option value={15}>15 km</option>
-          <option value={20}>20 km</option>
-          <option value={50}>50 km</option>
-        </select>
-      </div>
-
-      {/* Theaters List */}
-      <div className="theaters-container">
-        {isLoading ? (
-          <div className="location-loading">
-            <span className="loading-spinner"></span>
-            <span>Đang tải danh sách rạp...</span>
-          </div>
-        ) : isError ? (
-          <div className="no-theaters">
-            <div className="no-theaters-content">
-              <span className="icon">❌</span>
-              <h3>Có lỗi khi tải dữ liệu</h3>
-              <p>Vui lòng thử lại sau</p>
+        {/* Dashboard Controls */}
+        <div className="controls-dashboard">
+          <div className="location-panel">
+            <span className="panel-label">Vị trí hiện tại</span>
+            <div className="location-status-display">
+              <div className={`status-dot ${isDetectingLocation ? 'loading' : ''}`}></div>
+              {isDetectingLocation ? (
+                <span>Đang định vị...</span>
+              ) : userLocation ? (
+                <span>{userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}</span>
+              ) : (
+                <span>Chưa xác định</span>
+              )}
+            </div>
+            <div className="location-actions">
+              <button
+                className="btn-nt btn-nt-primary"
+                onClick={detectLocation}
+                disabled={isDetectingLocation}
+              >
+                <FontAwesomeIcon icon={faLocationCrosshairs} /> Xác định lại
+              </button>
+              {userLocation && (
+                <button className="btn-nt btn-nt-secondary" onClick={detectLocation}>
+                  <FontAwesomeIcon icon={faSync} /> Làm mới
+                </button>
+              )}
             </div>
           </div>
-        ) : theaters && theaters.length > 0 ? (
-          <div className="theaters-list">
-            {theaters.map((theater: any) => {
-              const distance = userLocation
-                ? calculateDistance(
-                    userLocation.latitude,
-                    userLocation.longitude,
-                    theater.latitude,
-                    theater.longitude
-                  )
-                : 0;
 
-              return (
-                <div key={theater.id} className="theater-card">
-                  <div className="theater-info">
-                    <h3 className="theater-name">{theater.name}</h3>
-                    <p className="theater-address">📍 {theater.address}</p>
-                    {theater.phone && (
-                      <p className="theater-phone">📞 {theater.phone}</p>
-                    )}
-                    {theater.description && (
-                      <p className="theater-description">
-                        {theater.description}
-                      </p>
-                    )}
-                    <div className="theater-badges">
-                      <span className="badge badge-code">
-                        🎬 {theater.code}
-                      </span>
-                      <span className="badge badge-distance">
-                        📍 {distance.toFixed(1)} km
-                      </span>
+          <div className="radius-panel">
+            <span className="panel-label">Bán kính tìm kiếm</span>
+            <CustomSelect
+              instanceId="radius-select"
+              options={radiusOptions}
+              value={selectedRadius}
+              onChange={(option) => setRadius(option?.value as number)}
+              menuPortalTarget={document.body}
+              styles={{
+                control: (base: any, state: any) => ({
+                  ...base,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: state.isFocused ? '1px solid #8b7355' : '1px solid rgba(217, 210, 183, 0.2)',
+                  borderRadius: '12px',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    border: '1px solid rgba(217, 210, 183, 0.4)',
+                  },
+                }),
+                singleValue: (base: any) => ({
+                  ...base,
+                  color: '#d9d2b7',
+                  fontWeight: '600',
+                }),
+                placeholder: (base: any) => ({
+                  ...base,
+                  color: 'rgba(217, 210, 183, 0.5)',
+                }),
+                menu: (base: any) => ({
+                  ...base,
+                  background: '#2c241e',
+                  border: '1px solid rgba(217, 210, 183, 0.1)',
+                  borderRadius: '12px',
+                  marginTop: '8px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                }),
+                menuPortal: (base: any) => ({
+                  ...base,
+                  zIndex: 9999,
+                }),
+                option: (base: any, state: any) => ({
+                  ...base,
+                  background: state.isSelected ? '#8b7355' : state.isFocused ? 'rgba(139, 115, 85, 0.2)' : 'transparent',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  padding: '12px 16px',
+                  '&:active': {
+                    background: '#8b7355',
+                  },
+                }),
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Theaters Grid */}
+        <div className="theaters-container">
+          {isLoading ? (
+            <div className="nt-loading-overlay">
+              <div className="nt-spinner"></div>
+              <span>Đang tìm kiếm các rạp trong khu vực...</span>
+            </div>
+          ) : isError ? (
+            <div className="nt-empty-state">
+              <div className="nt-empty-icon"><FontAwesomeIcon icon={faInfoCircle} /></div>
+              <h3>Có lỗi xảy ra</h3>
+              <p>Không thể kết nối đến máy chủ. Vui lòng thử lại sau.</p>
+            </div>
+          ) : theaters && theaters.length > 0 ? (
+            <div className="theaters-grid">
+              {theaters.map((theater: any) => {
+                const distance = userLocation
+                  ? calculateDistance(
+                      userLocation.latitude,
+                      userLocation.longitude,
+                      theater.latitude,
+                      theater.longitude
+                    )
+                  : 0;
+
+                return (
+                  <div key={theater.id} className="nt-theater-card">
+                    <div className="nt-theater-info">
+                      <h3 className="nt-theater-name">{theater.name}</h3>
+                      <div className="nt-theater-meta">
+                        <div className="meta-item">
+                          <FontAwesomeIcon icon={faMapMarkerAlt} />
+                          <span>{theater.address}</span>
+                        </div>
+                        {theater.phone && (
+                          <div className="meta-item">
+                            <FontAwesomeIcon icon={faPhone} />
+                            <span>{theater.phone}</span>
+                          </div>
+                        )}
+                        {theater.description && (
+                          <div className="meta-item">
+                            <FontAwesomeIcon icon={faInfoCircle} />
+                            <span>{theater.description}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="nt-theater-badges">
+                        <span className="nt-badge nt-badge-code">
+                          #{theater.code}
+                        </span>
+                        <span className="nt-badge nt-badge-distance">
+                          {distance.toFixed(1)} km
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="nt-theater-actions">
+                      <button
+                        className="btn-booking"
+                        onClick={() => {
+                          window.location.href = `/booking?theaterId=${theater.id}`;
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faTicketAlt} /> Đặt vé ngay
+                      </button>
+                      <button
+                        className="btn-map"
+                        onClick={() =>
+                          window.open(
+                            `https://maps.google.com/?q=${theater.latitude},${theater.longitude}`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        <FontAwesomeIcon icon={faDirections} /> Xem bản đồ
+                      </button>
                     </div>
                   </div>
-                  <div className="theater-actions">
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => {
-                        // Navigate to booking page with theater pre-selected
-                        // Use /booking?theaterId=123 to avoid conflict with /booking/:movieId route
-                        window.location.href = `/booking?theaterId=${theater.id}`;
-                      }}
-                    >
-                      🎫 Đặt vé
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() =>
-                        window.open(
-                          `https://maps.google.com/?q=${theater.latitude},${theater.longitude}`,
-                          "_blank"
-                        )
-                      }
-                    >
-                      📍 Chỉ đường
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="no-theaters">
-            <div className="no-theaters-content">
-              <span className="icon">🎬</span>
-              <h3>Không tìm thấy rạp nào</h3>
-              <p>Không có rạp chiếu phim nào trong bán kính {radius}km</p>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="nt-empty-state">
+              <div className="nt-empty-icon"><FontAwesomeIcon icon={faTheaterMasks} /></div>
+              <h3>Không tìm thấy rạp</h3>
+              <p>Hiện tại không có rạp chiếu phim nào trong bán kính {radius}km xung quanh bạn.</p>
               <button
-                className="btn btn-primary"
+                className="btn-nt btn-nt-primary"
+                style={{ margin: '0 auto' }}
                 onClick={() => setRadius(radius + 10)}
               >
-                Mở rộng tìm kiếm
+                <FontAwesomeIcon icon={faSearchPlus} /> Mở rộng tìm kiếm (+10km)
               </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

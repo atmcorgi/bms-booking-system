@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
 import api from "../services/apiClient";
 
 interface SearchBarProps {
@@ -19,7 +21,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   const { data: genres = [], isLoading: loadingGenres } = useQuery({
     queryKey: ["genres"],
     queryFn: async () => {
-      const res = await api.get("/movies/api/genres");
+      const res = await api.get("/api/genres");
       return res.data;
     },
   });
@@ -67,7 +69,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                   <span className="dropdown-arrow">▼</span>
                 </div>
                 {isGenreDropdownOpen && (
-                  <div className="dropdown-menu">
+                  <div className="dropdown-menu show">
                     <div
                       className="dropdown-item"
                       onClick={() => handleGenreSelect("")}
@@ -114,6 +116,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     type="button"
                     className={`year-btn ${selectedYear === "" ? "active" : ""}`}
                     onClick={() => handleYearClick("")}
+                    style={{ borderRadius: "0" }}
                   >
                     Tất cả
                   </button>
@@ -121,6 +124,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     type="button"
                     className={`year-btn ${selectedYear === "2025" ? "active" : ""}`}
                     onClick={() => handleYearClick("2025")}
+                    style={{ borderRadius: "0" }}
                   >
                     2025
                   </button>
@@ -128,6 +132,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     type="button"
                     className={`year-btn ${selectedYear === "2024" ? "active" : ""}`}
                     onClick={() => handleYearClick("2024")}
+                    style={{ borderRadius: "0" }}
                   >
                     2024
                   </button>
@@ -135,6 +140,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     type="button"
                     className={`year-btn ${selectedYear === "2023" ? "active" : ""}`}
                     onClick={() => handleYearClick("2023")}
+                    style={{ borderRadius: "0" }}
                   >
                     2023
                   </button>
@@ -153,8 +159,12 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
-              <button className="search-btn" onClick={handleSearch}>
-                <span className="search-icon">🔍</span>
+              <button
+                className="search-btn"
+                style={{ borderRadius: "0" }}
+                onClick={handleSearch}
+              >
+                <FontAwesomeIcon icon={faMagnifyingGlass} className="search-icon" />
               </button>
             </div>
           </div>

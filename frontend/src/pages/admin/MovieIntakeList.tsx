@@ -212,7 +212,7 @@ export default function MovieIntakeList() {
                 title="Ẩn/hiện cột"
                 style={{ marginTop: 0 }}
               >
-                ⚙️ Cột
+                ⚙ Cột
                 {Object.values(visibleCols).filter(Boolean).length <
                 Object.keys(visibleCols).length
                   ? ` (${Object.keys(visibleCols).length - Object.values(visibleCols).filter(Boolean).length})`
@@ -623,7 +623,7 @@ export default function MovieIntakeList() {
                               style={{
                                 width: 40,
                                 height: 56,
-                                objectFit: "cover",
+                                objectFit: "contain",
                                 borderRadius: 4,
                               }}
                             />
@@ -870,6 +870,7 @@ export default function MovieIntakeList() {
                   <th style={{ width: "100px" }}>Ngôn ngữ</th>
                   <th style={{ width: "80px" }}>Ưu tiên</th>
                   <th style={{ width: "120px" }}>Điểm nhu cầu</th>
+                  <th style={{ width: "200px" }}>YouTube URL</th>
                   <th style={{ width: "180px" }}>Thể loại</th>
                   <th style={{ width: "250px" }}>Lỗi</th>
                   <th style={{ width: "250px" }}>Cảnh báo</th>
@@ -1030,6 +1031,16 @@ export default function MovieIntakeList() {
                       }}
                     >
                       {r.data?.demandScore}
+                    </td>
+                    <td
+                      style={{
+                        maxWidth: "200px",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {r.data?.youtubeUrl}
                     </td>
                     <td
                       style={{
@@ -1275,7 +1286,7 @@ export default function MovieIntakeList() {
                   color: "#dc2626",
                 }}
               >
-                ⚠️
+                ⚠
               </div>
               <div
                 id="delete-title"
@@ -1321,7 +1332,7 @@ export default function MovieIntakeList() {
                   border: "1px solid #fde68a",
                 }}
               >
-                ⚠️ Hành động này không thể hoàn tác
+                ⚠ Hành động này không thể hoàn tác
               </div>
             </div>
             <div

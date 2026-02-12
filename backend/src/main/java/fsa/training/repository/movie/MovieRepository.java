@@ -22,15 +22,29 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
     List<Movie> findMoviesByTheaterIdFromDate(@Param("theaterId") Long theaterId,
                                               @Param("start") LocalDate start);
 
+    @Query(value = "SELECT DISTINCT m.* FROM movie m " +
+            "JOIN movie_request mr ON m.id = mr.movie_id " +
+            "JOIN showtime s ON m.id = s.movie_id " +
+            "WHERE s.theater_id = :theaterId " +
+            "AND s.show_date >= :start " +
+            "AND mr.status = 'PUBLISHED'", nativeQuery = true)
+    List<Movie> findNowShowingMoviesByTheater(@Param("theaterId") Long theaterId, @Param("start") LocalDate start);
+
+
     Optional<Movie> findByCode(String code);
 
     // Projection queries
 
     @Query(value = "SELECT m.id as id, m.title as title, m.poster_url as posterUrl, " +
            "m.duration as duration, m.age_rating as ageRating, m.release_date as releaseDate, " +
-           "m.director as director, '' as genres " +
+           "m.director as director, COALESCE(GROUP_CONCAT(DISTINCT g.name SEPARATOR ', '), '') as genres " +
            "FROM movie m " +
-           "WHERE EXISTS (SELECT 1 FROM showtime s WHERE s.movie_id = m.id AND s.show_date >= :today) " +
+           "JOIN movie_request mr ON m.id = mr.movie_id " +
+           "LEFT JOIN movie_genre mg ON m.id = mg.movie_id " +
+           "LEFT JOIN genre g ON mg.genre_id = g.id " +
+           "WHERE mr.status = 'PUBLISHED' " +
+           "AND EXISTS (SELECT 1 FROM showtime s WHERE s.movie_id = m.id AND s.show_date >= :today) " +
+           "GROUP BY m.id, m.title, m.poster_url, m.duration, m.age_rating, m.release_date, m.director " +
            "ORDER BY m.title ASC", nativeQuery = true)
     Page<MovieCardProjection> findNowShowingProjections(Pageable pageable, @Param("today") LocalDate today);
 
@@ -40,7 +54,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
            "FROM movie m " +
            "LEFT JOIN movie_genre mg ON m.id = mg.movie_id " +
            "LEFT JOIN genre g ON mg.genre_id = g.id " +
-           "WHERE m.id NOT IN (SELECT DISTINCT s.movie_id FROM showtime s WHERE s.show_date >= :today) " +
+           "WHERE m.release_date > :today " +
            "GROUP BY m.id, m.title, m.poster_url, m.duration, m.age_rating, m.release_date, m.director " +
            "ORDER BY m.title ASC", nativeQuery = true)
     Page<MovieCardProjection> findComingSoonProjections(Pageable pageable, @Param("today") LocalDate today);
@@ -112,4 +126,13 @@ public interface MovieRepository extends JpaRepository<Movie, Long>, JpaSpecific
            "GROUP BY m.id, m.code, m.title, m.director, m.duration, m.status, m.release_date, ma.formats, ma.languages " +
            "ORDER BY m.title ASC", nativeQuery = true)
     Page<MovieStatusProjection> findAllAssignedMoviesByTheater(@Param("theaterId") Long theaterId, Pageable pageable);
+    @Query(value = "SELECT m.* FROM movie m " +
+            "WHERE (:q IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(m.code) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+            "AND NOT EXISTS (SELECT 1 FROM movie_assignment ma WHERE ma.movie_id = m.id AND ma.theater_id = :theaterId) " +
+            "ORDER BY m.title ASC",
+            countQuery = "SELECT count(m.id) FROM movie m " +
+            "WHERE (:q IS NULL OR LOWER(m.title) LIKE LOWER(CONCAT('%', :q, '%')) OR LOWER(m.code) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+            "AND NOT EXISTS (SELECT 1 FROM movie_assignment ma WHERE ma.movie_id = m.id AND ma.theater_id = :theaterId)",
+            nativeQuery = true)
+    Page<Movie> findUnassignedMoviesByTheater(@Param("theaterId") Long theaterId, @Param("q") String q, Pageable pageable);
 }

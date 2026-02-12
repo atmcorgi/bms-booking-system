@@ -3,6 +3,20 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminTheaterApi } from "../../services/adminTheaterApi";
 import TheaterManageTabs from "./TheaterManageTabs.tsx";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import ErrorModal from "../../components/shared/ErrorModal";
+import {
+  faSearch,
+  faFilm,
+  faSpinner,
+  faMapMarkerAlt,
+  faMapMarkedAlt,
+  faMap,
+  faEdit,
+  faSave,
+  faInfoCircle,
+  faList,
+} from "@fortawesome/free-solid-svg-icons";
 
 // Custom Select Component
 const CustomSelect = ({
@@ -11,14 +25,14 @@ const CustomSelect = ({
   options,
   placeholder,
   disabled = false,
-  icon = "🏛️",
+  icon,
 }: {
   value: number;
   onChange: (value: number) => void;
   options: Array<{ id: number; name: string }>;
   placeholder: string;
   disabled?: boolean;
-  icon?: string;
+  icon?: any;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -86,12 +100,22 @@ const CustomSelect = ({
         <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           {selectedOption ? (
             <>
-              <span style={{ fontSize: "16px" }}>{icon}</span>
+              {icon && (
+                <FontAwesomeIcon
+                  icon={icon}
+                  style={{ fontSize: "14px", color: "#6366f1" }}
+                />
+              )}
               <span>{selectedOption.name}</span>
             </>
           ) : (
             <>
-              <span style={{ fontSize: "16px" }}>{icon}</span>
+              {icon && (
+                <FontAwesomeIcon
+                  icon={icon}
+                  style={{ fontSize: "14px", color: "#9ca3af" }}
+                />
+              )}
               <span style={{ color: "#9ca3af", fontStyle: "italic" }}>
                 {placeholder}
               </span>
@@ -193,7 +217,6 @@ const CustomSelect = ({
                     e.currentTarget.style.color = "#333";
                   }}
                 >
-                  <span style={{ fontSize: "16px" }}>{icon}</span>
                   <span>{option.name}</span>
                   {value === option.id && (
                     <span
@@ -248,6 +271,48 @@ const AutofillModal = ({
 }) => {
   if (!isOpen || !theaterInfo) return null;
 
+  const InfoRow = ({
+    label,
+    value,
+    icon,
+  }: {
+    label: string;
+    value: string;
+    icon?: string;
+  }) => (
+    <div
+      style={{
+        padding: "12px 16px",
+        background: "#f9fafb",
+        borderRadius: "8px",
+        border: "1px solid #e5e7eb",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "12px",
+          fontWeight: "600",
+          color: "#6b7280",
+          marginBottom: "4px",
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}
+      >
+        {icon && <span style={{ marginRight: "6px" }}>{icon}</span>}
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: "14px",
+          color: "#1f2937",
+          fontWeight: "500",
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -256,23 +321,22 @@ const AutofillModal = ({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.6)",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         zIndex: 9999,
-        padding: "20px",
       }}
       onClick={onClose}
     >
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "#fff",
           borderRadius: "12px",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-          maxWidth: "500px",
-          width: "100%",
-          maxHeight: "90vh",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+          maxWidth: "600px",
+          width: "90%",
+          maxHeight: "80vh",
           overflow: "hidden",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -280,453 +344,112 @@ const AutofillModal = ({
         {/* Header */}
         <div
           style={{
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            color: "#ffffff",
             padding: "24px",
-            borderTopLeftRadius: "12px",
-            borderTopRightRadius: "12px",
+            borderBottom: "1px solid #e5e7eb",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          <div
+          <h3
             style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
+              fontSize: "20px",
+              fontWeight: "600",
+              margin: 0,
+              color: "#1f2937",
             }}
           >
-            <h3
-              style={{
-                fontSize: "20px",
-                fontWeight: "600",
-                margin: 0,
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <span style={{ marginRight: "8px", fontSize: "24px" }}>🎬</span>
-              Thông tin rạp chiếu phim
-            </h3>
-            <button
-              onClick={onClose}
-              style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                border: "none",
-                borderRadius: "50%",
-                width: "32px",
-                height: "32px",
-                color: "#ffffff",
-                cursor: "pointer",
-                fontSize: "18px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background-color 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "rgba(255, 255, 255, 0.3)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor =
-                  "rgba(255, 255, 255, 0.2)";
-              }}
-            >
-              ×
-            </button>
-          </div>
+            🎬 Thông tin rạp chiếu phim
+          </h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: "24px",
+              color: "#9ca3af",
+              cursor: "pointer",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#f3f4f6";
+              e.currentTarget.style.color = "#1f2937";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "none";
+              e.currentTarget.style.color = "#9ca3af";
+            }}
+          >
+            ×
+          </button>
         </div>
 
         {/* Content */}
         <div style={{ padding: "24px", maxHeight: "60vh", overflowY: "auto" }}>
-          <div style={{ display: "grid", gap: "20px" }}>
-            {/* Theater Name */}
-            <div
-              style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}
-            >
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: "18px",
-                }}
-              >
-                🎭
-              </div>
-              <div style={{ flex: 1 }}>
-                <p
-                  style={{
-                    fontWeight: "600",
-                    color: "#374151",
-                    margin: "0 0 4px 0",
-                    fontSize: "14px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Tên rạp
-                </p>
-                <p
-                  style={{
-                    color: "#6b7280",
-                    margin: 0,
-                    fontSize: "16px",
-                    lineHeight: "1.5",
-                  }}
-                >
-                  {theaterInfo.name}
-                </p>
-              </div>
-            </div>
+          <div style={{ display: "grid", gap: "12px" }}>
+            <InfoRow label="Tên rạp" value={theaterInfo.name} icon="🎬" />
+            <InfoRow label="Địa chỉ" value={theaterInfo.address} icon="📍" />
 
-            {/* Address */}
-            <div
-              style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}
-            >
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  background:
-                    "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: "18px",
-                }}
-              >
-                📍
-              </div>
-              <div style={{ flex: 1 }}>
-                <p
-                  style={{
-                    fontWeight: "600",
-                    color: "#374151",
-                    margin: "0 0 4px 0",
-                    fontSize: "14px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Địa chỉ
-                </p>
-                <p
-                  style={{
-                    color: "#6b7280",
-                    margin: 0,
-                    fontSize: "14px",
-                    lineHeight: "1.6",
-                  }}
-                >
-                  {theaterInfo.address}
-                </p>
-              </div>
-            </div>
-
-            {/* Province & District */}
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                gap: "20px",
+                gap: "12px",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    background:
-                      "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    fontSize: "16px",
-                  }}
-                >
-                  🏢
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontWeight: "500",
-                      color: "#374151",
-                      margin: "0 0 4px 0",
-                      fontSize: "12px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Tỉnh/TP
-                  </p>
-                  <p
-                    style={{
-                      color: "#6b7280",
-                      margin: 0,
-                      fontSize: "14px",
-                    }}
-                  >
-                    {theaterInfo.province}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    background:
-                      "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    fontSize: "16px",
-                  }}
-                >
-                  🏠
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontWeight: "500",
-                      color: "#374151",
-                      margin: "0 0 4px 0",
-                      fontSize: "12px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Quận/Huyện
-                  </p>
-                  <p
-                    style={{
-                      color: "#6b7280",
-                      margin: 0,
-                      fontSize: "14px",
-                    }}
-                  >
-                    {theaterInfo.district}
-                  </p>
-                </div>
-              </div>
+              <InfoRow label="Tỉnh/TP" value={theaterInfo.province} icon="🏙️" />
+              <InfoRow
+                label="Quận/Huyện"
+                value={theaterInfo.district}
+                icon="🏘️"
+              />
             </div>
 
-            {/* Phone & Website */}
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                gap: "20px",
+                gap: "12px",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    background:
-                      "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    fontSize: "16px",
-                  }}
-                >
-                  📞
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontWeight: "500",
-                      color: "#374151",
-                      margin: "0 0 4px 0",
-                      fontSize: "12px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Điện thoại
-                  </p>
-                  <p
-                    style={{
-                      color: "#6b7280",
-                      margin: 0,
-                      fontSize: "14px",
-                    }}
-                  >
-                    {theaterInfo.phone}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    background:
-                      "linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    fontSize: "16px",
-                  }}
-                >
-                  🌐
-                </div>
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontWeight: "500",
-                      color: "#374151",
-                      margin: "0 0 4px 0",
-                      fontSize: "12px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Website
-                  </p>
-                  <p
-                    style={{
-                      color: "#6b7280",
-                      margin: 0,
-                      fontSize: "14px",
-                    }}
-                  >
-                    {theaterInfo.website}
-                  </p>
-                </div>
-              </div>
+              <InfoRow label="Điện thoại" value={theaterInfo.phone} icon="📞" />
+              <InfoRow label="Website" value={theaterInfo.website} icon="🌐" />
             </div>
 
-            {/* Coordinates */}
-            <div
-              style={{ display: "flex", alignItems: "flex-start", gap: "16px" }}
-            >
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "10px",
-                  background:
-                    "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: "18px",
-                }}
-              >
-                🗺️
-              </div>
-              <div style={{ flex: 1 }}>
-                <p
-                  style={{
-                    fontWeight: "600",
-                    color: "#374151",
-                    margin: "0 0 4px 0",
-                    fontSize: "14px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Tọa độ
-                </p>
-                <p
-                  style={{
-                    color: "#6b7280",
-                    margin: 0,
-                    fontSize: "13px",
-                    fontFamily: "monospace",
-                    background: "#f9fafb",
-                    padding: "6px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid #e5e7eb",
-                  }}
-                >
-                  {theaterInfo.coordinates}
-                </p>
-              </div>
-            </div>
+            <InfoRow label="Tọa độ" value={theaterInfo.coordinates} icon="🗺️" />
           </div>
         </div>
 
         {/* Footer */}
         <div
           style={{
-            backgroundColor: "#f8fafc",
-            padding: "20px 24px",
-            borderTop: "1px solid #e2e8f0",
+            padding: "16px 24px",
+            borderTop: "1px solid #e5e7eb",
+            background: "#f9fafb",
             display: "flex",
             justifyContent: "flex-end",
-            gap: "12px",
           }}
         >
           <button
             onClick={onClose}
             style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "#ffffff",
+              padding: "10px 20px",
+              background: "#6366f1",
+              color: "#fff",
               border: "none",
-              borderRadius: "8px",
-              padding: "12px 24px",
+              borderRadius: "6px",
               fontSize: "14px",
-              fontWeight: "600",
+              fontWeight: "500",
               cursor: "pointer",
-              transition: "all 0.2s ease",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              transition: "all 0.2s",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 12px -1px rgba(0, 0, 0, 0.15)";
+              e.currentTarget.style.background = "#4f46e5";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+              e.currentTarget.style.background = "#6366f1";
             }}
           >
             Đóng
@@ -789,6 +512,10 @@ const TheaterForm: React.FC = () => {
     website: string;
     coordinates: string;
   } | null>(null);
+  const [errorModal, setErrorModal] = useState<{
+    show: boolean;
+    message: string;
+  }>({ show: false, message: "" });
 
   // Load theater data for editing/viewing
   const { data: theaterData, isLoading: theaterLoading } = useQuery({
@@ -1055,7 +782,14 @@ const TheaterForm: React.FC = () => {
     },
     onError: (error: any) => {
       console.error("Error saving theater:", error);
-      alert("Lỗi lưu rạp: " + (error?.message || "Không thể lưu rạp"));
+      setErrorModal({
+        show: true,
+        message:
+          "Lỗi lưu rạp: " +
+          (error?.response?.data?.error ||
+            error?.message ||
+            "Không thể lưu rạp"),
+      });
     },
   });
 
@@ -1081,6 +815,15 @@ const TheaterForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isViewMode) {
+      // Validate required fields
+      if (!formData.provinceId || formData.provinceId === 0) {
+        setErrorModal({ show: true, message: "Vui lòng chọn Tỉnh/Thành phố!" });
+        return;
+      }
+      if (!formData.districtId || formData.districtId === 0) {
+        setErrorModal({ show: true, message: "Vui lòng chọn Quận/Huyện!" });
+        return;
+      }
       mutation.mutate(formData);
     }
   };
@@ -1088,7 +831,10 @@ const TheaterForm: React.FC = () => {
   // Function to search theater by name using OpenStreetMap
   const searchTheaterByName = async () => {
     if (!formData.name.trim()) {
-      alert("Vui lòng nhập tên rạp trước khi tìm kiếm");
+      setErrorModal({
+        show: true,
+        message: "Vui lòng nhập tên rạp trước khi tìm kiếm",
+      });
       return;
     }
 
@@ -1623,15 +1369,18 @@ const TheaterForm: React.FC = () => {
         });
         setShowAutofillModal(true);
       } else {
-        alert(
-          "❌ Không tìm thấy rạp phim nào với tên này. Hãy thử tìm kiếm trên Google Maps hoặc nhập thủ công."
-        );
+        setErrorModal({
+          show: true,
+          message:
+            "Không tìm thấy rạp phim nào với tên này. Hãy thử tìm kiếm trên Google Maps hoặc nhập thủ công.",
+        });
       }
     } catch (error: any) {
-      console.error("❌ Error searching theater:", error);
-      alert(
-        `❌ Lỗi khi tìm kiếm rạp: ${error?.message || "Vui lòng thử lại hoặc nhập thủ công."}`
-      );
+      console.error("Error searching theater:", error);
+      setErrorModal({
+        show: true,
+        message: `Lỗi khi tìm kiếm rạp: ${error?.message || "Vui lòng thử lại hoặc nhập thủ công."}`,
+      });
     } finally {
       setSearchingTheater(false);
     }
@@ -1640,7 +1389,10 @@ const TheaterForm: React.FC = () => {
   // Function to get coordinates from address
   const getCoordinatesFromAddress = async () => {
     if (!formData.address.trim()) {
-      alert("Vui lòng nhập địa chỉ trước khi lấy tọa độ");
+      setErrorModal({
+        show: true,
+        message: "Vui lòng nhập địa chỉ trước khi lấy tọa độ",
+      });
       return;
     }
 
@@ -1662,18 +1414,25 @@ const TheaterForm: React.FC = () => {
             longitude: parseFloat(result.lon),
           }));
 
-          alert(
-            `✅ Đã lấy tọa độ thành công!\nVĩ độ: ${result.lat}\nKinh độ: ${result.lon}`
-          );
+          setErrorModal({
+            show: true,
+            message: `Đã lấy tọa độ thành công!\nVĩ độ: ${result.lat}\nKinh độ: ${result.lon}`,
+          });
         } else {
-          alert("❌ Không tìm thấy tọa độ. Vui lòng sử dụng Google Maps.");
+          setErrorModal({
+            show: true,
+            message: "Không tìm thấy tọa độ. Vui lòng sử dụng Google Maps.",
+          });
         }
       } else {
         throw new Error("Không thể kết nối đến dịch vụ tìm kiếm");
       }
     } catch (error) {
       console.error("Error getting coordinates:", error);
-      alert("❌ Lỗi khi lấy tọa độ. Vui lòng sử dụng Google Maps.");
+      setErrorModal({
+        show: true,
+        message: "Lỗi khi lấy tọa độ. Vui lòng sử dụng Google Maps.",
+      });
     } finally {
       setLoadingCoordinates(false);
     }
@@ -1734,22 +1493,20 @@ const TheaterForm: React.FC = () => {
                 e.currentTarget.style.color = "#6366f1";
               }}
             >
-              <span style={{ fontSize: "16px" }}>←</span>
+              <span style={{ fontSize: "14px" }}>←</span>
               Quay lại
             </button>
             <h3
               style={{
                 margin: 0,
                 lineHeight: 1,
-                fontSize: "24px",
-                fontWeight: "600",
+                fontWeight: "300",
                 color: "#1f2937",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
               }}
             >
-              <span style={{ fontSize: "28px" }}>🎬</span>
               {isViewMode
                 ? "Xem chi tiết rạp"
                 : isEditMode
@@ -1768,283 +1525,292 @@ const TheaterForm: React.FC = () => {
           }}
         >
           <form onSubmit={handleSubmit}>
-            {/* Basic Information Section */}
+            {/* Basic Information & Location Section - Side by Side */}
             <div
               style={{
-                background: "#f8fafc",
-                padding: "24px",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                boxShadow: "0 2px 8px rgba(139, 115, 85, 0.1)",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "24px",
                 marginBottom: "24px",
               }}
             >
-              <h4
-                style={{
-                  margin: "0 0 20px 0",
-                  color: "#333",
-                  fontSize: "18px",
-                  fontWeight: "700",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span style={{ fontSize: "20px" }}>📋</span>
-                Thông Tin Cơ Bản
-              </h4>
+              {/* Basic Information Section */}
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                  gap: "20px",
+                  background: "#f8fafc",
+                  padding: "24px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 2px 8px rgba(139, 115, 85, 0.1)",
                 }}
               >
-                <div
+                <h4
                   style={{
+                    margin: "0 0 20px 0",
+                    color: "#333",
+                    fontSize: "18px",
+                    fontWeight: "700",
                     display: "flex",
-                    flexDirection: "column",
+                    alignItems: "center",
                     gap: "8px",
                   }}
                 >
-                  <label
+                  <FontAwesomeIcon
+                    icon={faList}
+                    style={{ fontSize: "18px", marginRight: "8px" }}
+                  />
+                  Thông Tin Cơ Bản
+                </h4>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gap: "20px",
+                  }}
+                >
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#5d4e37",
-                      marginBottom: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
                     }}
                   >
-                    Tên rạp *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Nhập tên rạp..."
-                    style={{
-                      padding: "12px 16px",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      background: isViewMode ? "#f9fafb" : "#ffffff",
-                      outline: "none",
-                      transition: "all 0.2s ease",
-                      cursor: isViewMode ? "not-allowed" : "text",
-                    }}
-                    onFocus={(e) => {
-                      if (!isViewMode) {
-                        e.target.style.borderColor = "#8b7355";
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (!isViewMode) {
-                        e.target.style.borderColor = "#e2e8f0";
-                        e.target.style.boxShadow =
-                          "0 1px 2px 0 rgba(139, 115, 85, 0.05)";
-                      }
-                    }}
-                  />
-                </div>
+                    <label
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#5d4e37",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Tên rạp *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Nhập tên rạp..."
+                      style={{
+                        padding: "12px 16px",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        background: isViewMode ? "#f9fafb" : "#ffffff",
+                        outline: "none",
+                        transition: "all 0.2s ease",
+                        cursor: isViewMode ? "not-allowed" : "text",
+                      }}
+                      onFocus={(e) => {
+                        if (!isViewMode) {
+                          e.target.style.borderColor = "#8b7355";
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (!isViewMode) {
+                          e.target.style.borderColor = "#e2e8f0";
+                          e.target.style.boxShadow =
+                            "0 1px 2px 0 rgba(139, 115, 85, 0.05)";
+                        }
+                      }}
+                    />
+                  </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#5d4e37",
-                      marginBottom: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
                     }}
                   >
-                    Mã rạp *
-                  </label>
-                  <input
-                    type="text"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="VD: CGV001"
-                    style={{
-                      padding: "12px 16px",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      background: isViewMode ? "#f9fafb" : "#ffffff",
-                      outline: "none",
-                      transition: "all 0.2s ease",
-                      cursor: isViewMode ? "not-allowed" : "text",
-                    }}
-                    onFocus={(e) => {
-                      if (!isViewMode) {
-                        e.target.style.borderColor = "#8b7355";
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (!isViewMode) {
-                        e.target.style.borderColor = "#e2e8f0";
-                        e.target.style.boxShadow =
-                          "0 1px 2px 0 rgba(139, 115, 85, 0.05)";
-                      }
-                    }}
-                  />
-                </div>
+                    <label
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#5d4e37",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Mã rạp *
+                    </label>
+                    <input
+                      type="text"
+                      name="code"
+                      value={formData.code}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="VD: CGV001"
+                      style={{
+                        padding: "12px 16px",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        background: isViewMode ? "#f9fafb" : "#ffffff",
+                        outline: "none",
+                        transition: "all 0.2s ease",
+                        cursor: isViewMode ? "not-allowed" : "text",
+                      }}
+                      onFocus={(e) => {
+                        if (!isViewMode) {
+                          e.target.style.borderColor = "#8b7355";
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (!isViewMode) {
+                          e.target.style.borderColor = "#e2e8f0";
+                          e.target.style.boxShadow =
+                            "0 1px 2px 0 rgba(139, 115, 85, 0.05)";
+                        }
+                      }}
+                    />
+                  </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#5d4e37",
-                      marginBottom: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
                     }}
                   >
-                    Địa chỉ *
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    required
-                    placeholder="Số nhà, đường, phường/xã"
-                    style={{
-                      padding: "12px 16px",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      background: isViewMode ? "#f9fafb" : "#ffffff",
-                      outline: "none",
-                      transition: "all 0.2s ease",
-                      cursor: isViewMode ? "not-allowed" : "text",
-                    }}
-                    onFocus={(e) => {
-                      if (!isViewMode) {
-                        e.target.style.borderColor = "#8b7355";
-                      }
-                    }}
-                    onBlur={(e) => {
-                      if (!isViewMode) {
-                        e.target.style.borderColor = "#e2e8f0";
-                        e.target.style.boxShadow =
-                          "0 1px 2px 0 rgba(139, 115, 85, 0.05)";
-                      }
-                    }}
-                  />
+                    <label
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#5d4e37",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Địa chỉ *
+                    </label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Số nhà, đường, phường/xã"
+                      style={{
+                        padding: "12px 16px",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        background: isViewMode ? "#f9fafb" : "#ffffff",
+                        outline: "none",
+                        transition: "all 0.2s ease",
+                        cursor: isViewMode ? "not-allowed" : "text",
+                      }}
+                      onFocus={(e) => {
+                        if (!isViewMode) {
+                          e.target.style.borderColor = "#8b7355";
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (!isViewMode) {
+                          e.target.style.borderColor = "#e2e8f0";
+                          e.target.style.boxShadow =
+                            "0 1px 2px 0 rgba(139, 115, 85, 0.05)";
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Location Section */}
-            <div
-              style={{
-                background: "#f8fafc",
-                padding: "24px",
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                boxShadow: "0 2px 8px rgba(139, 115, 85, 0.1)",
-                marginBottom: "24px",
-              }}
-            >
-              <h4
-                style={{
-                  margin: "0 0 20px 0",
-                  color: "#333",
-                  fontSize: "18px",
-                  fontWeight: "700",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                <span style={{ fontSize: "20px" }}>📍</span>
-                Thông Tin Địa Lý
-              </h4>
+              {/* Location Section */}
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                  gap: "20px",
+                  background: "#f8fafc",
+                  padding: "24px",
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  boxShadow: "0 2px 8px rgba(139, 115, 85, 0.1)",
                 }}
               >
-                <div
+                <h4
                   style={{
+                    margin: "0 0 20px 0",
+                    color: "#333",
+                    fontSize: "18px",
+                    fontWeight: "700",
                     display: "flex",
-                    flexDirection: "column",
+                    alignItems: "center",
                     gap: "8px",
                   }}
                 >
-                  <label
+                  <span style={{ fontSize: "20px" }}>📍</span>
+                  Thông Tin Địa Lý
+                </h4>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+                    gap: "20px",
+                  }}
+                >
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#5d4e37",
-                      marginBottom: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
                     }}
                   >
-                    Tỉnh/Thành phố *
-                  </label>
-                  <CustomSelect
-                    value={formData.provinceId}
-                    onChange={(value) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        provinceId: value,
-                        districtId: 0,
-                      }));
-                    }}
-                    options={provinces?.data || []}
-                    placeholder="Chọn tỉnh/thành phố"
-                    disabled={isViewMode}
-                    icon="🏛️"
-                  />
-                </div>
+                    <label
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#5d4e37",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Tỉnh/Thành phố *
+                    </label>
+                    <CustomSelect
+                      value={formData.provinceId}
+                      onChange={(value) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          provinceId: value,
+                          districtId: 0,
+                        }));
+                      }}
+                      options={provinces?.data || []}
+                      placeholder="Chọn tỉnh/thành phố"
+                      disabled={isViewMode}
+                    />
+                  </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "8px",
-                  }}
-                >
-                  <label
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: "#5d4e37",
-                      marginBottom: "4px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
                     }}
                   >
-                    Quận/Huyện *
-                  </label>
-                  <CustomSelect
-                    value={formData.districtId}
-                    onChange={(value) => {
-                      setFormData((prev) => ({ ...prev, districtId: value }));
-                    }}
-                    options={districts?.data || []}
-                    placeholder={
-                      !districts?.data?.length
-                        ? "Chọn tỉnh/thành phố trước"
-                        : "Chọn quận/huyện"
-                    }
-                    disabled={isViewMode || !districts?.data?.length}
-                    icon="🏘️"
-                  />
+                    <label
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: "#5d4e37",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Quận/Huyện *
+                    </label>
+                    <CustomSelect
+                      value={formData.districtId}
+                      onChange={(value) => {
+                        setFormData((prev) => ({ ...prev, districtId: value }));
+                      }}
+                      options={districts?.data || []}
+                      placeholder={
+                        !districts?.data?.length
+                          ? "Chọn tỉnh/thành phố trước"
+                          : "Chọn quận/huyện"
+                      }
+                      disabled={isViewMode || !districts?.data?.length}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -2073,7 +1839,10 @@ const TheaterForm: React.FC = () => {
                     gap: "8px",
                   }}
                 >
-                  <span style={{ fontSize: "20px" }}>🔍</span>
+                  <FontAwesomeIcon
+                    icon={faSearch}
+                    style={{ fontSize: "18px", marginRight: "8px" }}
+                  />
                   Tìm Kiếm & Tọa Độ
                 </h4>
 
@@ -2122,9 +1891,16 @@ const TheaterForm: React.FC = () => {
                       }
                     }}
                   >
-                    {searchingTheater
-                      ? "⏳ Đang tìm rạp..."
-                      : "🎬 Tìm rạp qua tên"}
+                    {searchingTheater ? (
+                      <>
+                        <FontAwesomeIcon icon={faSpinner} spin /> Đang tìm
+                        rạp...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faFilm} /> Tìm rạp qua tên
+                      </>
+                    )}
                   </button>
 
                   <button
@@ -2164,9 +1940,16 @@ const TheaterForm: React.FC = () => {
                       }
                     }}
                   >
-                    {loadingCoordinates
-                      ? "⏳ Đang tìm..."
-                      : "📍 Lấy tọa độ từ địa chỉ"}
+                    {loadingCoordinates ? (
+                      <>
+                        <FontAwesomeIcon icon={faSpinner} spin /> Đang tìm...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faMapMarkerAlt} /> Lấy tọa độ từ
+                        địa chỉ
+                      </>
+                    )}
                   </button>
 
                   <button
@@ -2206,50 +1989,102 @@ const TheaterForm: React.FC = () => {
                       e.currentTarget.style.color = "#7c3aed";
                     }}
                   >
-                    🗺️ Google Maps
+                    <FontAwesomeIcon
+                      icon={faMapMarkedAlt}
+                      style={{ color: "#fff" }}
+                    />{" "}
+                    Google Maps
                   </button>
                 </div>
 
                 <div
                   style={{
-                    fontSize: "13px",
-                    color: "#8b7355",
-                    lineHeight: "1.5",
-                    padding: "16px",
-                    background: "#fff",
-                    borderRadius: "8px",
-                    border: "1px solid #e2e8f0",
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: "12px",
+                    fontSize: "12px",
+                    color: "#6b7280",
                   }}
                 >
-                  <strong style={{ color: "#1f2937" }}>
-                    💡 Hướng dẫn lấy tọa độ:
-                  </strong>
-                  <br />
-                  <br />
-                  <strong>🎬 Cách 1 - Tìm rạp qua tên (tốt nhất):</strong>
-                  <br />
-                  • Nhập tên rạp → Click "🎬 Tìm rạp qua tên"
-                  <br />
-                  • Tự động điền tất cả thông tin: tên, địa chỉ, số điện thoại,
-                  tọa độ
-                  <br />
-                  <br />
-                  <strong>📍 Cách 2 - Từ địa chỉ:</strong>
-                  <br />
-                  • Nhập địa chỉ → Click "📍 Lấy tọa độ từ địa chỉ"
-                  <br />
-                  <br />
-                  <strong>🗺️ Cách 3 - Google Maps (chính xác nhất):</strong>
-                  <br />
-                  • Click "🗺️ Google Maps" → Tìm rạp trên bản đồ
-                  <br />
-                  • Click chuột phải vào vị trí rạp → "Tọa độ"
-                  <br />
-                  • Copy tọa độ → Paste vào form
-                  <br />
-                  <br />
-                  <strong>✏️ Cách 4 - Nhập thủ công:</strong>
-                  <br />• Nhập trực tiếp vào ô Vĩ độ/Kinh độ
+                  <div
+                    style={{
+                      padding: "12px",
+                      background: "#eff6ff",
+                      borderRadius: "6px",
+                      border: "1px solid #dbeafe",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        color: "#1e40af",
+                        display: "block",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faFilm} /> Tìm rạp qua tên
+                    </strong>
+                    Nhập tên → Tự động điền thông tin
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "12px",
+                      background: "#f0fdf4",
+                      borderRadius: "6px",
+                      border: "1px solid #dcfce7",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        color: "#15803d",
+                        display: "block",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faMapMarkerAlt} /> Từ địa chỉ
+                    </strong>
+                    Nhập địa chỉ → Lấy tọa độ
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "12px",
+                      background: "#faf5ff",
+                      borderRadius: "6px",
+                      border: "1px solid #f3e8ff",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        color: "#7c3aed",
+                        display: "block",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faMap} /> Google Maps
+                    </strong>
+                    Click chuột phải → Copy tọa độ
+                  </div>
+
+                  <div
+                    style={{
+                      padding: "12px",
+                      background: "#fef3c7",
+                      borderRadius: "6px",
+                      border: "1px solid #fde68a",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        color: "#92400e",
+                        display: "block",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faEdit} /> Nhập thủ công
+                    </strong>
+                    Nhập trực tiếp Vĩ độ/Kinh độ
+                  </div>
                 </div>
               </div>
             )}
@@ -2276,7 +2111,10 @@ const TheaterForm: React.FC = () => {
                   gap: "8px",
                 }}
               >
-                <span style={{ fontSize: "20px" }}>ℹ️</span>
+                <FontAwesomeIcon
+                  icon={faInfoCircle}
+                  style={{ fontSize: "18px", marginRight: "8px" }}
+                />
                 Thông Tin Bổ Sung
               </h4>
               <div
@@ -2640,7 +2478,7 @@ const TheaterForm: React.FC = () => {
                     e.currentTarget.style.color = "#6366f1";
                   }}
                 >
-                  ✏️ Chỉnh sửa
+                  <FontAwesomeIcon icon={faEdit} /> Chỉnh sửa
                 </button>
               ) : (
                 <button
@@ -2670,11 +2508,19 @@ const TheaterForm: React.FC = () => {
                     }
                   }}
                 >
-                  {mutation.isPending
-                    ? "⏳ Đang lưu..."
-                    : isEditMode
-                      ? "💾 Cập nhật rạp"
-                      : "💾 Lưu rạp"}
+                  {mutation.isPending ? (
+                    <>
+                      <FontAwesomeIcon icon={faSpinner} spin /> Đang lưu...
+                    </>
+                  ) : isEditMode ? (
+                    <>
+                      <FontAwesomeIcon icon={faSave} /> Cập nhật rạp
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faSave} /> Lưu rạp
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -2694,6 +2540,14 @@ const TheaterForm: React.FC = () => {
         isOpen={showAutofillModal}
         onClose={() => setShowAutofillModal(false)}
         theaterInfo={autofillInfo}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.show}
+        title="Thông báo"
+        message={errorModal.message}
+        onClose={() => setErrorModal({ show: false, message: "" })}
       />
     </div>
   );

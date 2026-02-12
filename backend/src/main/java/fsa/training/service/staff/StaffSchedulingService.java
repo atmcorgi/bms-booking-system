@@ -134,6 +134,12 @@ public class StaffSchedulingService {
             System.out.println("DEBUG: Set showDate=" + dto.getShowDate() + ", showTime=" + dto.getShowTime());
             dto.setPriceStandard(75000);
             dto.setDuration(a.getMovieRequest().getMovie() != null ? a.getMovieRequest().getMovie().getDuration() : 120);
+            
+            // Map validation errors
+            if (a.getPlanningErrors() != null && !a.getPlanningErrors().isEmpty()) {
+                dto.setErrors(new java.util.ArrayList<>(a.getPlanningErrors()));
+            }
+            
             rows.add(dto);
         }
         

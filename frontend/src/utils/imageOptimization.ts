@@ -21,10 +21,26 @@ function getCloudinaryOptimizedUrl(
     // Extract public_id from Cloudinary URL
     const url = new URL(originalUrl);
     const pathParts = url.pathname.split("/");
-    const publicId = pathParts[pathParts.length - 1].replace(/\.[^/.]+$/, ""); // Remove extension
 
-    // Build optimized URL
-    const optimizedUrl = `https://res.cloudinary.com/${url.hostname.split(".")[0]}/image/upload/w_${width},h_${height},c_fill,g_face,q_auto,f_auto/${publicId}`;
+    // Find the upload index
+    const uploadIndex = pathParts.indexOf("upload");
+    if (uploadIndex === -1) {
+      console.warn("Invalid Cloudinary URL format:", originalUrl);
+      return originalUrl;
+    }
+
+    // Get cloud name from hostname (e.g., res.cloudinary.com/cloud_name)
+    const cloudName = pathParts[1] || url.hostname.split(".")[0];
+
+    // Get public_id (everything after /upload/)
+    const publicIdParts = pathParts.slice(uploadIndex + 1);
+
+    // Keep the full path including any transformations or version numbers
+    // But we need to insert our transformations AFTER /upload/
+    const restOfPath = publicIdParts.join("/");
+
+    // Build optimized URL - insert transformations right after /upload/
+    const optimizedUrl = `https://res.cloudinary.com/${cloudName}/image/upload/w_${width},h_${height},c_fill,g_face,q_auto,f_auto/${restOfPath}`;
 
     return optimizedUrl;
   } catch (error) {
@@ -73,13 +89,19 @@ export function getOptimizedImageUrl(
       }
     }
 
-    // Handle relative URLs
+    // Handle relative URLs - these might need to be proxied through nginx
     if (originalUrl.startsWith("/")) {
       return originalUrl;
     }
 
     // For absolute URLs, try to add optimization parameters
     const url = new URL(originalUrl);
+
+    // Skip optimization for URLs that already have parameters
+    if (url.searchParams.toString()) {
+      return originalUrl;
+    }
+
     url.searchParams.set("w", width.toString());
     url.searchParams.set("h", height.toString());
     url.searchParams.set("q", quality.toString());

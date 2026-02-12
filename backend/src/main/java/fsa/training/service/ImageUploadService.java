@@ -22,35 +22,52 @@ public class ImageUploadService {
     private Cloudinary cloudinary;
 
     /**
-     * Upload image to Cloudinary with movie poster optimizations
+     * Upload image to Cloudinary with movie poster optimizations or general purpose
      */
-    public String uploadMoviePoster(MultipartFile file, String movieTitle) {
+    public String uploadPoster(MultipartFile file, String resourceTitle) {
         try {
+            // Determine folder based on resourceTitle
+            String folder = "movie-posters";
+            if ("banner".equals(resourceTitle)) {
+                folder = "banners";
+            } else if ("profile".equals(resourceTitle)) {
+                folder = "profiles";
+            }
             // Generate unique public ID
-            String publicId = "movie-posters/" + generatePublicId(movieTitle);
-            
-            // Upload with movie poster specific transformations
-            Map<String, Object> uploadParams = ObjectUtils.asMap(
-                    "public_id", publicId,
-                    "folder", "movie-posters",
-                    "resource_type", "image",
-                    "transformation", new Transformation()
-                            .width(600)
-                            .height(900)
-                            .crop("fill")
-                            .gravity("face")
-                            .quality("auto")
-                            .fetchFormat("auto")
-            );
+            String publicId = folder + "/" + generatePublicId(resourceTitle);
+
+            // Define a base transformation map
+            Map<String, Object> uploadParams = new java.util.HashMap<>();
+            uploadParams.put("public_id", publicId);
+            uploadParams.put("folder", folder);
+            uploadParams.put("resource_type", "image");
+
+            // Apply different transformations based on resource type
+            if ("banner".equals(resourceTitle)) {
+                // For banners: resize to a max width of 1920, maintain aspect ratio
+                uploadParams.put("transformation", new Transformation()
+                        .width(1920)
+                        .quality("auto")
+                        .fetchFormat("auto"));
+            } else {
+                // For posters (default): crop to 600x900
+                uploadParams.put("transformation", new Transformation()
+                        .width(600)
+                        .height(900)
+                        .crop("fill")
+                        .gravity("face")
+                        .quality("auto")
+                        .fetchFormat("auto"));
+            }
 
             Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), uploadParams);
             String secureUrl = (String) result.get("secure_url");
             
-            logger.info("Successfully uploaded movie poster: {} -> {}", movieTitle, secureUrl);
+            logger.info("Successfully uploaded image for {}: {} -> {}", resourceTitle, file.getOriginalFilename(), secureUrl);
             return secureUrl;
             
         } catch (IOException e) {
-            logger.error("Failed to upload movie poster for: {}", movieTitle, e);
+            logger.error("Failed to upload image for: {}", resourceTitle, e);
             throw new RuntimeException("Failed to upload image", e);
         }
     }
@@ -92,15 +109,19 @@ public class ImageUploadService {
      */
     public String uploadTrailer(MultipartFile file, String movieTitle) {
         try {
-            String publicId = "movie-trailers/" + generatePublicId(movieTitle);
+            String folder = "movie-trailers";
+            if (movieTitle == null || movieTitle.trim().isEmpty()) {
+                folder = "banners";
+            }
+            String publicId = folder + "/" + generatePublicId(movieTitle);
 
             Map<String, Object> uploadParams = ObjectUtils.asMap(
                     "public_id", publicId,
-                    "folder", "movie-trailers",
+                    "folder", folder,
                     "resource_type", "video",
-                    "eager", new Object[]{
-                            ObjectUtils.asMap("format", "mp4", "quality", "auto")
-                    }
+                    "eager", java.util.Arrays.asList(
+                           new Transformation().fetchFormat("mp4").quality("auto")
+                    )
             );
 
             Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), uploadParams);

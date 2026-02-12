@@ -5,15 +5,28 @@ import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
+import { useState } from "react";
 import { authApi } from "../services/authApi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { staffNotificationApi } from "../services/staffNotificationApi";
+import { profileApi } from "../services/profileApi";
+import UserDropdown from "../components/UserDropdown";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChartBar,
+  faCalendarAlt,
+  faFilm,
+  faClock,
+  faCashRegister,
+  faBell,
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function StaffLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname.replace(/^\/staff\/?/, "");
-  const crumbs = ["Staff", ...path.split("/").filter(Boolean)];
+  const crumbs = ["staff", ...path.split("/").filter(Boolean)];
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
     authApi.logout();
@@ -31,6 +44,12 @@ export default function StaffLayout() {
     refetchInterval: 30000,
   });
 
+  const { data: user } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => (await profileApi.getProfile()).data,
+    enabled: !!token,
+  });
+
   const markAllMut = useMutation({
     mutationFn: () => staffNotificationApi.markAllRead(),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff-notif-list"] }),
@@ -45,22 +64,70 @@ export default function StaffLayout() {
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "220px 1fr",
+        gridTemplateColumns: `${collapsed ? "72px" : "240px"} 1fr`,
         minHeight: "100vh",
+        width: "100vw",
+        overflow: "hidden",
       }}
     >
       <aside
         style={{
-          background: "#f6f8fa",
+          background: "#faf9f6",
           color: "#333",
           padding: 16,
           borderRight: "1px solid #e9ecef",
+          transition: "width 0.2s ease",
         }}
       >
-        <div style={{ fontWeight: 800, marginBottom: 16 }}>
-          <Link to="/" style={{ color: "#333", textDecoration: "none" }}>
-            My Cinema Staff
-          </Link>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "space-between",
+            marginBottom: 16,
+          }}
+        >
+          {!collapsed && (
+            <div style={{ fontWeight: 800 }}>
+              <Link to="/" style={{ color: "#333", textDecoration: "none" }}>
+                My Cinema Staff
+              </Link>
+            </div>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+            title={collapsed ? "Mở rộng" : "Thu gọn"}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = "inset 0 0 0 2px #d9d2b7";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            style={{
+              border: "none",
+              background: "transparent",
+              padding: "8px",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              gap: "2px",
+              alignItems: "center",
+              justifyContent: "center",
+              outline: "none",
+              WebkitTapHighlightColor: "transparent",
+            }}
+          >
+            <div
+              style={{ width: "16px", height: "2px", background: "#666" }}
+            ></div>
+            <div
+              style={{ width: "16px", height: "2px", background: "#666" }}
+            ></div>
+            <div
+              style={{ width: "16px", height: "2px", background: "#666" }}
+            ></div>
+          </button>
         </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <NavLink
@@ -71,12 +138,16 @@ export default function StaffLayout() {
               textDecoration: "none",
               padding: "8px 10px",
               borderLeft: isActive
-                ? "3px solid #6ea8fe"
+                ? "3px solid #d9d2b7"
                 : "3px solid transparent",
-              background: isActive ? "#e7f1ff" : "transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             })}
           >
-            Dashboard
+            <FontAwesomeIcon icon={faChartBar} />
+            {!collapsed && <span>Dashboard</span>}
           </NavLink>
           <NavLink
             to="/staff/scheduling"
@@ -85,12 +156,16 @@ export default function StaffLayout() {
               textDecoration: "none",
               padding: "8px 10px",
               borderLeft: isActive
-                ? "3px solid #6ea8fe"
+                ? "3px solid #d9d2b7"
                 : "3px solid transparent",
-              background: isActive ? "#e7f1ff" : "transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             })}
           >
-            Auto scheduling
+            <FontAwesomeIcon icon={faCalendarAlt} />
+            {!collapsed && <span>Lịch chiếu tự động</span>}
           </NavLink>
           <NavLink
             to="/staff/movies"
@@ -99,12 +174,16 @@ export default function StaffLayout() {
               textDecoration: "none",
               padding: "8px 10px",
               borderLeft: isActive
-                ? "3px solid #6ea8fe"
+                ? "3px solid #d9d2b7"
                 : "3px solid transparent",
-              background: isActive ? "#e7f1ff" : "transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             })}
           >
-            Quản lý phim
+            <FontAwesomeIcon icon={faFilm} />
+            {!collapsed && <span>Quản lý phim</span>}
           </NavLink>
           <NavLink
             to="/staff/showtimes"
@@ -113,69 +192,142 @@ export default function StaffLayout() {
               textDecoration: "none",
               padding: "8px 10px",
               borderLeft: isActive
-                ? "3px solid #6ea8fe"
+                ? "3px solid #d9d2b7"
                 : "3px solid transparent",
-              background: isActive ? "#e7f1ff" : "transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             })}
           >
-            Suất chiếu
+            <FontAwesomeIcon icon={faClock} />
+            {!collapsed && <span>Suất chiếu</span>}
           </NavLink>
           <NavLink
-            to="/staff/pos"
+            to="/staff/bookings"
             style={({ isActive }) => ({
               color: "#333",
               textDecoration: "none",
               padding: "8px 10px",
               borderLeft: isActive
-                ? "3px solid #6ea8fe"
+                ? "3px solid #d9d2b7"
                 : "3px solid transparent",
-              background: isActive ? "#e7f1ff" : "transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
             })}
           >
-            Bán vé
+            <FontAwesomeIcon icon={faCashRegister} />
+            {!collapsed && <span>Quản lý Vé</span>}
           </NavLink>
         </nav>
       </aside>
-      <section style={{ background: "#f8f9fa" }}>
+      <section style={{ background: "#f8f9fa", overflow: "hidden" }}>
         <header
           style={{
             background: "#ffffff",
             borderBottom: "1px solid #e9ecef",
-            padding: "12px 16px",
+            padding: "8px 12px",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 12,
+            gap: 8,
+            width: "100%",
+            boxSizing: "border-box",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ fontWeight: 700 }}>Bảng điều khiển nhân viên</div>
-            <div style={{ fontSize: 12, color: "#6c757d" }}>
-              {crumbs.join(" / ")}
+            <div style={{ fontWeight: 700, lineHeight: 1 }}>
+              {(() => {
+                const first = crumbs[1] || "";
+                if (!first) return "Bảng điều khiển";
+                switch (first) {
+                  case "scheduling":
+                    return "Lịch chiếu tự động";
+                  case "movies":
+                    return "Quản lý phim";
+                  case "showtimes":
+                    return "Suất chiếu";
+                  case "pos":
+                    return "Bán vé";
+                  default:
+                    return "Bảng điều khiển";
+                }
+              })()}
+            </div>
+            <div style={{ fontSize: 12, color: "#8b7355", lineHeight: 1 }}>
+              {(() => {
+                const labels: Record<string, string> = {
+                  staff: "Staff",
+                  scheduling: "Lịch chiếu",
+                  movies: "Phim",
+                  showtimes: "Suất chiếu",
+                  pos: "Bán vé",
+                };
+                const parts = crumbs.filter(Boolean);
+                const acc: string[] = [];
+                return (
+                  <span>
+                    {parts.map((seg, idx) => {
+                      acc.push(seg);
+                      const href = "/" + acc.join("/");
+                      const label = labels[seg] || seg;
+                      const isLast = idx === parts.length - 1;
+                      return (
+                        <span key={href}>
+                          {isLast ? (
+                            <span>{label}</span>
+                          ) : (
+                            <Link to={href.replace("/staff", "/staff")}>
+                              {label}
+                            </Link>
+                          )}
+                          {!isLast && <span> / </span>}
+                        </span>
+                      );
+                    })}
+                  </span>
+                );
+              })()}
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ position: "relative" }}>
               <details>
                 <summary style={{ listStyle: "none", cursor: "pointer" }}>
                   <span
-                    style={{ position: "relative", display: "inline-block" }}
+                    style={{ 
+                      position: "relative", 
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 36,
+                      height: 36,
+                    }}
                   >
-                    🔔
-                    {notifQ.data?.unread && notifQ.data.unread > 0 && (
+                    <FontAwesomeIcon 
+                      icon={faBell} 
+                      style={{ 
+                        fontSize: 18,
+                        color: "#8b7355"
+                      }}
+                    />
+                    {notifQ.data?.unread != null && notifQ.data.unread > 0 && (
                       <span
                         style={{
                           position: "absolute",
-                          top: -6,
-                          right: -8,
+                          top: 4,
+                          right: 4,
                           background: "#dc3545",
                           color: "#fff",
                           borderRadius: 12,
                           padding: "0 6px",
-                          fontSize: 12,
-                          lineHeight: "18px",
-                          minWidth: 18,
+                          fontSize: 10,
+                          lineHeight: "16px",
+                          minWidth: 16,
                           textAlign: "center",
+                          fontWeight: 600,
                         }}
                       >
                         {notifQ.data.unread}
@@ -273,22 +425,33 @@ export default function StaffLayout() {
               </details>
             </div>
 
-            <button
-              onClick={handleLogout}
-              style={{
-                background: "#dc3545",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Đăng xuất
-            </button>
+            {user ? (
+               <UserDropdown user={user} onLogout={handleLogout} />
+            ) : (
+                <button
+                onClick={handleLogout}
+                style={{
+                    background: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    padding: "6px 10px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    height: 36,
+                }}
+                >
+                Đăng xuất
+                </button>
+            )}
           </div>
         </header>
-        <div style={{ padding: 16 }}>
+        <div
+          style={{
+            padding: "8px 16px",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        >
           <Outlet />
         </div>
       </section>

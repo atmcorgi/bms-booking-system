@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q -e -DskipTests clean package
 
 # Run stage
 ############################
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:21-jdk
 
 # Create non-root user
 RUN useradd -u 10001 -m appuser

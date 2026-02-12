@@ -29,73 +29,22 @@ export default function LazyImage({
   // If no src provided, show placeholder immediately
   if (!src) {
     return (
-      <div style={{ position: "relative", ...style }}>
+      <>
         <img
           src={placeholder || generateImagePlaceholder(width, height)}
           alt={alt}
           className={className}
           style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
             width: "100%",
             height: "100%",
-            objectFit: "cover",
-            opacity: 0.5,
+                        objectFit: "contain",
+            opacity: 0.3,
+            ...style,
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0,0,0,0.7)",
-            color: "white",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            fontSize: "12px",
-            zIndex: 2,
-          }}
-        >
-          No Image
-        </div>
-      </div>
-    );
-  }
-
-  const { imageSrc, isLoaded, isLoading, hasError, imgRef, retry } =
-    useLazyImage({
-      src,
-      placeholder,
-      width,
-      height,
-      quality,
-      onLoad,
-      onError,
-    });
-
-  return (
-    <div style={{ position: "relative", ...style }}>
-      <img
-        ref={imgRef}
-        src={imageSrc}
-        alt={alt}
-        className={`${className || ""} ${isLoading ? "lazy-image loading" : ""} ${hasError ? "lazy-image error" : ""}`}
-        style={{
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          transition: "opacity 0.3s ease-in-out",
-          opacity: isLoaded ? 1 : isLoading ? 0.7 : 0.5,
-        }}
-        loading="lazy"
-        onClick={hasError ? retry : undefined}
-        title={hasError ? "Click to retry loading" : undefined}
-        referrerPolicy={
-          src && (src.includes("amazon") || src.includes("media-amazon"))
-            ? "no-referrer"
-            : "strict-origin-when-cross-origin"
-        }
-      />
-      {isLoading && (
         <div
           style={{
             position: "absolute",
@@ -109,29 +58,66 @@ export default function LazyImage({
             animation: "loading 1.5s infinite",
             borderRadius: "inherit",
             zIndex: 1,
+            pointerEvents: "none",
           }}
         />
-      )}
-      {hasError && (
+      </>
+    );
+  }
+
+  const { imageSrc, isLoaded, isLoading, hasError, imgRef } = useLazyImage({
+    src,
+    placeholder,
+    width,
+    height,
+    quality,
+    onLoad,
+    onError,
+  });
+
+  return (
+    <>
+      <img
+        ref={imgRef}
+        src={imageSrc}
+        alt={alt}
+        className={`${className || ""} ${isLoading ? "lazy-image loading" : ""} ${hasError ? "lazy-image error" : ""}`}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+                      objectFit: "contain",
+          transition: "opacity 0.3s ease-in-out",
+          opacity: isLoaded ? 1 : 0.3,
+          ...style,
+        }}
+        loading="lazy"
+        referrerPolicy={
+          src && (src.includes("amazon") || src.includes("media-amazon"))
+            ? "no-referrer"
+            : "strict-origin-when-cross-origin"
+        }
+      />
+      {(isLoading || hasError) && (
         <div
           style={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0,0,0,0.7)",
-            color: "white",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            fontSize: "12px",
-            cursor: "pointer",
-            zIndex: 2,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background:
+              "linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)",
+            backgroundSize: "200% 100%",
+            animation: "loading 1.5s infinite",
+            borderRadius: "inherit",
+            zIndex: 1,
+            pointerEvents: "none",
           }}
-          onClick={retry}
-        >
-          Retry
-        </div>
+        />
       )}
-    </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-package fsa.training.controller.admin;
+ package fsa.training.controller.admin;
 
 import fsa.training.entity.Genre;
 import fsa.training.entity.Movie;
@@ -81,6 +81,7 @@ public class AdminMovieApiController {
             // Handle poster and trailer URLs
             m.setPosterUrl(String.valueOf(body.getOrDefault("posterUrl", "")));
             m.setTrailerUrl(String.valueOf(body.getOrDefault("trailerUrl", "")));
+            m.setYoutubeUrl(String.valueOf(body.getOrDefault("youtubeUrl", "")));
 
             // genres: array of names
             @SuppressWarnings("unchecked")
@@ -119,10 +120,17 @@ public class AdminMovieApiController {
             m.setAgeRating(String.valueOf(body.getOrDefault("ageRating", m.getAgeRating())));
             m.setFormats(String.valueOf(body.getOrDefault("formats", m.getFormats())));
             m.setLanguages(String.valueOf(body.getOrDefault("languages", m.getLanguages())));
-            
-            // Handle poster and trailer URLs
-            m.setPosterUrl(String.valueOf(body.getOrDefault("posterUrl", m.getPosterUrl())));
-            m.setTrailerUrl(String.valueOf(body.getOrDefault("trailerUrl", m.getTrailerUrl())));
+
+            // Handle poster and trailer URLs: only update if a new, non-empty URL is provided
+            if (body.containsKey("posterUrl") && body.get("posterUrl") != null && !String.valueOf(body.get("posterUrl")).isBlank()) {
+                m.setPosterUrl(String.valueOf(body.get("posterUrl")));
+            }
+            if (body.containsKey("trailerUrl") && body.get("trailerUrl") != null && !String.valueOf(body.get("trailerUrl")).isBlank()) {
+                m.setTrailerUrl(String.valueOf(body.get("trailerUrl")));
+            }
+            if (body.containsKey("youtubeUrl") && body.get("youtubeUrl") != null && !String.valueOf(body.get("youtubeUrl")).isBlank()) {
+                m.setYoutubeUrl(String.valueOf(body.get("youtubeUrl")));
+            }
 
             // genres: array of names
             @SuppressWarnings("unchecked")
@@ -141,6 +149,26 @@ public class AdminMovieApiController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable Long id) {
+        try {
+            Movie movie = movieRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Movie not found"));
+            
+            movieRepository.delete(movie);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Movie deleted successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
     private Map<String, Object> toMovie(Movie m) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", m.getId());
@@ -156,7 +184,9 @@ public class AdminMovieApiController {
         map.put("languages", m.getLanguages());
         map.put("status", m.getStatus());
         map.put("posterUrl", m.getPosterUrl());
+        map.put("posterUrl", m.getPosterUrl());
         map.put("trailerUrl", m.getTrailerUrl());
+        map.put("youtubeUrl", m.getYoutubeUrl());
         map.put("genres", m.getGenres() == null ? List.of() : m.getGenres().stream().map(Genre::getName).toList());
         return map;
     }

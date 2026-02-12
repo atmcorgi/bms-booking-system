@@ -30,25 +30,29 @@ export default function MovieTabs(props: MovieTabsProps) {
 
   const normalizedNow = useMemo(
     () =>
-      (nowShowing || []).map((m) => ({
-        ...m,
-        duration: m.duration ?? m.durationMin,
-      })),
+      (nowShowing || [])
+        .filter(Boolean)
+        .map((m) => ({
+          ...m!,
+          duration: m?.duration ?? m?.durationMin,
+        })),
     [nowShowing]
   );
 
   const normalizedSoon = useMemo(
     () =>
-      (comingSoon || []).map((m) => ({
-        ...m,
-        duration: m.duration ?? m.durationMin,
-      })),
+      (comingSoon || [])
+        .filter(Boolean)
+        .map((m) => ({
+          ...m!,
+          duration: m?.duration ?? m?.durationMin,
+        })),
     [comingSoon]
   );
 
   return (
     <div className="movie-tabs-container">
-      <div className="movie-tabs">
+      <div className="movie-tabs" id="now-showing">
         <button
           className={`movie-tab ${activeTab === "now" ? "active" : ""}`}
           data-tab="now-showing"
@@ -68,16 +72,19 @@ export default function MovieTabs(props: MovieTabsProps) {
       {/* Now Showing */}
       <div
         className={`lotte-tab-content ${activeTab === "now" ? "active" : ""}`}
-        id="now-showing"
       >
         <div className="lotte-movie-grid" id="nowShowingMoviesContainer">
           {normalizedNow.length === 0 && (
             <div
               className="no-movies-message"
-              style={{ textAlign: "center", padding: 50, color: "#666" }}
+              style={{ textAlign: "center", padding: "40px 20px", gridColumn: "1 / -1" }}
             >
-              <h3>Không có phim đang chiếu nào</h3>
-              <p>Vui lòng quay lại sau!</p>
+              <h3 style={{ marginBottom: 16, color: "#8b7355", fontSize: 18, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Không có phim đang chiếu nào
+              </h3>
+              <p style={{ marginBottom: 16, color: "#8b7355", fontSize: 14, lineHeight: 1.5 }}>
+                Vui lòng quay lại sau!
+              </p>
             </div>
           )}
 
@@ -128,7 +135,7 @@ export default function MovieTabs(props: MovieTabsProps) {
                 </div>
                 <div className="lotte-movie-meta">
                   <span className="lotte-movie-duration">
-                    {(movie.duration ?? "") + "Phút"}
+                    {movie.duration ? `${movie.duration} Phút` : ""}
                   </span>
                   <span className="lotte-movie-date">
                     {(movie.releaseDate || "").toString().slice(0, 10)}
@@ -183,10 +190,14 @@ export default function MovieTabs(props: MovieTabsProps) {
           {normalizedSoon.length === 0 && (
             <div
               className="no-movies-message"
-              style={{ textAlign: "center", padding: 50, color: "#666" }}
+              style={{ textAlign: "center", padding: "40px 20px", gridColumn: "1 / -1" }}
             >
-              <h3>Không có phim sắp chiếu nào</h3>
-              <p>Vui lòng quay lại sau!</p>
+              <h3 style={{ marginBottom: 16, color: "#8b7355", fontSize: 18, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Không có phim sắp chiếu nào
+              </h3>
+              <p style={{ marginBottom: 16, color: "#8b7355", fontSize: 14, lineHeight: 1.5 }}>
+                Vui lòng quay lại sau!
+              </p>
             </div>
           )}
 
@@ -231,7 +242,7 @@ export default function MovieTabs(props: MovieTabsProps) {
                 </div>
                 <div className="lotte-movie-meta">
                   <span className="lotte-movie-duration">
-                    {(movie.duration ?? "") + "Phút"}
+                    {movie.duration ? `${movie.duration} Phút` : ""}
                   </span>
                   <span className="lotte-movie-date">
                     {(movie.releaseDate || "").toString().slice(0, 10)}

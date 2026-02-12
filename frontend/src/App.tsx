@@ -1,22 +1,26 @@
+import { Toaster } from "react-hot-toast";
 import { Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./styles/optimization.css";
 import { useState } from "react";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import MainLayout from "./layouts/MainLayout";
 import api from "./services/apiClient";
 import MovieTabs from "./components/MovieTabs";
 import { type MovieItem } from "./types/movie";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
 import QuickBooking from "./components/QuickBooking";
 import MovieBanner from "./components/MovieBanner";
 import SearchBar from "./components/SearchBar";
 import MovieDetail from "./pages/MovieDetail";
 import LoginPage from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import RegisterPage from "./pages/Register";
 import BookingFlow from "./components/BookingFlow";
 import BookingSuccess from "./pages/BookingSuccess";
 import BookingFailed from "./pages/BookingFailed";
 import Tickets from "./pages/Tickets";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ScrollToHash from "./components/ScrollToHash";
 import GenreList from "./pages/admin/GenreList";
 import GenreForm from "./pages/admin/GenreForm";
 import AdminLayout from "./layouts/AdminLayout";
@@ -30,16 +34,40 @@ import StaffScheduling from "./pages/staff/Scheduling";
 import StaffLayout from "./layouts/StaffLayout";
 import StaffDashboard from "./pages/staff/Dashboard";
 import StaffMovieManagement from "./pages/staff/MovieManagement";
+import ShowtimeManagement from "./pages/staff/ShowtimeManagement";
+import BookingManagement from "./pages/staff/BookingManagement";
 import MovieIntakeForm from "./pages/admin/MovieIntakeForm";
 import NearbyTheaters from "./pages/NearbyTheaters";
+import BannerList from "./pages/admin/BannerList";
+import BannerForm from "./pages/admin/BannerForm";
+import AccountManagement from "./pages/admin/AccountManagement";
+import MovieAssignmentList from "./pages/admin/MovieAssignmentList";
+import MovieRequestList from "./pages/admin/MovieRequestList";
+import Profile from "./pages/Profile";
+import StaffProfile from "./pages/staff/StaffProfile";
+import AdminProfile from "./pages/admin/AdminProfile";
+import { BackgroundProvider } from "./contexts/BackgroundContext";
 // import CloudinaryTest from "./components/CloudinaryTest";
 
-type PagedMovies = {
-  movies: MovieItem[];
+// App.tsx
+
+// ... (imports remain the same) ...
+
+// Define more accurate types for paged content from Spring Boot
+interface PagedContent<T> {
+  content: T[];
   hasMore: boolean;
-  currentPage: number;
   totalPages: number;
-};
+  totalItems: number;
+  page: number;
+  size: number;
+}
+
+// Define the type for the categorized search result
+interface MovieSearchResult {
+  nowShowing: PagedContent<MovieItem>;
+  comingSoon: PagedContent<MovieItem>;
+}
 
 function Home() {
   const [searchFilters, setSearchFilters] = useState<{
@@ -48,6 +76,7 @@ function Home() {
     year: string;
   }>({ searchTerm: "", genre: "", year: "" });
 
+  // ... (useInfiniteQuery for nowShowingData and comingSoonData remains the same) ...
   const {
     data: nowShowingData,
     isLoading: loadingNow,
@@ -55,7 +84,7 @@ function Home() {
     fetchNextPage: fetchNextNowShowing,
     hasNextPage: hasNextNowShowing,
     isFetchingNextPage: loadingMoreNowShowing,
-  } = useInfiniteQuery<PagedMovies>({
+  } = useInfiniteQuery<PagedContent<MovieItem>>({
     queryKey: ["/api/movies/now-showing"],
     queryFn: async ({ pageParam = 0 }) => {
       const res = await api.get("/api/movies/now-showing", {
@@ -64,7 +93,7 @@ function Home() {
       return res.data;
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.currentPage + 1 : undefined;
+      return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
     initialPageParam: 0,
   });
@@ -76,7 +105,7 @@ function Home() {
     fetchNextPage: fetchNextComingSoon,
     hasNextPage: hasNextComingSoon,
     isFetchingNextPage: loadingMoreComingSoon,
-  } = useInfiniteQuery<PagedMovies>({
+  } = useInfiniteQuery<PagedContent<MovieItem>>({
     queryKey: ["/api/movies/coming-soon"],
     queryFn: async ({ pageParam = 0 }) => {
       const res = await api.get("/api/movies/coming-soon", {
@@ -85,17 +114,18 @@ function Home() {
       return res.data;
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.currentPage + 1 : undefined;
+      return lastPage.hasMore ? lastPage.page + 1 : undefined;
     },
     initialPageParam: 0,
   });
 
-  // Search results
+
+  // Updated Search results query
   const {
     data: searchResults,
     isLoading: loadingSearch,
     isError: errorSearch,
-  } = useQuery<PagedMovies>({
+  } = useQuery<MovieSearchResult>({
     queryKey: ["/api/movies/search", searchFilters],
     queryFn: async () => {
       const res = await api.get("/api/movies/search", {
@@ -103,7 +133,7 @@ function Home() {
           q: searchFilters.searchTerm || undefined,
           genre: searchFilters.genre || undefined,
           year: searchFilters.year || undefined,
-          page: 0,
+          page: 0, // Pagination for search results can be added later if needed
         },
       });
       return res.data;
@@ -123,11 +153,11 @@ function Home() {
 
   // Flatten infinite query data
   const nowShowingMovies =
-    nowShowingData?.pages.flatMap((page) => page.movies) || [];
+    nowShowingData?.pages.flatMap((page) => page.content) || [];
   const comingSoonMovies =
-    comingSoonData?.pages.flatMap((page) => page.movies) || [];
+    comingSoonData?.pages.flatMap((page) => page.content) || [];
 
-  // Load more handlers
+  // ... (load more handlers remain the same) ...
   const handleLoadMoreNowShowing = () => {
     if (hasNextNowShowing && !loadingMoreNowShowing) {
       fetchNextNowShowing();
@@ -140,6 +170,7 @@ function Home() {
     }
   };
 
+
   if (loadingNow || loadingSoon)
     return <div style={{ padding: 24 }}>Đang tải...</div>;
   if (errorNow || errorSoon)
@@ -149,19 +180,18 @@ function Home() {
     searchFilters.searchTerm !== "" ||
     searchFilters.genre !== "" ||
     searchFilters.year !== "";
-  const displayMovies = hasActiveSearch ? searchResults?.movies || [] : [];
+    
+  const totalFound = (searchResults?.nowShowing.totalItems || 0) + (searchResults?.comingSoon.totalItems || 0);
 
   return (
-    <>
-      <Header />
-      <main>
+    <MainLayout>
         <MovieBanner />
         <SearchBar onSearch={handleSearch} />
 
         <div className="container">
           {hasActiveSearch ? (
             <div>
-              {/* Results Summary - Giống Thymeleaf */}
+              {/* Results Summary */}
               <div
                 style={{
                   marginBottom: 20,
@@ -192,8 +222,7 @@ function Home() {
                       "Có lỗi khi tìm kiếm."
                     ) : (
                       <>
-                        TÌM THẤY {displayMovies.length} / {displayMovies.length}{" "}
-                        PHIM CHO "{searchFilters.searchTerm || ""}"
+                        TÌM THẤY {totalFound} PHIM CHO "{searchFilters.searchTerm || ""}"
                         {searchFilters.genre &&
                           ` • THỂ LOẠI: "${searchFilters.genre}"`}
                         {searchFilters.year && ` • NĂM: ${searchFilters.year}`}
@@ -231,19 +260,19 @@ function Home() {
               </div>
 
               {/* Search Results */}
-              {!loadingSearch && !errorSearch && displayMovies.length > 0 && (
+              {!loadingSearch && !errorSearch && totalFound > 0 && (
                 <MovieTabs
-                  nowShowing={displayMovies}
-                  comingSoon={[]}
-                  nowShowingHasMore={false}
-                  comingSoonHasMore={false}
-                  onLoadMoreNowShowing={() => {}}
-                  onLoadMoreComingSoon={() => {}}
+                  nowShowing={searchResults?.nowShowing.content || []}
+                  comingSoon={searchResults?.comingSoon.content || []}
+                  nowShowingHasMore={searchResults?.nowShowing.hasMore || false}
+                  comingSoonHasMore={searchResults?.comingSoon.hasMore || false}
+                  onLoadMoreNowShowing={() => {}} // TODO: Implement pagination for search if needed
+                  onLoadMoreComingSoon={() => {}} // TODO: Implement pagination for search if needed
                 />
               )}
 
               {/* No Results */}
-              {!loadingSearch && !errorSearch && displayMovies.length === 0 && (
+              {!loadingSearch && !errorSearch && totalFound === 0 && (
                 <div
                   style={{
                     textAlign: "center",
@@ -304,11 +333,12 @@ function Home() {
         </div>
 
         <QuickBooking />
-      </main>
-      <Footer />
-    </>
+    </MainLayout>
   );
 }
+
+// ... (rest of App.tsx remains the same) ...
+
 
 function BookingPage() {
   const { movieId } = useParams();
@@ -316,84 +346,95 @@ function BookingPage() {
   const theaterId = searchParams.get("theaterId");
 
   return (
-    <>
-      <Header />
-      <main>
-        <BookingFlow movieId={movieId} theaterId={theaterId} />
-      </main>
-      <Footer />
-    </>
+    <MainLayout>
+      <BookingFlow movieId={movieId} theaterId={theaterId} />
+    </MainLayout>
   );
 }
 
 function NearbyTheatersPage() {
   return (
-    <>
-      <Header />
-      <main>
-        <NearbyTheaters />
-      </main>
-      <Footer />
-    </>
+    <MainLayout>
+      <NearbyTheaters />
+    </MainLayout>
   );
 }
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/movies/:id" element={<MovieDetail />} />
-      <Route path="/booking" element={<BookingPage />} />
-      <Route path="/booking/:movieId" element={<BookingPage />} />
-      <Route path="/booking/success" element={<BookingSuccess />} />
-      <Route path="/booking/failed" element={<BookingFailed />} />
-      <Route path="/booking/tickets" element={<Tickets />} />
-      <Route path="/theaters/nearby" element={<NearbyTheatersPage />} />
-      {/* <Route path="/test-cloudinary" element={<CloudinaryTest />} /> */}
-      <Route path="/login" element={<LoginPage />} />
-      {/* Staff layout with nested routes */}
-      <Route
-        path="/staff"
-        element={
-          <ProtectedRoute roles={["STAFF"]}>
-            <StaffLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<StaffDashboard />} />
-        <Route path="scheduling" element={<StaffScheduling />} />
-        <Route path="movies" element={<StaffMovieManagement />} />
-      </Route>
-      {/* Admin layout with nested routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute roles={["ADMIN"]}>
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Dashboard />} />
-        <Route path="genres" element={<GenreList />} />
-        <Route path="genres/create" element={<GenreForm />} />
-        <Route path="genres/:id/edit" element={<GenreForm />} />
-        <Route path="theaters" element={<TheaterList />} />
-        <Route path="theaters/create" element={<TheaterForm />} />
-        <Route path="theaters/:id/detail" element={<TheaterDetail />} />
-        <Route path="theaters/:id/edit" element={<TheaterForm />} />
-        <Route path="theaters/:id/view" element={<TheaterForm />} />
-        <Route path="theaters/:theaterId/rooms/create" element={<RoomForm />} />
+    <BackgroundProvider>
+      <Toaster position="top-right" />
+      <ScrollToHash />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/movies/:id" element={<MainLayout><MovieDetail /></MainLayout>} />
+        <Route path="/booking" element={<BookingPage />} />
+        <Route path="/booking/:movieId" element={<BookingPage />} />
+        <Route path="/booking/success" element={<MainLayout><BookingSuccess /></MainLayout>} />
+        <Route path="/booking/failed" element={<MainLayout><BookingFailed /></MainLayout>} />
+        <Route path="/booking/tickets" element={<Tickets />} />
+        <Route path="/theaters/nearby" element={<NearbyTheatersPage />} />
+        {/* <Route path="/test-cloudinary" element={<CloudinaryTest />} /> */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/register" element={<RegisterPage />} />
+        {/* Customer Profile */}
+        <Route path="/profile" element={<ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>} />
+        {/* Staff layout with nested routes */}
         <Route
-          path="theaters/:theaterId/rooms/:roomId/edit"
-          element={<RoomForm />}
-        />
-        <Route path="movies" element={<MovieIntakeList />} />
-        <Route path="movies/create" element={<MovieIntakeForm />} />
-        <Route path="movies/:id/edit" element={<MovieIntakeForm />} />
-        <Route path="movies/:id/view" element={<MovieIntakeForm />} />
-      </Route>
-      {/* Examples for protected routes (uncomment when pages exist) */}
-      {/* <Route path="/admin/*" element={<ProtectedRoute roles={["ADMIN"]}><AdminApp/></ProtectedRoute>} /> */}
-    </Routes>
+          path="/staff"
+          element={
+            <ProtectedRoute roles={["STAFF"]}>
+              <StaffLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<StaffDashboard />} />
+          <Route path="scheduling" element={<StaffScheduling />} />
+          <Route path="movies" element={<StaffMovieManagement />} />
+          <Route path="showtimes" element={<ShowtimeManagement />} />
+          <Route path="bookings" element={<BookingManagement />} />
+          <Route path="profile" element={<StaffProfile />} />
+        </Route>
+        {/* Admin layout with nested routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute roles={["ADMIN"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="genres" element={<GenreList />} />
+          <Route path="genres/create" element={<GenreForm />} />
+          <Route path="genres/:id/edit" element={<GenreForm />} />
+          <Route path="theaters" element={<TheaterList />} />
+          <Route path="theaters/create" element={<TheaterForm />} />
+          <Route path="theaters/:id/detail" element={<TheaterDetail />} />
+          <Route path="theaters/:id/edit" element={<TheaterForm />} />
+          <Route path="theaters/:id/view" element={<TheaterForm />} />
+          <Route path="theaters/:theaterId/rooms/create" element={<RoomForm />} />
+          <Route
+            path="theaters/:theaterId/rooms/:roomId/edit"
+            element={<RoomForm />}
+          />
+          <Route path="movies" element={<MovieIntakeList />} />
+          <Route path="movies/create" element={<MovieIntakeForm />} />
+          <Route path="movies/:id/edit" element={<MovieIntakeForm />} />
+          <Route path="movies/:id/view" element={<MovieIntakeForm />} />
+          <Route path="banners" element={<BannerList />} />
+          <Route path="banners/new" element={<BannerForm />} />
+          <Route path="banners/:id/edit" element={<BannerForm />} />
+          <Route path="accounts" element={<AccountManagement />} />
+          <Route path="movie-assignments" element={<MovieAssignmentList />} />
+          <Route path="movie-requests" element={<MovieRequestList />} />
+          <Route path="profile" element={<AdminProfile />} />
+        </Route>
+        {/* Examples for protected routes (uncomment when pages exist) */}
+        {/* <Route path="/admin/*" element={<ProtectedRoute roles={["ADMIN"]}><AdminApp/></ProtectedRoute>} /> */}
+      </Routes>
+    </BackgroundProvider>
   );
 }

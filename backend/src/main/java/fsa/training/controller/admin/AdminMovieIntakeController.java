@@ -50,6 +50,8 @@ public class AdminMovieIntakeController {
                 dataMap.put("demandScore", row.getDemandScore());
                 dataMap.put("genres", row.getGenreNames());
                 dataMap.put("allowedTheaters", row.getAllowedTheaters());
+                dataMap.put("trailerUrl", row.getTrailerUrl());
+                dataMap.put("youtubeUrl", row.getYoutubeUrl());
                 rowMap.put("data", dataMap);
                 rowMap.put("errors", row.getErrors());
                 rowMap.put("warnings", List.of());
@@ -103,6 +105,8 @@ public class AdminMovieIntakeController {
                     dto.setLanguages(asString(data.get("languages")));
                     dto.setPriority(asInteger(data.get("priority")));
                     dto.setDemandScore(asDouble(data.get("demandScore")));
+                    dto.setTrailerUrl(asString(data.get("trailerUrl")));
+                    dto.setYoutubeUrl(asString(data.get("youtubeUrl")));
                     @SuppressWarnings("unchecked")
                     List<String> genres = (List<String>) data.get("genres");
                     dto.setGenreNames(genres != null ? genres : List.of());

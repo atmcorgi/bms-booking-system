@@ -3,7 +3,19 @@ import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { adminMovieApi } from "../../services/adminMovieApi";
 import { adminGenreApi } from "../../services/adminGenreApi";
 import api from "../../services/apiClient";
+import ErrorModal from "../../components/shared/ErrorModal";
 import "../../styles/admin-table.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faFileAlt,
+  faCalendarAlt,
+  faTheaterMasks,
+  faFilm,
+  faUpload,
+  faSpinner,
+  faEdit,
+  faSave,
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function MovieIntakeForm() {
   const navigate = useNavigate();
@@ -26,6 +38,7 @@ export default function MovieIntakeForm() {
     genres: [] as string[],
     posterUrl: "",
     trailerUrl: "",
+    youtubeUrl: "",
   });
   const [allGenres, setAllGenres] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -34,6 +47,7 @@ export default function MovieIntakeForm() {
   const [newGenre, setNewGenre] = useState("");
   const [showGenreDropdown, setShowGenreDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [errorModal, setErrorModal] = useState({ show: false, message: "", title: "Thông báo" });
 
   useEffect(() => {
     // Load genres (names)
@@ -62,14 +76,16 @@ export default function MovieIntakeForm() {
             genres: movie.genres || [],
             posterUrl: movie.posterUrl || "",
             trailerUrl: movie.trailerUrl || "",
+            youtubeUrl: movie.youtubeUrl || "",
           });
         })
         .catch((error) => {
           console.error("Error loading movie:", error);
-          alert(
-            "Lỗi tải dữ liệu phim: " +
-              (error.response?.data?.message || error.message)
-          );
+          setErrorModal({
+            show: true,
+            title: "Lỗi",
+            message: "Lỗi tải dữ liệu phim: " + (error.response?.data?.message || error.message)
+          });
         });
     }
   }, [isEditMode, id]);
@@ -103,9 +119,11 @@ export default function MovieIntakeForm() {
       navigate("/admin/movies", { replace: true });
     } catch (error: any) {
       console.error("Error saving movie:", error);
-      alert(
-        "Lỗi lưu phim: " + (error.response?.data?.message || error.message)
-      );
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "Lỗi lưu phim: " + (error.response?.data?.message || error.message)
+      });
     } finally {
       setLoading(false);
     }
@@ -118,7 +136,11 @@ export default function MovieIntakeForm() {
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert("File poster quá lớn! Vui lòng chọn file nhỏ hơn 5MB.");
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "File poster quá lớn! Vui lòng chọn file nhỏ hơn 5MB."
+      });
       e.target.value = ""; // Clear the input
       return;
     }
@@ -126,7 +148,11 @@ export default function MovieIntakeForm() {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Chỉ chấp nhận file ảnh (JPG, PNG, WebP)!");
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "Chỉ chấp nhận file ảnh (JPG, PNG, WebP)!"
+      });
       e.target.value = ""; // Clear the input
       return;
     }
@@ -139,7 +165,7 @@ export default function MovieIntakeForm() {
       const res = await api.post("/api/images/upload-poster", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setForm((f: any) => ({ ...f, posterUrl: res.data.imageUrl }));
+      setForm((f: any) => ({ ...f, posterUrl: res.data.url }));
     } catch (error: any) {
       console.error("Upload poster error:", error);
       console.error("Error response:", error.response?.data);
@@ -153,7 +179,11 @@ export default function MovieIntakeForm() {
         errorMessage = error.message;
       }
 
-      alert(errorMessage);
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: errorMessage
+      });
     } finally {
       setUploadingPoster(false);
     }
@@ -168,7 +198,11 @@ export default function MovieIntakeForm() {
     // Validate file size (max 50MB for video)
     const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      alert("File trailer quá lớn! Vui lòng chọn file nhỏ hơn 50MB.");
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "File trailer quá lớn! Vui lòng chọn file nhỏ hơn 50MB."
+      });
       e.target.value = ""; // Clear the input
       return;
     }
@@ -182,7 +216,11 @@ export default function MovieIntakeForm() {
       "video/mov",
     ];
     if (!allowedTypes.includes(file.type)) {
-      alert("Chỉ chấp nhận file video (MP4, WebM, OGG, AVI, MOV)!");
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "Chỉ chấp nhận file video (MP4, WebM, OGG, AVI, MOV)!"
+      });
       e.target.value = ""; // Clear the input
       return;
     }
@@ -195,7 +233,7 @@ export default function MovieIntakeForm() {
       const res = await api.post("/api/images/upload-trailer", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      setForm((f: any) => ({ ...f, trailerUrl: res.data.videoUrl }));
+      setForm((f: any) => ({ ...f, trailerUrl: res.data.url }));
     } catch (error: any) {
       console.error("Upload trailer error:", error);
       console.error("Error response:", error.response?.data);
@@ -209,7 +247,11 @@ export default function MovieIntakeForm() {
         errorMessage = error.message;
       }
 
-      alert(errorMessage);
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: errorMessage
+      });
     } finally {
       setUploadingTrailer(false);
     }
@@ -304,7 +346,7 @@ export default function MovieIntakeForm() {
                   color: "#1f2937",
                 }}
               >
-                📝 Thông Tin Cơ Bản
+                <FontAwesomeIcon icon={faFileAlt} style={{ marginRight: "8px" }} /> Thông Tin Cơ Bản
               </h3>
               <div
                 style={{
@@ -420,6 +462,46 @@ export default function MovieIntakeForm() {
                     }}
                   />
                 </div>
+                
+                {/* Movie Description */}
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    marginTop: "8px"
+                  }}
+                >
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      color: "#374151",
+                    }}
+                  >
+                    Mô tả phim
+                  </label>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                    placeholder="Nhập mô tả phim..."
+                    readOnly={isViewMode}
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      fontFamily: "inherit",
+                      background: isViewMode ? "#f8fafc" : "#fff",
+                      color: "#1f2937",
+                      outline: "none",
+                      resize: "vertical"
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -441,7 +523,7 @@ export default function MovieIntakeForm() {
                   color: "#1f2937",
                 }}
               >
-                📅 Thông Tin Bổ Sung
+                <FontAwesomeIcon icon={faCalendarAlt} style={{ marginRight: "8px" }} /> Thông Tin Bổ Sung
               </h3>
               <div
                 style={{
@@ -520,6 +602,78 @@ export default function MovieIntakeForm() {
                     }}
                   />
                 </div>
+                
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      color: "#374151",
+                    }}
+                  >
+                    Định dạng (2D, 3D, IMAX...)
+                  </label>
+                  <input
+                    value={form.formats}
+                    onChange={(e) =>
+                      setForm({ ...form, formats: e.target.value })
+                    }
+                    placeholder="2D, 3D, IMAX..."
+                    readOnly={isViewMode}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      background: isViewMode ? "#f8fafc" : "#fff",
+                      color: "#1f2937",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+                
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      color: "#374151",
+                    }}
+                  >
+                    Ngôn ngữ (Lồng tiếng, Phụ đề...)
+                  </label>
+                  <input
+                    value={form.languages}
+                    onChange={(e) =>
+                      setForm({ ...form, languages: e.target.value })
+                    }
+                    placeholder="Tiếng Việt, Phụ đề Tiếng Anh..."
+                    readOnly={isViewMode}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      background: isViewMode ? "#f8fafc" : "#fff",
+                      color: "#1f2937",
+                      outline: "none",
+                    }}
+                  />
+                </div>
               </div>
             </div>
 
@@ -541,7 +695,7 @@ export default function MovieIntakeForm() {
                   color: "#1f2937",
                 }}
               >
-                🎭 Thông Tin Nghệ Thuật
+                <FontAwesomeIcon icon={faTheaterMasks} style={{ marginRight: "8px" }} /> Thông Tin Nghệ Thuật
               </h3>
               <div
                 style={{
@@ -585,6 +739,45 @@ export default function MovieIntakeForm() {
                     }}
                   />
                 </div>
+                
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                    marginTop: "8px"
+                  }}
+                >
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      color: "#374151",
+                    }}
+                  >
+                    Diễn viên
+                  </label>
+                  <textarea
+                    value={form.actors}
+                    onChange={(e) => setForm({ ...form, actors: e.target.value })}
+                    placeholder="Nhập tên dàn diễn viên..."
+                    readOnly={isViewMode}
+                    rows={2}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      fontFamily: "inherit",
+                      background: isViewMode ? "#f8fafc" : "#fff",
+                      color: "#1f2937",
+                      outline: "none",
+                      resize: "vertical"
+                    }}
+                  />
+                </div>
                 <div
                   style={{
                     display: "flex",
@@ -613,7 +806,7 @@ export default function MovieIntakeForm() {
                       minHeight: "42px",
                     }}
                   >
-                    {form.genres.map((genre: string) => (
+                    {(form.genres || []).map((genre: string) => (
                       <span
                         key={genre}
                         style={{
@@ -717,7 +910,7 @@ export default function MovieIntakeForm() {
                               }}
                             >
                               {allGenres
-                                .filter((genre) => !form.genres.includes(genre))
+                                .filter((genre) => !(form.genres || []).includes(genre))
                                 .map((genre) => (
                                   <button
                                     key={genre}
@@ -752,8 +945,8 @@ export default function MovieIntakeForm() {
                                     {genre}
                                   </button>
                                 ))}
-                              {allGenres.filter(
-                                (genre) => !form.genres.includes(genre)
+                              {(allGenres || []).filter(
+                                (genre) => !(form.genres || []).includes(genre)
                               ).length === 0 && (
                                 <div
                                   style={{
@@ -776,23 +969,48 @@ export default function MovieIntakeForm() {
                           placeholder="Tạo thể loại mới..."
                           value={newGenre}
                           onChange={(e) => setNewGenre(e.target.value)}
-                          onKeyPress={(e) => {
+                          onKeyPress={async (e) => {
                             if (e.key === "Enter" && newGenre.trim()) {
                               e.preventDefault();
+                              const genreName = newGenre.trim();
+                              
+                              // Check if genre already exists
                               if (
-                                !form.genres.includes(newGenre.trim()) &&
-                                !allGenres.includes(newGenre.trim())
+                                (form.genres || []).includes(genreName) ||
+                                (allGenres || []).includes(genreName)
                               ) {
+                                setErrorModal({ 
+                                  show: true, 
+                                  title: "Thông báo",
+                                  message: "Thể loại này đã tồn tại!" 
+                                });
+                                return;
+                              }
+
+                              try {
+                                // Create genre in database
+                                await adminGenreApi.create({ name: genreName, description: "" });
+                                
+                                // Add to form and local list
                                 setForm((f: any) => ({
                                   ...f,
-                                  genres: [...f.genres, newGenre.trim()],
+                                  genres: [...f.genres, genreName],
                                 }));
-                                setAllGenres((prev) => [
-                                  ...prev,
-                                  newGenre.trim(),
-                                ]);
+                                setAllGenres((prev) => [...prev, genreName]);
+                                setNewGenre("");
+                                
+                                setErrorModal({ 
+                                  show: true, 
+                                  title: "Thành công",
+                                  message: `Đã tạo thể loại "${genreName}" thành công!` 
+                                });
+                              } catch (error: any) {
+                                setErrorModal({ 
+                                  show: true, 
+                                  title: "Lỗi",
+                                  message: error?.response?.data?.message || "Có lỗi khi tạo thể loại. Có thể tên đã tồn tại." 
+                                });
                               }
-                              setNewGenre("");
                             }
                           }}
                           style={{
@@ -837,7 +1055,7 @@ export default function MovieIntakeForm() {
                   color: "#1f2937",
                 }}
               >
-                🎬 Poster và Trailer
+                <FontAwesomeIcon icon={faFilm} style={{ marginRight: "8px" }} /> Poster và Trailer
               </h3>
               <div
                 style={{
@@ -908,7 +1126,7 @@ export default function MovieIntakeForm() {
                             marginTop: "4px",
                           }}
                         >
-                          📤 Đang upload...
+                          <FontAwesomeIcon icon={faUpload} spin /> Đang upload...
                         </div>
                       )}
                     </div>
@@ -989,11 +1207,45 @@ export default function MovieIntakeForm() {
                               marginTop: "4px",
                             }}
                           >
-                            📤 Đang upload trailer...
+                            <FontAwesomeIcon icon={faUpload} spin /> Đang upload trailer...
                           </div>
                         )}
                       </div>
                     )}
+                  </div>
+                  
+                  {/* YouTube URL */}
+                  <div style={{ marginTop: "16px" }}>
+                    <label
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        color: "#374151",
+                        marginBottom: "8px",
+                        display: "block",
+                      }}
+                    >
+                      YouTube URL (Iframe fallback)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.youtubeUrl}
+                      onChange={(e) =>
+                        setForm({ ...form, youtubeUrl: e.target.value })
+                      }
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      readOnly={isViewMode}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        background: isViewMode ? "#f8fafc" : "#fff",
+                        color: "#1f2937",
+                        outline: "none",
+                      }}
+                    />
                   </div>
                 </div>
               </div>
@@ -1057,7 +1309,7 @@ export default function MovieIntakeForm() {
                       e.currentTarget.style.color = "#6366f1";
                     }}
                   >
-                    ✏️ Chỉnh sửa
+                    <FontAwesomeIcon icon={faEdit} /> Chỉnh sửa
                   </button>
                 </>
               ) : (
@@ -1116,12 +1368,12 @@ export default function MovieIntakeForm() {
                     }}
                   >
                     {loading
-                      ? "⏳ Đang lưu..."
+                      ? (<><FontAwesomeIcon icon={faSpinner} spin /> Đang lưu...</>)
                       : isEditMode
-                        ? "💾 Cập nhật phim"
+                        ? (<><FontAwesomeIcon icon={faSave} /> Cập nhật phim</>)
                         : isCreateMode
-                          ? "💾 Thêm phim mới"
-                          : "💾 Lưu phim"}
+                          ? (<><FontAwesomeIcon icon={faSave} /> Thêm phim mới</>)
+                          : (<><FontAwesomeIcon icon={faSave} /> Lưu phim</>)}
                   </button>
                 </>
               )}
@@ -1129,6 +1381,14 @@ export default function MovieIntakeForm() {
           </form>
         </div>
       </div>
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.show}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ show: false, message: "", title: "Thông báo" })}
+      />
     </div>
   );
 }

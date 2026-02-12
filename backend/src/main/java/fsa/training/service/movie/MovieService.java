@@ -22,6 +22,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import fsa.training.dto.movie.MovieSearchResultDTO;
+import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
@@ -46,6 +48,51 @@ public class MovieService {
     public Page<MovieCardProjection> getComingSoonProjections(int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
         return movieRepository.findComingSoonProjections(pageable, LocalDate.now());
+    }
+
+    @Transactional(readOnly = true)
+    public MovieSearchResultDTO searchAndCategorizeMovies(String searchTerm, String genre, String year, int page, int size) {
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
+        LocalDate today = LocalDate.now();
+
+        // 1. Build the base specification from filters
+        List<Specification<Movie>> parts = new ArrayList<>();
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            parts.add(MovieSpecification.withKeyword(searchTerm.trim()));
+        }
+        if (genre != null && !genre.trim().isEmpty()) {
+            parts.add(MovieSpecification.withGenre(genre.trim()));
+        }
+        if (year != null && !year.trim().isEmpty()) {
+            String[] sYearSplit = year.split(",");
+            List<Integer> years = new ArrayList<>();
+            for (String y : sYearSplit) {
+                if (y == null || y.isEmpty()) continue;
+                try {
+                    years.add(Integer.parseInt(y));
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid year format: {}", y, e);
+                }
+            }
+            if (!years.isEmpty()) {
+                parts.add(MovieSpecification.withYears(years));
+            }
+        }
+        Specification<Movie> baseSpec = Specification.allOf(parts);
+
+        // 2. Create categorized specifications
+        Specification<Movie> nowShowingSpec = baseSpec.and(MovieSpecification.isNowShowing(today));
+        Specification<Movie> comingSoonSpec = baseSpec.and(MovieSpecification.isComingSoon(today));
+
+        // 3. Execute find queries
+        Page<Movie> nowShowingMovies = movieRepository.findAll(nowShowingSpec, pageable);
+        Page<Movie> comingSoonMovies = movieRepository.findAll(comingSoonSpec, pageable);
+
+        // 4. Convert to projections
+        Page<MovieCardProjection> nowShowingProjections = nowShowingMovies.map(this::convertToMovieCardProjection);
+        Page<MovieCardProjection> comingSoonProjections = comingSoonMovies.map(this::convertToMovieCardProjection);
+
+        return new MovieSearchResultDTO(nowShowingProjections, comingSoonProjections);
     }
 
     @Transactional(readOnly = true)
@@ -122,72 +169,6 @@ public class MovieService {
     public Optional<Movie> getMovieById(Long id) {
         return movieRepository.findById(id);
     }
-
-    @Transactional(readOnly = true)
-    public List<Movie> searchMoviesWithFilters(String keyword, String genre, String sYear) {
-        List<Specification<Movie>> parts = new ArrayList<>();
-
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            parts.add(MovieSpecification.withKeyword(keyword.trim()));
-        }
-
-        if (genre != null && !genre.trim().isEmpty()) {
-            parts.add(MovieSpecification.withGenre(genre.trim()));
-        }
-
-        if (sYear != null && !sYear.trim().isEmpty()) {
-            String[] sYearSplit = sYear.split(",");
-            List<Integer> years = new java.util.ArrayList<>();
-            for (String year : sYearSplit) {
-                if (year == null || year.isEmpty()) continue;
-                try {
-                    years.add(Integer.parseInt(year));
-                } catch (NumberFormatException e) {
-                    logger.warn("Invalid year format: {}", year, e);
-                }
-            }
-            if (!years.isEmpty()) {
-                parts.add(MovieSpecification.withYears(years));
-            }
-        }
-
-        Specification<Movie> spec = parts.isEmpty()
-            ? (root, q, cb) -> cb.conjunction()
-            : Specification.allOf(parts);
-
-        return movieRepository.findAll(spec);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<MovieCardProjection> searchMovies(String searchTerm, String genre, String year, int page, int size) {
-        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1));
-        
-        // Debug logging
-        logger.debug("Search parameters: searchTerm={}, genre={}, year={}", searchTerm, genre, year);
-        
-        // Use the existing searchMoviesWithFilters logic but return as projections
-        List<Movie> filteredMovies = searchMoviesWithFilters(searchTerm, genre, year);
-        
-        logger.debug("Filtered movies count: {}", filteredMovies.size());
-        
-        // Convert to projections (không phụ thuộc status)
-        List<MovieCardProjection> projections = filteredMovies.stream()
-            .map(this::convertToMovieCardProjection)
-            .toList();
-        
-        logger.debug("Projections count: {}", projections.size());
-        
-        // Create a custom page implementation
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), projections.size());
-        List<MovieCardProjection> pageContent = projections.subList(start, end);
-        
-        return new org.springframework.data.domain.PageImpl<>(
-            pageContent, 
-            pageable, 
-            projections.size()
-        );
-    }
     
     private MovieCardProjection convertToMovieCardProjection(Movie movie) {
         return new MovieCardProjection() {
@@ -214,9 +195,10 @@ public class MovieService {
             
             @Override
             public String getGenres() { 
+                if (movie.getGenres() == null) return "";
                 return movie.getGenres().stream()
                     .map(g -> g.getName())
-                    .collect(java.util.stream.Collectors.joining(", "));
+                    .collect(Collectors.joining(", "));
             }
         };
     }

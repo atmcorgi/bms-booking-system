@@ -20,12 +20,12 @@ public class ImageController {
      * Upload movie poster
      */
     @PostMapping("/upload-poster")
-    public ResponseEntity<Map<String, Object>> uploadMoviePoster(
+    public ResponseEntity<Map<String, Object>> uploadPoster(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("movieTitle") String movieTitle) {
-        
+            @RequestParam(value = "movieTitle", required = false) String movieTitle) {
+
         Map<String, Object> response = new HashMap<>();
-        
+
         try {
             if (file.isEmpty()) {
                 response.put("success", false);
@@ -33,14 +33,17 @@ public class ImageController {
                 return ResponseEntity.badRequest().body(response);
             }
 
-            String imageUrl = imageUploadService.uploadMoviePoster(file, movieTitle);
-            
+            // If movieTitle is not provided, use a default prefix for banners
+            String resourceTitle = movieTitle != null && !movieTitle.isEmpty() ? movieTitle : "banner";
+
+            String imageUrl = imageUploadService.uploadPoster(file, resourceTitle);
+
             response.put("success", true);
-            response.put("imageUrl", imageUrl);
+            response.put("url", imageUrl);
             response.put("message", "Image uploaded successfully");
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Failed to upload image: " + e.getMessage());
@@ -54,7 +57,7 @@ public class ImageController {
     @PostMapping("/upload-trailer")
     public ResponseEntity<Map<String, Object>> uploadTrailer(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("movieTitle") String movieTitle) {
+            @RequestParam(value = "movieTitle", required = false) String movieTitle) {
 
         Map<String, Object> response = new HashMap<>();
 
@@ -68,7 +71,7 @@ public class ImageController {
             String videoUrl = imageUploadService.uploadTrailer(file, movieTitle);
 
             response.put("success", true);
-            response.put("videoUrl", videoUrl);
+            response.put("url", videoUrl);
             response.put("message", "Trailer uploaded successfully");
 
             return ResponseEntity.ok(response);

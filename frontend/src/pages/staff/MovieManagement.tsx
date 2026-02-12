@@ -1,725 +1,438 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "../../services/apiClient";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faClipboardList, 
+  faCalendarCheck, 
+  faCircleCheck, 
+  faEdit, 
+  faSave, 
+  faTimes, 
+  faTrash, 
+  faCalendarPlus, 
+  faEye, 
+  faEyeSlash, 
+  faLightbulb,
+  faBuilding,
+  faCheck 
+} from "@fortawesome/free-solid-svg-icons";
+import "../../styles/staff-booking.css"; // Modern Staff CSS
 
 export default function MovieManagement() {
-  const [selectedMovies, setSelectedMovies] = useState<Set<string>>(new Set());
   const [notice, setNotice] = useState<string>("");
-  const [reqStatus, setReqStatus] = useState<
-    "PENDING" | "SCHEDULED" | "APPROVED" | "REJECTED"
-  >("PENDING");
-
-  // New UI states: inline edit + modals
   const [editRow, setEditRow] = useState<{
     id: number;
     priority: number;
     demandScore: number;
   } | null>(null);
-  const [createModal, setCreateModal] = useState<{
-    movieId: number;
-    title: string;
-    priority: number;
-    demandScore: number;
-  } | null>(null);
-  const [deleteModalId, setDeleteModalId] = useState<number | null>(null);
 
-  // Fetch dashboard data to get assigned movies
+  // Fetch theater info
+  const { data: dashboardData } = useQuery({
+    queryKey: ["staff-dashboard"],
+    queryFn: async () => (await api.get("/api/staff/dashboard")).data,
+  });
+
+  const theater = dashboardData?.theater;
+
+  // Fetch all movie requests
   const {
-    data: assignedMoviesData,
-    isLoading,
-    error,
-    refetch,
+    data: pendingData,
+    isLoading: loadingPending,
+    refetch: refetchPending,
   } = useQuery({
-    queryKey: ["staff-assigned-movies"],
-    queryFn: async () => (await api.get("/api/staff/movies/assigned")).data,
-  });
-
-  // Publish movies mutation
-  const publishMut = useMutation({
-    mutationFn: (movieCodes: string[]) =>
-      api.post("/api/staff/movies/publish", { movieCodes }).then((r) => r.data),
-    onSuccess: (data) => {
-      setNotice(`✅ ${data.message}`);
-      setSelectedMovies(new Set());
-      refetch(); // Refresh dashboard data
-    },
-    onError: (e: any) =>
-      setNotice(
-        `❌ ${e?.response?.data?.error || e?.message || "Lỗi khi publish phim"}`
-      ),
-  });
-
-  // Create Movie Request mutation
-  const createReqMut = useMutation({
-    mutationFn: (payload: {
-      movieId: number;
-      priority?: number;
-      demandScore?: number;
-    }) => api.post("/api/staff/movies/requests", payload).then((r) => r.data),
-    onSuccess: () => {
-      setNotice("✅ Đã gửi yêu cầu chiếu phim");
-      setCreateModal(null);
-      refetchReqs();
-    },
-    onError: (e: any) =>
-      setNotice(
-        `❌ ${e?.response?.data?.error || e?.message || "Lỗi khi gửi yêu cầu"}`
-      ),
-  });
-
-  const assignments = assignedMoviesData?.movies || [];
-  const theater = assignedMoviesData?.theater;
-
-  // Group movies by status (we'll need to check movie status)
-
-  // Movies already have status from the API, no need to fetch separately
-
-  const handlePublish = () => {
-    if (selectedMovies.size === 0) {
-      setNotice("❌ Vui lòng chọn ít nhất một phim để publish");
-      return;
-    }
-    publishMut.mutate(Array.from(selectedMovies));
-  };
-
-  const toggleMovie = (movieCode: string) => {
-    setSelectedMovies((prev) => {
-      const next = new Set(prev);
-      if (next.has(movieCode)) {
-        next.delete(movieCode);
-      } else {
-        next.add(movieCode);
-      }
-      return next;
-    });
-  };
-
-  const selectAllScheduled = () => {
-    const scheduledMovies = assignments
-      .filter((a: any) => a.status === "SCHEDULED")
-      .map((a: any) => a.code);
-    setSelectedMovies(new Set(scheduledMovies));
-  };
-
-  const clearSelection = () => {
-    setSelectedMovies(new Set());
-  };
-
-  // Load requests by status
-  const {
-    data: requestsData,
-    isLoading: loadingReqs,
-    refetch: refetchReqs,
-  } = useQuery({
-    queryKey: ["staff-movie-requests", reqStatus],
+    queryKey: ["staff-movie-requests-pending"],
     queryFn: async () =>
-      (
-        await api.get(`/api/staff/movie-requests`, {
-          params: { status: reqStatus },
-        })
-      ).data,
+      (await api.get(`/api/staff/movie-requests`, { params: { status: "PENDING" } })).data,
   });
 
-  // Update & Delete request mutations
+  const {
+    data: scheduledData,
+    isLoading: loadingScheduled,
+    refetch: refetchScheduled,
+  } = useQuery({
+    queryKey: ["staff-movie-requests-scheduled"],
+    queryFn: async () =>
+      (await api.get(`/api/staff/movie-requests`, { params: { status: "SCHEDULED" } })).data,
+  });
+
+  const {
+    data: publishedData,
+    isLoading: loadingPublished,
+    refetch: refetchPublished,
+  } = useQuery({
+    queryKey: ["staff-movie-requests-published"],
+    queryFn: async () =>
+      (await api.get(`/api/staff/movie-requests`, { params: { status: "PUBLISHED" } })).data,
+  });
+
+  const pendingRequests = pendingData?.items || [];
+  const scheduledRequests = scheduledData?.items || [];
+  const publishedRequests = publishedData?.items || [];
+
+  const refetchAll = () => {
+    refetchPending();
+    refetchScheduled();
+    refetchPublished();
+  };
+
+  // Update request mutation
   const updateReqMut = useMutation({
-    mutationFn: (payload: {
-      id: number;
-      priority?: number;
-      demandScore?: number;
-    }) =>
-      api
-        .patch(`/api/staff/movies/requests/${payload.id}`, {
-          priority: payload.priority,
-          demandScore: payload.demandScore,
-        })
-        .then((r) => r.data),
+    mutationFn: (payload: { id: number; priority?: number; demandScore?: number }) =>
+      api.patch(`/api/staff/movie-requests/${payload.id}`, {
+        priority: payload.priority,
+        demandScore: payload.demandScore,
+      }),
     onSuccess: () => {
-      setNotice("✅ Đã cập nhật yêu cầu");
+      setNotice("Đã cập nhật yêu cầu");
       setEditRow(null);
-      refetchReqs();
+      refetchAll();
+      setTimeout(() => setNotice(""), 3000);
     },
     onError: (e: any) =>
-      setNotice(
-        `❌ ${e?.response?.data?.error || e?.message || "Lỗi khi cập nhật yêu cầu"}`
-      ),
+      setNotice(`Lỗi: ${e?.response?.data?.error || e?.message || "Lỗi khi cập nhật"}`),
   });
 
+  // Delete request mutation
   const deleteReqMut = useMutation({
-    mutationFn: (id: number) =>
-      api.delete(`/api/staff/movies/requests/${id}`).then((r) => r.data),
+    mutationFn: (id: number) => api.delete(`/api/staff/movie-requests/${id}`),
     onSuccess: () => {
-      setNotice("✅ Đã xoá yêu cầu");
-      setDeleteModalId(null);
-      refetchReqs();
+      setNotice("Đã xóa yêu cầu");
+      refetchAll();
+      setTimeout(() => setNotice(""), 3000);
     },
     onError: (e: any) =>
-      setNotice(
-        `❌ ${e?.response?.data?.error || e?.message || "Lỗi khi xoá yêu cầu"}`
-      ),
+      setNotice(`Lỗi: ${e?.response?.data?.error || e?.message || "Lỗi khi xóa"}`),
   });
 
-  if (isLoading) return <div className="section-box">Đang tải...</div>;
-  if (error) return <div className="section-box">Lỗi tải dữ liệu</div>;
+  // Publish mutation (SCHEDULED → PUBLISHED)
+  const publishMut = useMutation({
+    mutationFn: (requestId: number) =>
+      api.post(`/api/staff/movie-requests/${requestId}/publish`),
+    onSuccess: () => {
+      setNotice("Đã publish phim thành công");
+      refetchAll();
+      setTimeout(() => setNotice(""), 3000);
+    },
+    onError: (e: any) =>
+      setNotice(`Lỗi: ${e?.response?.data?.error || e?.message || "Lỗi khi publish"}`),
+  });
 
-  return (
-    <main className="container" style={{ padding: 16 }}>
-      <section className="section-box">
-        <h3 style={{ margin: 0 }}>Quản lý Movie Request</h3>
-        {theater && (
-          <div style={{ marginTop: 8, color: "#6c757d" }}>
-            <strong>Rạp:</strong> {theater.name} ({theater.code})
-          </div>
-        )}
-      </section>
+  // Unpublish mutation (PUBLISHED → SCHEDULED)
+  const unpublishMut = useMutation({
+    mutationFn: (requestId: number) =>
+      api.post(`/api/staff/movie-requests/${requestId}/unpublish`),
+    onSuccess: () => {
+      setNotice("Đã unpublish phim thành công");
+      refetchAll();
+      setTimeout(() => setNotice(""), 3000);
+    },
+    onError: (e: any) =>
+      setNotice(`Lỗi: ${e?.response?.data?.error || e?.message || "Lỗi khi unpublish"}`),
+  });
 
-      <section className="section-box" style={{ marginTop: 12 }}>
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          {(["PENDING", "SCHEDULED", "APPROVED", "REJECTED"] as const).map(
-            (s) => (
-              <button
-                key={s}
-                className="fd-btn"
-                style={{
-                  background: reqStatus === s ? "#8b7355" : "#fff",
-                  color: reqStatus === s ? "#fff" : "#333",
-                  border: "1px solid #d9d2b7",
-                }}
-                onClick={() => setReqStatus(s)}
-              >
-                {s}
-              </button>
-            )
-          )}
-        </div>
-        {loadingReqs ? (
-          <div>Đang tải yêu cầu...</div>
-        ) : (
-          <table
-            width="100%"
-            cellPadding={10}
-            style={{
-              background: "#fff",
-              border: "1px solid #e9ecef",
-              borderRadius: 6,
-            }}
-          >
-            <thead>
-              <tr style={{ background: "#f8f9fa" }}>
-                <th align="left">Mã phim</th>
-                <th align="left">Tiêu đề</th>
-                <th align="left">Trạng thái</th>
-                <th align="left">Ưu tiên</th>
-                <th align="left">Điểm nhu cầu</th>
-                <th align="left">Hành động</th>
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      deleteReqMut.mutate(deleteId);
+      setDeleteId(null);
+    }
+  };
+
+  const renderRequestTable = (
+    requests: any[],
+    status: "PENDING" | "SCHEDULED" | "PUBLISHED",
+    isLoading: boolean
+  ) => {
+    const isPending = status === "PENDING";
+    const isScheduled = status === "SCHEDULED";
+    const isPublished = status === "PUBLISHED";
+
+    return (
+      <div className="staff-table-wrap">
+        <table className="staff-table">
+          <thead>
+            <tr>
+              <th>Mã phim</th>
+              <th>Tiêu đề</th>
+              {isPending && <th>Ưu tiên</th>}
+              {isPending && <th>Điểm nhu cầu</th>}
+              {(isScheduled || isPublished) && <th>Trạng thái</th>}
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td colSpan={isPending ? 5 : 4} style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                  <FontAwesomeIcon icon={faCircleCheck} spin={true} /> Đang tải...
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {(requestsData?.items || []).map((r: any) => {
-                const isPending = r.status === "PENDING";
+            ) : requests.length === 0 ? (
+              <tr>
+                <td colSpan={isPending ? 5 : 4} style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                  Chưa có yêu cầu nào
+                </td>
+              </tr>
+            ) : (
+              requests.map((r: any) => {
                 const isEditing = editRow?.id === r.id;
                 return (
-                  <tr key={r.id} style={{ borderBottom: "1px solid #e9ecef" }}>
-                    <td style={{ fontFamily: "monospace" }}>{r.movieCode}</td>
-                    <td>{r.movie?.title}</td>
-                    <td>{r.status}</td>
-                    <td>
-                      {isPending ? (
-                        isEditing ? (
-                          <input
-                            type="number"
-                            value={editRow?.priority ?? 0}
-                            style={{ width: 72 }}
-                            onChange={(e) =>
-                              setEditRow((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      priority: Number(e.target.value),
-                                    }
-                                  : prev
-                              )
-                            }
-                          />
-                        ) : (
-                          (r.priority ?? "-")
-                        )
-                      ) : (
-                        (r.priority ?? "-")
-                      )}
-                    </td>
-                    <td>
-                      {isPending ? (
-                        isEditing ? (
-                          <input
-                            type="number"
-                            step="0.1"
-                            min="0"
-                            max="1"
-                            value={editRow?.demandScore ?? 0}
-                            style={{ width: 72 }}
-                            onChange={(e) =>
-                              setEditRow((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      demandScore: Number(e.target.value),
-                                    }
-                                  : prev
-                              )
-                            }
-                          />
-                        ) : (
-                          (r.demandScore ?? "-")
-                        )
-                      ) : (
-                        (r.demandScore ?? "-")
-                      )}
-                    </td>
-                    <td>
-                      {isPending ? (
-                        <div style={{ display: "flex", gap: 8 }}>
+                  <tr key={r.id}>
+                    <td className="text-mono">{r.movieCode}</td>
+                    <td><strong>{r.movieTitle || r.movie?.title}</strong></td>
+                    
+                    {isPending && (
+                      <>
+                        <td>
                           {isEditing ? (
-                            <>
-                              <button
-                                className="fd-btn"
-                                style={{ padding: "4px 8px", fontSize: 12 }}
-                                onClick={() =>
-                                  updateReqMut.mutate({
-                                    id: r.id,
-                                    priority: editRow?.priority ?? r.priority,
-                                    demandScore:
-                                      editRow?.demandScore ?? r.demandScore,
-                                  })
-                                }
-                                disabled={updateReqMut.isPending}
-                              >
-                                Lưu
-                              </button>
-                              <button
-                                className="fd-btn"
-                                style={{ padding: "4px 8px", fontSize: 12 }}
-                                onClick={() => setEditRow(null)}
-                              >
-                                Hủy
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              className="fd-btn"
-                              style={{ padding: "4px 8px", fontSize: 12 }}
-                              onClick={() =>
-                                setEditRow({
-                                  id: r.id,
-                                  priority: r.priority ?? 0,
-                                  demandScore: r.demandScore ?? 0,
-                                })
+                            <input
+                              type="number"
+                              value={editRow?.priority ?? 0}
+                              className="staff-input staff-input-sm"
+                              style={{ width: 72 }}
+                              onChange={(e) =>
+                                setEditRow((prev) =>
+                                  prev ? { ...prev, priority: Number(e.target.value) } : prev
+                                )
                               }
-                            >
-                              Sửa
-                            </button>
+                            />
+                          ) : (
+                            r.priority ?? 0
                           )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0"
+                              max="1"
+                              value={editRow?.demandScore ?? 0}
+                              className="staff-input staff-input-sm"
+                              style={{ width: 72 }}
+                              onChange={(e) =>
+                                setEditRow((prev) =>
+                                  prev ? { ...prev, demandScore: Number(e.target.value) } : prev
+                                )
+                              }
+                            />
+                          ) : (
+                            (r.demandScore ?? 0).toFixed(1)
+                          )}
+                        </td>
+                      </>
+                    )}
+
+                    {(isScheduled || isPublished) && (
+                      <td>
+                        <span className={`staff-badge ${isPublished ? "staff-badge-green" : "staff-badge-yellow"}`}>
+                          {isPublished ? "Đã publish" : "Đã lập lịch"}
+                        </span>
+                      </td>
+                    )}
+
+                    <td>
+                      <div className="staff-action-group">
+                        {isPending && (
+                          <>
+                            {isEditing ? (
+                              <>
+                                <button
+                                  className="staff-btn staff-btn-success staff-btn-sm"
+                                  onClick={() =>
+                                    updateReqMut.mutate({
+                                      id: r.id,
+                                      priority: editRow?.priority,
+                                      demandScore: editRow?.demandScore,
+                                    })
+                                  }
+                                >
+                                  <FontAwesomeIcon icon={faSave} /> Lưu
+                                </button>
+                                <button
+                                  className="staff-btn staff-btn-secondary staff-btn-sm"
+                                  onClick={() => setEditRow(null)}
+                                >
+                                  <FontAwesomeIcon icon={faTimes} /> Hủy
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  className="staff-btn staff-btn-secondary staff-btn-sm"
+                                  onClick={() =>
+                                    setEditRow({
+                                      id: r.id,
+                                      priority: r.priority ?? 0,
+                                      demandScore: r.demandScore ?? 0,
+                                    })
+                                  }
+                                >
+                                  <FontAwesomeIcon icon={faEdit} /> Sửa
+                                </button>
+                              </>
+                            )}
+                              <button
+                                className="staff-btn staff-btn-danger staff-btn-sm"
+                                onClick={() => setDeleteId(r.id)}
+                              >
+                                <FontAwesomeIcon icon={faTrash} /> Xóa
+                              </button>
+                          </>
+                        )}
+
+                        {isScheduled && (
                           <button
-                            className="fd-btn"
-                            style={{
-                              padding: "4px 8px",
-                              fontSize: 12,
-                              color: "#a00",
-                              borderColor: "#f1c0c0",
-                            }}
-                            onClick={() => setDeleteModalId(r.id)}
-                            disabled={deleteReqMut.isPending}
+                            className="staff-btn staff-btn-success staff-btn-sm"
+                            onClick={() => publishMut.mutate(r.id)}
+                            disabled={publishMut.isPending}
                           >
-                            Xoá
+                            <FontAwesomeIcon icon={faEye} /> Publish
                           </button>
-                        </div>
-                      ) : (
-                        <span style={{ color: "#6c757d", fontSize: 12 }}>
-                          -
-                        </span>
-                      )}
+                        )}
+
+                        {isPublished && (
+                          <button
+                            className="staff-btn staff-btn-secondary staff-btn-sm"
+                            onClick={() => unpublishMut.mutate(r.id)}
+                            disabled={unpublishMut.isPending}
+                          >
+                            <FontAwesomeIcon icon={faEyeSlash} /> Unpublish
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
-              })}
-              {(requestsData?.items || []).length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    style={{
-                      textAlign: "center",
-                      color: "#6c757d",
-                      padding: 16,
-                    }}
-                  >
-                    Chưa có yêu cầu
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </section>
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
-      {notice && (
-        <section className="section-box" style={{ marginTop: 12 }}>
-          <div
-            style={{
-              padding: 12,
-              borderRadius: 6,
-              background: notice.includes("✅") ? "#e7f7e7" : "#ffeaea",
-              color: notice.includes("✅") ? "#2d5a2d" : "#a00",
-            }}
+  return (
+    <div className="staff-container">
+      <div className="staff-header-section">
+          <div>
+            <h2 className="staff-title">
+                Quản lý Yêu cầu Phim
+            </h2>
+             <p className="staff-subtitle">
+                <FontAwesomeIcon icon={faBuilding} /> {theater ? `${theater.name} (${theater.code})` : "Loading..."}
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.href = "/staff/scheduling"}
+            className="staff-btn staff-btn-primary"
           >
-            {notice}
-          </div>
-        </section>
-      )}
-
-      <section className="section-box" style={{ marginTop: 12 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 16,
-          }}
-        >
-          <h4 style={{ margin: 0 }}>Phim đã assign (phục vụ publish)</h4>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              className="fd-btn"
-              onClick={selectAllScheduled}
-              disabled={assignments.length === 0}
-            >
-              Chọn phim SCHEDULED
-            </button>
-            <button
-              className="fd-btn"
-              onClick={clearSelection}
-              disabled={selectedMovies.size === 0}
-            >
-              Bỏ chọn tất cả
-            </button>
-            <button
-              className="fd-btn"
-              onClick={handlePublish}
-              disabled={publishMut.isPending || selectedMovies.size === 0}
-              style={{
-                background: "#28a745",
-                color: "white",
-                border: "1px solid #28a745",
-              }}
-            >
-              {publishMut.isPending
-                ? "Đang publish..."
-                : `Publish (${selectedMovies.size})`}
-            </button>
-          </div>
+            <FontAwesomeIcon icon={faCalendarPlus} />
+            Lập lịch
+          </button>
         </div>
 
-        {assignments.length === 0 ? (
-          <div style={{ color: "#6c757d", textAlign: "center", padding: 24 }}>
-            Không có phim nào được assign cho rạp này
+        {notice && (
+          <div className={`staff-alert ${notice.includes("Lỗi") ? "staff-alert-error" : "staff-alert-success"}`}>
+             <FontAwesomeIcon icon={notice.includes("Lỗi") ? faTimes : faCheck} className="mr-2"/>
+             {notice}
           </div>
-        ) : (
-          <table
-            width="100%"
-            cellPadding={12}
-            style={{
-              background: "#fff",
-              border: "1px solid #e9ecef",
-              borderRadius: 6,
-            }}
-          >
-            <thead>
-              <tr style={{ background: "#f8f9fa" }}>
-                <th align="left" style={{ padding: "12px 8px" }}>
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedMovies.size > 0 &&
-                      selectedMovies.size === assignments.length
-                    }
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedMovies(
-                          new Set(assignments.map((a: any) => a.code))
-                        );
-                      } else {
-                        setSelectedMovies(new Set());
-                      }
-                    }}
-                  />
-                </th>
-                <th align="left">Mã phim</th>
-                <th align="left">Tiêu đề</th>
-                <th align="left">Trạng thái</th>
-                <th align="left">Từ ngày</th>
-                <th align="left">Đến ngày</th>
-                <th align="left">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((assignment: any, idx: number) => {
-                const status = assignment.status || "UNKNOWN";
-                const isScheduled = status === "SCHEDULED";
-                const isPublished = status === "PUBLISHED";
-
-                return (
-                  <tr
-                    key={idx}
-                    style={{
-                      background: selectedMovies.has(assignment.code)
-                        ? "#e7f7e7"
-                        : "#fff",
-                      borderBottom: "1px solid #e9ecef",
-                    }}
-                  >
-                    <td style={{ padding: "12px 8px" }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedMovies.has(assignment.code)}
-                        disabled={!isScheduled}
-                        onChange={() => toggleMovie(assignment.code)}
-                      />
-                    </td>
-                    <td style={{ fontFamily: "monospace", fontWeight: 600 }}>
-                      {assignment.code}
-                    </td>
-                    <td>{assignment.title}</td>
-                    <td>
-                      <span
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: 4,
-                          fontSize: 12,
-                          fontWeight: 600,
-                          background: isScheduled
-                            ? "#fff3cd"
-                            : isPublished
-                              ? "#d4edda"
-                              : "#f8d7da",
-                          color: isScheduled
-                            ? "#856404"
-                            : isPublished
-                              ? "#155724"
-                              : "#721c24",
-                        }}
-                      >
-                        {status}
-                      </span>
-                    </td>
-                    <td>{assignment.activeFrom || "N/A"}</td>
-                    <td>{assignment.activeTo || "N/A"}</td>
-                    <td>
-                      {isScheduled && (
-                        <button
-                          className="fd-btn"
-                          style={{
-                            background: "#28a745",
-                            color: "white",
-                            border: "1px solid #28a745",
-                            padding: "4px 8px",
-                            fontSize: 12,
-                          }}
-                          onClick={() => {
-                            setSelectedMovies(new Set([assignment.code]));
-                            handlePublish();
-                          }}
-                        >
-                          Publish
-                        </button>
-                      )}
-                      {!isScheduled && !isPublished && (
-                        <button
-                          className="fd-btn"
-                          style={{ padding: "4px 8px", fontSize: 12 }}
-                          onClick={() =>
-                            setCreateModal({
-                              movieId: assignment.id,
-                              title: assignment.title,
-                              priority: 0,
-                              demandScore: 0,
-                            })
-                          }
-                          disabled={createReqMut.isPending}
-                        >
-                          {createReqMut.isPending
-                            ? "Đang gửi..."
-                            : "Yêu cầu chiếu"}
-                        </button>
-                      )}
-                      {isPublished && (
-                        <span style={{ color: "#28a745", fontSize: 12 }}>
-                          ✅ Đã publish
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         )}
-      </section>
 
-      {/* Create Request Modal */}
-      {createModal && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.35)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 8,
-              padding: 16,
-              width: 360,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-            }}
-          >
-            <h4 style={{ margin: 0, marginBottom: 8 }}>Yêu cầu chiếu</h4>
-            <div style={{ color: "#6c757d", marginBottom: 12 }}>
-              {createModal.title}
-            </div>
-            <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-              <div>
-                <div style={{ fontSize: 12, color: "#6c757d" }}>Ưu tiên</div>
-                <input
-                  type="number"
-                  value={createModal.priority}
-                  style={{ width: 120 }}
-                  onChange={(e) =>
-                    setCreateModal((m) =>
-                      m ? { ...m, priority: Number(e.target.value) } : m
-                    )
-                  }
-                />
+        {/* Block 1: PENDING */}
+        <div style={{ marginBottom: 32 }} className="staff-card">
+          <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600, color: "#d97706" }}>
+            <FontAwesomeIcon icon={faClipboardList} style={{ marginRight: "8px" }} />
+            Chờ lập lịch (PENDING)
+          </h4>
+          <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "16px" }}>
+            Các phim mới được Admin assign, chưa tạo suất chiếu. Hãy cập nhật độ ưu tiên và điểm nhu cầu, sau đó chuyển sang Lập lịch.
+          </div>
+          {renderRequestTable(pendingRequests, "PENDING", loadingPending)}
+        </div>
+
+        {/* Block 2: SCHEDULED */}
+        <div style={{ marginBottom: 32 }} className="staff-card">
+          <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600, color: "#1e40af" }}>
+            <FontAwesomeIcon icon={faCalendarCheck} style={{ marginRight: "8px" }} />
+            Đã lập lịch (SCHEDULED)
+          </h4>
+          <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "16px" }}>
+            Các phim đã có suất chiếu nhưng chưa publish. Click "Publish" để customer có thể xem và đặt vé.
+          </div>
+          {renderRequestTable(scheduledRequests, "SCHEDULED", loadingScheduled)}
+        </div>
+
+        {/* Block 3: PUBLISHED */}
+        <div style={{ marginBottom: 32 }} className="staff-card">
+          <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600, color: "#15803d" }}>
+            <FontAwesomeIcon icon={faCircleCheck} style={{ marginRight: "8px" }} />
+            Đã publish (PUBLISHED)
+          </h4>
+          <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "16px" }}>
+            Các phim đang hiển thị công khai, customer có thể đặt vé. Click "Unpublish" để tạm ẩn khỏi danh sách.
+          </div>
+          {renderRequestTable(publishedRequests, "PUBLISHED", loadingPublished)}
+        </div>
+
+        {/* Hướng dẫn */}
+        <div className="staff-card" style={{background: '#f9fafb'}}>
+          <h4 style={{ margin: "0 0 12px 0", fontSize: "15px", fontWeight: 600 }}>
+            <FontAwesomeIcon icon={faLightbulb} style={{ marginRight: "8px", color: "#f59e0b" }} />
+            Workflow
+          </h4>
+          <div style={{ fontSize: 13, lineHeight: 1.6, color: "#4b5563" }}>
+            <p style={{ marginBottom: "8px" }}>
+              <strong>1. PENDING:</strong> Admin assign phim → tự động tạo MovieRequest với status PENDING
+            </p>
+            <p style={{ marginBottom: "8px" }}>
+              <strong>2. SCHEDULED:</strong> Staff lập lịch (tạo Showtimes) → status chuyển sang SCHEDULED
+            </p>
+            <p style={{ marginBottom: "8px" }}>
+              <strong>3. PUBLISHED:</strong> Staff publish → status chuyển sang PUBLISHED, customer thấy được
+            </p>
+            <p style={{ marginBottom: 0 }}>
+              <strong>4. Unpublish:</strong> Nếu cần tạm ẩn, click Unpublish để chuyển về SCHEDULED
+            </p>
+          </div>
+        </div>
+      {/* Delete Confirmation Modal */}
+      {deleteId !== null && (
+        <div className="staff-modal-overlay">
+          <div className="staff-modal">
+            <div className="staff-modal-content">
+              <div className="staff-modal-icon">
+                <FontAwesomeIcon icon={faTrash} />
               </div>
-              <div>
-                <div style={{ fontSize: 12, color: "#6c757d" }}>
-                  Điểm nhu cầu
-                </div>
-                <input
-                  type="number"
-                  step="0.1"
-                  min={0}
-                  max={1}
-                  value={createModal.demandScore}
-                  style={{ width: 120 }}
-                  onChange={(e) =>
-                    setCreateModal((m) =>
-                      m ? { ...m, demandScore: Number(e.target.value) } : m
-                    )
-                  }
-                />
-              </div>
+              <h3 className="staff-modal-title">
+                Xác nhận xóa
+              </h3>
+              <p className="staff-modal-text">
+                Bạn có chắc chắn muốn xóa yêu cầu này không? Hành động này không thể hoàn tác.
+              </p>
             </div>
-            <div
-              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
-            >
-              <button className="fd-btn" onClick={() => setCreateModal(null)}>
-                Hủy
+            <div className="staff-modal-actions">
+              <button
+                type="button"
+                className="staff-btn staff-btn-danger"
+                onClick={confirmDelete}
+                disabled={deleteReqMut.isPending}
+              >
+                {deleteReqMut.isPending ? "Đang xóa..." : "Xóa bỏ"}
               </button>
               <button
-                className="fd-btn"
-                style={{
-                  background: "#8b7355",
-                  color: "#fff",
-                  borderColor: "#8b7355",
-                }}
-                onClick={() =>
-                  createReqMut.mutate({
-                    movieId: createModal.movieId,
-                    priority: createModal.priority,
-                    demandScore: createModal.demandScore,
-                  })
-                }
+                type="button"
+                className="staff-btn staff-btn-secondary"
+                onClick={() => setDeleteId(null)}
               >
-                Gửi yêu cầu
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirm Modal */}
-      {deleteModalId !== null && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.35)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 8,
-              padding: 16,
-              width: 360,
-              boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-            }}
-          >
-            <h4 style={{ margin: 0, marginBottom: 8 }}>Xoá yêu cầu</h4>
-            <div style={{ color: "#6c757d", marginBottom: 12 }}>
-              Bạn có chắc chắn muốn xoá yêu cầu này? Hành động không thể hoàn
-              tác.
-            </div>
-            <div
-              style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}
-            >
-              <button className="fd-btn" onClick={() => setDeleteModalId(null)}>
                 Hủy
               </button>
-              <button
-                className="fd-btn"
-                style={{
-                  background: "#a00",
-                  color: "#fff",
-                  borderColor: "#a00",
-                }}
-                onClick={() => deleteReqMut.mutate(deleteModalId)}
-              >
-                Xoá
-              </button>
             </div>
           </div>
         </div>
       )}
-
-      <section className="section-box" style={{ marginTop: 12 }}>
-        <h4 style={{ margin: 0, marginBottom: 12 }}>Hướng dẫn</h4>
-        <div style={{ fontSize: 14, lineHeight: 1.6, color: "#6c757d" }}>
-          <p>
-            <strong>1. SCHEDULED:</strong> Phim đã được assign và có thể tạo
-            showtime, chưa publish
-          </p>
-          <p>
-            <strong>2. PUBLISHED:</strong> Phim đã được publish và xuất hiện
-            trong "Phim đang chiếu"
-          </p>
-          <p>
-            <strong>3. Publish:</strong> Chuyển phim từ SCHEDULED → PUBLISHED để
-            customer có thể booking
-          </p>
-          <p>
-            <strong>4. Lưu ý:</strong> Chỉ có thể publish phim ở trạng thái
-            SCHEDULED
-          </p>
-        </div>
-      </section>
-    </main>
+    </div>
   );
 }

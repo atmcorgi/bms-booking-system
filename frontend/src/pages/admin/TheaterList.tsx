@@ -2,241 +2,15 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { adminTheaterApi } from "../../services/adminTheaterApi";
+import ErrorModal from "../../components/shared/ErrorModal";
 import "../../styles/admin-table.css";
-
-// Theater Action Menu Component
-const TheaterActionMenu = ({
-  theater,
-  onDelete,
-  onNavigate,
-}: {
-  theater: any;
-  onDelete: () => void;
-  onNavigate: (path: string) => void;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div style={{ position: "relative", display: "inline-block" }}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          padding: "8px 12px",
-          background: "linear-gradient(135deg, #8b7355 0%, #a68b5b 100%)",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontSize: "13px",
-          fontWeight: "600",
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          minWidth: "100px",
-          justifyContent: "center",
-          boxShadow: "0 2px 4px rgba(139, 115, 85, 0.2)",
-          transition: "all 0.2s ease",
-          outline: "none",
-          whiteSpace: "nowrap",
-          overflow: "hidden",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background =
-            "linear-gradient(135deg, #5d4e37 0%, #8b7355 100%)";
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 4px 8px rgba(139, 115, 85, 0.3)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background =
-            "linear-gradient(135deg, #8b7355 0%, #a68b5b 100%)";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "0 2px 4px rgba(139, 115, 85, 0.2)";
-        }}
-      >
-        <span style={{ fontSize: "12px", flexShrink: 0 }}>⚙️</span>
-        <span style={{ flexShrink: 0, lineHeight: 1 }}>Hành động</span>
-        <span style={{ fontSize: "8px", flexShrink: 0 }}>▼</span>
-      </button>
-
-      {isOpen && (
-        <>
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 10,
-            }}
-            onClick={() => setIsOpen(false)}
-          />
-          <div
-            style={{
-              position: "absolute",
-              top: "100%",
-              right: 0,
-              marginTop: "4px",
-              background: "#fff",
-              border: "1px solid #d9d2b7",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(139, 115, 85, 0.15)",
-              zIndex: 20,
-              minWidth: "200px",
-              overflow: "hidden",
-            }}
-          >
-            {/* Main Actions */}
-            <div style={{ padding: "8px 0" }}>
-              <button
-                onClick={() => {
-                  onNavigate(`/admin/theaters/${theater.id}/detail`);
-                  setIsOpen(false);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "10px 16px",
-                  background: "transparent",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  color: "#333",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#faf9f6";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <span style={{ fontSize: "16px" }}>🎬</span>
-                Quản lý rạp
-              </button>
-              <button
-                onClick={() => {
-                  onNavigate(`/admin/theaters/${theater.id}/edit`);
-                  setIsOpen(false);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "10px 16px",
-                  background: "transparent",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  color: "#333",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#faf9f6";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <span style={{ fontSize: "16px" }}>✏️</span>
-                Chỉnh sửa
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div
-              style={{ height: "1px", background: "#d9d2b7", margin: "4px 0" }}
-            />
-
-            {/* Quick Actions */}
-            <div style={{ padding: "8px 0" }}>
-              <button
-                onClick={() => {
-                  onNavigate(`/admin/theaters/${theater.id}/view`);
-                  setIsOpen(false);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "8px 16px",
-                  background: "transparent",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  color: "#8b7355",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#faf9f6";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <span style={{ fontSize: "14px" }}>👁️</span>
-                Xem thông tin
-              </button>
-            </div>
-
-            {/* Divider */}
-            <div
-              style={{ height: "1px", background: "#d9d2b7", margin: "4px 0" }}
-            />
-
-            {/* Danger Zone */}
-            <div style={{ padding: "8px 0" }}>
-              <button
-                onClick={() => {
-                  onDelete();
-                  setIsOpen(false);
-                }}
-                style={{
-                  width: "100%",
-                  padding: "8px 16px",
-                  background: "transparent",
-                  border: "none",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  color: "#dc2626",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#fef2f2";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                <span style={{ fontSize: "14px" }}>🗑️</span>
-                Xóa rạp
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
 
 export default function TheaterList() {
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
   const [page, setPage] = useState(0);
   const [pendingDelete, setPendingDelete] = useState<any | null>(null);
+  const [errorModal, setErrorModal] = useState({ show: false, message: "", title: "Lỗi" });
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -412,11 +186,31 @@ export default function TheaterList() {
                       {t.closeTime || "N/A"}
                     </td>
                     <td>
-                      <TheaterActionMenu
-                        theater={t}
-                        onDelete={() => setPendingDelete(t)}
-                        onNavigate={(path) => navigate(path)}
-                      />
+                      <div className="action-group">
+                        <button
+                          className="btn-action btn-view"
+                          onClick={() =>
+                            navigate(`/admin/theaters/${t.id}/detail`)
+                          }
+                        >
+                          View
+                        </button>
+                        <button
+                          className="btn-action btn-edit"
+                          onClick={() =>
+                            navigate(`/admin/theaters/${t.id}/edit`)
+                          }
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn-action btn-delete"
+                          onClick={() => setPendingDelete(t)}
+                          aria-label={`Xóa rạp ${t.name}`}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -593,7 +387,7 @@ export default function TheaterList() {
                 border: "1px solid #fbbf24",
               }}
             >
-              ⚠️ Hành động này không thể hoàn tác. Rạp và tất cả dữ liệu liên
+              ⚠ Hành động này không thể hoàn tác. Rạp và tất cả dữ liệu liên
               quan sẽ bị xóa vĩnh viễn.
             </div>
             <div
@@ -657,9 +451,11 @@ export default function TheaterList() {
                     setPendingDelete(null);
                   } catch (e: any) {
                     console.error("Error deleting theater:", e);
-                    alert(
-                      "Lỗi xóa rạp: " + (e?.message || "Không thể xóa rạp")
-                    );
+                    setErrorModal({
+                      show: true,
+                      title: "Lỗi",
+                      message: "Lỗi xóa rạp: " + (e?.message || "Không thể xóa rạp")
+                    });
                   }
                 }}
               >
@@ -669,6 +465,13 @@ export default function TheaterList() {
           </div>
         </div>
       )}
+
+      <ErrorModal
+        isOpen={errorModal.show}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ show: false, message: "", title: "Lỗi" })}
+      />
     </div>
   );
 }

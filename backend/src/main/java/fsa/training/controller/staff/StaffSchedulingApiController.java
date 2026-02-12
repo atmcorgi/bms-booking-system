@@ -55,14 +55,23 @@ public class StaffSchedulingApiController {
         List<Map<String, Object>> out = new ArrayList<>();
         for (SchedulingUploadDto r : result.getRows()) {
             Map<String, Object> m = new HashMap<>();
+            // IDs (required for commit)
+            m.put("theaterId", r.getTheaterId());
+            m.put("roomId", r.getRoomId());
+            m.put("movieId", r.getMovieId());
+            m.put("movieRequestId", r.getMovieRequestId());
+            // Names (for display)
             m.put("theaterName", r.getTheaterName());
             m.put("roomName", r.getRoomName());
             m.put("movieCode", r.getMovieCode());
+            // Showtime details
             m.put("showDate", r.getShowDate());
             m.put("showTime", r.getShowTime());
             m.put("priceStandard", r.getPriceStandard());
-            m.put("duration", r.getDuration()); // Add duration field
+            m.put("duration", r.getDuration());
             m.put("errors", r.getErrors());
+            // Add unique ID for frontend tracking
+            m.put("__id", r.getTheaterName() + "_" + r.getRoomName() + "_" + r.getShowDate() + "_" + r.getShowTime());
             out.add(m);
         }
         Map<String, Object> resp = new HashMap<>();

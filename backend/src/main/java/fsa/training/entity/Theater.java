@@ -66,12 +66,10 @@ public class Theater {
     @JoinColumn(name = "district_id", nullable = false)
     private District district;
     
-    // Relationship với Showtime
     @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Showtime> showtimes;
     
-    // Relationship với Seat
     @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Seat> seats;

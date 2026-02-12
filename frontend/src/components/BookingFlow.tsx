@@ -1,15 +1,25 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { bookingApi } from "../services/bookingApi";
+import { profileApi } from "../services/profileApi";
 import api from "../services/apiClient";
+import ErrorModal from "./shared/ErrorModal";
 
 export default function BookingFlow({
-  movieId,
+  movieId: propMovieId,
   theaterId: initialTheaterId,
 }: {
   movieId?: string | number;
   theaterId?: string | null;
 }) {
+  const navigate = useNavigate();
+  const { movieId: routeMovieId } = useParams();
+
+  // Determine the effective movieId
+  const movieId = propMovieId || routeMovieId;
+
+  const isTheaterFirst = !movieId || movieId === "theater" || !!initialTheaterId;
   const [provinceId, setProvinceId] = useState<string | number | undefined>();
   const [districtId, setDistrictId] = useState<string | number | undefined>();
   const [theaterId, setTheaterId] = useState<string | number | undefined>();
@@ -23,9 +33,17 @@ export default function BookingFlow({
   );
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrUrl, setQrUrl] = useState("");
+  const [currentPaymentCode, setCurrentPaymentCode] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(900); // 15 minutes in seconds
+  const [paymentTimedOut, setPaymentTimedOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorModal, setErrorModal] = useState({ show: false, message: "", title: "Lỗi" });
 
   // Refs để tránh dependency loop
   const prevProvinceId = useRef<string | number | undefined>(undefined);
@@ -73,6 +91,37 @@ export default function BookingFlow({
     },
     enabled: !!movieId && movieId !== "theater",
   });
+
+  // Fetch user profile to auto-fill customer info
+  const { data: userProfile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) return null;
+      try {
+        const response = await profileApi.getProfile();
+        return response.data;
+      } catch (error) {
+        return null;
+      }
+    },
+    retry: false,
+  });
+
+  // Auto-fill customer info from profile when available
+  useEffect(() => {
+    if (userProfile) {
+      if (userProfile.fullName) {
+        setCustomerName(userProfile.fullName);
+      }
+      if (userProfile.phone) {
+        setCustomerPhone(userProfile.phone);
+      }
+      if (userProfile.email) {
+        setCustomerEmail(userProfile.email);
+      }
+    }
+  }, [userProfile]);
 
   const {
     data: provinces,
@@ -188,11 +237,13 @@ export default function BookingFlow({
     data: seats,
     isLoading: loadingSeats,
     isError: errorSeats,
+    refetch: refetchSeats,
   } = useQuery({
     queryKey: seatsQueryKey,
     enabled: !!showtimeId,
     queryFn: async () =>
       (await bookingApi.getSeats({ theaterId: theaterId!, showtimeId })).data,
+    refetchInterval: 5000,
     placeholderData: (prev) => prev,
   });
   const provincesList = Array.isArray(provinces) ? provinces : [];
@@ -202,20 +253,35 @@ export default function BookingFlow({
   const showtimesList = Array.isArray(showtimes) ? showtimes : [];
   const seatsList = Array.isArray(seats) ? seats : [];
 
+  const sortedSeats = useMemo(() => {
+    return [...seatsList].sort((a: any, b: any) => {
+      const regex = /([A-Za-z]+)(\d+)/;
+      const matchA = a.seatNumber.match(regex);
+      const matchB = b.seatNumber.match(regex);
+      
+      if (!matchA || !matchB) return a.seatNumber.localeCompare(b.seatNumber);
+
+      const [, rowA, numA] = matchA;
+      const [, rowB, numB] = matchB;
+
+      if (rowA !== rowB) return rowA.localeCompare(rowB);
+      return parseInt(numA, 10) - parseInt(numB, 10);
+    });
+  }, [seatsList]);
+
+  const getSeatClass = (seat: any) => {
+      const type = (seat.seatType || "").toUpperCase();
+      if (type === "COUPLE") return "seat-type-couple";
+      if (type === "VIP") return "seat-type-vip";
+      return "seat-type-standard";
+  };
+
   // Reset local selection when showtime changes or seats refetch
   useEffect(() => {
     setSelectedSeatIds(new Set());
     setShowPaymentForm(false);
   }, [showtimeId]);
 
-  // Fast lookup for booked ids
-  const bookedSeatIds = useMemo(() => {
-    const s = new Set<string | number>();
-    for (const seat of seatsList) {
-      if (seat.booked) s.add(seat.id);
-    }
-    return s;
-  }, [seatsList]);
 
   function getDateLabel(dateStr: string) {
     // Expecting YYYY-MM-DD
@@ -261,10 +327,15 @@ export default function BookingFlow({
     if (
       !customerName ||
       !customerPhone ||
+      !customerEmail ||
       selectedSeatIds.size === 0 ||
       !showtimeId
     ) {
-      alert("Vui lòng điền đầy đủ thông tin");
+      setErrorModal({
+        show: true,
+        title: "Thông báo",
+        message: "Vui lòng điền đầy đủ thông tin"
+      });
       return;
     }
 
@@ -276,6 +347,7 @@ export default function BookingFlow({
         seatIds: Array.from(selectedSeatIds),
         customerName: customerName,
         customerPhone: customerPhone,
+        email: customerEmail,
       };
 
       // Creating booking with validated data
@@ -284,18 +356,99 @@ export default function BookingFlow({
       // Booking created successfully
 
       if (response.data && response.data.paymentUrl) {
-        // Redirect to VNPay payment page
-        window.location.href = response.data.paymentUrl;
+        // Calculate total amount
+        const total = [...selectedSeatIds].reduce((sum: number, seatId) => {
+          const seat = seatsList.find((s: any) => String(s.id) === String(seatId));
+          if (!seat || !selectedShowtime) return sum;
+          const seatType = (seat.seatType || "").toUpperCase();
+          const typeMultiplier = seatType === "COUPLE" ? 2 : 1;
+          const basePrice = seatType === "VIP" ? selectedShowtime.priceVip || 0 : selectedShowtime.priceStandard || 0;
+          return sum + Math.round(Number(basePrice) * typeMultiplier);
+        }, 0);
+        
+        // Mở modal QR thay vì redirect đi nơi khác
+        setQrUrl(response.data.paymentUrl);
+        setCurrentPaymentCode(response.data.paymentCode);
+        setPaymentAmount(total);
+        setTimeRemaining(900);
+        setPaymentTimedOut(false);
+        setShowQRModal(true);
+        
+        // Bắt đầu polling
+        startPolling(response.data.paymentCode);
       } else {
-        alert("Có lỗi xảy ra khi tạo thanh toán");
+        setErrorModal({
+          show: true,
+          title: "Lỗi",
+          message: "Có lỗi xảy ra khi tạo thanh toán"
+        });
       }
     } catch (error) {
       // Handle payment error
       setError("Có lỗi xảy ra khi thanh toán. Vui lòng thử lại.");
-      alert("Có lỗi xảy ra khi thanh toán");
+      setErrorModal({
+        show: true,
+        title: "Lỗi",
+        message: "Có lỗi xảy ra khi thanh toán. Vui lòng thử lại."
+      });
     } finally {
       setIsProcessingPayment(false);
     }
+  };
+
+  const startPolling = (paymentCode: string) => {
+    const TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+    const startTime = Date.now();
+    
+    const pollingInterval = setInterval(async () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, Math.floor((TIMEOUT_MS - elapsed) / 1000));
+      setTimeRemaining(remaining);
+      
+      // Check timeout
+      if (elapsed >= TIMEOUT_MS) {
+        clearInterval(pollingInterval);
+        clearInterval(timerInterval);
+        setPaymentTimedOut(true);
+        return;
+      }
+      
+      try {
+        const res = await api.get(`/api/booking/status/${paymentCode}`);
+        if (res.data.status === "PAID") {
+          clearInterval(pollingInterval);
+          clearInterval(timerInterval);
+          setShowQRModal(false);
+          // Chuyển đến trang thành công
+          navigate(`/booking/success?txnRef=${paymentCode}&bookingIds=${res.data.bookingIds}`);
+        } else if (res.data.status === "EXPIRED") {
+          clearInterval(pollingInterval);
+          clearInterval(timerInterval);
+          setPaymentTimedOut(true);
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+        // Continue polling on error
+      }
+    }, 3000); // Poll mỗi 3 giây
+    
+    // Update timer every second
+    const timerInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, Math.floor((TIMEOUT_MS - elapsed) / 1000));
+      setTimeRemaining(remaining);
+    }, 1000);
+
+    // Cleanup intervals if component unmounts
+    return () => {
+      clearInterval(pollingInterval);
+      clearInterval(timerInterval);
+    };
+  };
+  
+  const copyPaymentCode = () => {
+    navigator.clipboard.writeText(currentPaymentCode);
+    // Could add a toast notification here
   };
 
   // Reset logic với refs để tránh dependency loop
@@ -336,7 +489,9 @@ export default function BookingFlow({
 
   return (
     <div
-      className="main-content-container"
+      className={`main-content-container booking-flow-container ${
+        isTheaterFirst ? "theater-first" : ""
+      }`}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -366,6 +521,65 @@ export default function BookingFlow({
           Có lỗi khi tải dữ liệu.
         </div>
       )}
+
+      {/* Header and Guideline - Only show for Theater First flow */}
+      {isTheaterFirst && (
+        <>
+          <div className="page-header-container">
+            <h2 className="page-header-title">Đặt Vé Theo Rạp</h2>
+          </div>
+
+          <div className="booking-guideline">
+            <div className="guideline-title">
+              <span>ⓘ Hướng dẫn đặt vé</span>
+            </div>
+            <div className="guideline-steps">
+              <div className={`g-step ${!provinceId ? "current" : ""}`}>
+                <div className="g-step-number">1</div>
+                <span>Chọn Tỉnh/TP</span>
+              </div>
+              <div className="g-arrow">➜</div>
+              <div
+                className={`g-step ${provinceId && !districtId ? "current" : ""}`}
+              >
+                <div className="g-step-number">2</div>
+                <span>Chọn Quận/Huyện</span>
+              </div>
+              <div className="g-arrow">➜</div>
+              <div
+                className={`g-step ${districtId && !theaterId ? "current" : ""}`}
+              >
+                <div className="g-step-number">3</div>
+                <span>Chọn Rạp</span>
+              </div>
+              <div className="g-arrow">➜</div>
+              <div
+                className={`g-step ${
+                  theaterId && !selectedMovieId ? "current" : ""
+                }`}
+              >
+                <div className="g-step-number">4</div>
+                <span>Chọn Phim</span>
+              </div>
+              <div className="g-arrow">➜</div>
+              <div
+                className={`g-step ${
+                  selectedMovieId && !showtimeId ? "current" : ""
+                }`}
+              >
+                <div className="g-step-number">5</div>
+                <span>Chọn Suất Chiếu</span>
+              </div>
+              <div className="g-arrow">➜</div>
+              <div className={`g-step ${showtimeId ? "current" : ""}`}>
+                <div className="g-step-number">6</div>
+                <span>Chọn Ghế</span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
 
       {error && (
         <div style={{ textAlign: "center", padding: "12px", color: "#e50914" }}>
@@ -457,8 +671,13 @@ export default function BookingFlow({
       {/* Movie Selection - Only show when theater is selected and no movieId from URL */}
       {theaterId && (!movieId || movieId === "theater") && (
         <div className="step-content">
-          <div className="step-label">Các bộ phim đang chiếu tại rạp</div>
-          <div style={{ marginBottom: "20px", color: "#666" }}>Chọn phim:</div>
+          <h3 className="step-label" style={{ marginBottom: "8px" }}>
+            Các bộ phim đang chiếu tại rạp
+          </h3>
+          <p style={{ marginBottom: "20px", color: "#8b7355", fontSize: "14px", fontWeight: "500" }}>
+            Vui lòng chọn bộ phim bạn muốn xem:
+          </p>
+
           <div className="lotte-movie-grid">
             {loadingTheaterMovies ? (
               <div
@@ -476,8 +695,8 @@ export default function BookingFlow({
               >
                 Có lỗi khi tải danh sách phim.
               </div>
-            ) : theaterMovies && theaterMovies.length > 0 ? (
-              theaterMovies.map((movie: any) => (
+            ) : (Array.isArray(theaterMovies) ? theaterMovies : []).length > 0 ? (
+              (Array.isArray(theaterMovies) ? theaterMovies : []).map((movie: any) => (
                 <div
                   key={movie.id}
                   className={`lotte-movie-card ${selectedMovieId === movie.id ? "selected" : ""}`}
@@ -506,41 +725,55 @@ export default function BookingFlow({
                     </div>
                   </div>
                   <div className="lotte-movie-info">
-                    <div className="lotte-movie-title">{movie.title}</div>
+                    <div className="lotte-movie-rating">
+                      <span className={`lotte-age-rating ${
+                        movie.ageRating?.toLowerCase() === 'k' ? 'rating-k' :
+                        movie.ageRating?.toLowerCase() === 'p' ? 'rating-p' :
+                        `rating-${movie.ageRating?.replace(/\D/g, '')}`
+                      }`}>
+                        {movie.ageRating || 'K'}
+                      </span>
+                      <span className="lotte-movie-title">{movie.title}</span>
+                    </div>
+                    
                     <div className="lotte-movie-meta">
-                      {movie.duration} phút • {movie.ageRating}
-                      {movie.genres && movie.genres.length > 0 && (
-                        <div style={{ marginTop: "4px" }}>
-                          {movie.genres
-                            .map((genre: any) => genre.name)
-                            .join(", ")}
+                      <span className="lotte-movie-duration">
+                        {movie.duration} phút
+                      </span>
+                      {Array.isArray(movie.genres) && movie.genres.length > 0 && (
+                        <div className="movie-genres-list">
+                          {movie.genres.map((genre: any) => (
+                            <span key={genre.id} className="movie-genre-tag">
+                              {genre.name}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
                   </div>
                   {selectedMovieId === movie.id && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        right: "10px",
-                        backgroundColor: "#28a745",
-                        color: "white",
-                        padding: "4px 8px",
-                        borderRadius: "4px",
-                        fontSize: "12px",
-                        fontWeight: "bold",
-                        zIndex: 10,
-                      }}
-                    >
-                      Đã chọn
+                    <div className="movie-selected-badge">
+                      ✓ Đã chọn
                     </div>
                   )}
+
+
+
                 </div>
               ))
             ) : (
               <div
-                style={{ textAlign: "center", padding: "20px", color: "#666" }}
+                style={{
+                  textAlign: "center",
+                  padding: "40px 20px",
+                  color: "#8b7355",
+                  gridColumn: "1 / -1",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  borderRadius: "12px",
+                  border: "1px dashed rgba(139, 115, 85, 0.2)",
+                  fontSize: "1.1rem",
+                  fontWeight: "500"
+                }}
               >
                 Không có phim nào trong rạp này.
               </div>
@@ -619,44 +852,72 @@ export default function BookingFlow({
                 <div
                   className="seat-row-seats"
                   style={{
-                    gridTemplateColumns: "repeat(12, var(--seat-size))",
+                    gridTemplateColumns: "repeat(20, var(--seat-size))",
                   }}
                 >
-                  {seatsList.map((seat: any) => {
-                    const isBooked = bookedSeatIds.has(seat.id);
+                  {sortedSeats.map((seat: any) => {
+                    const isPurchased = seat.status === "PAID";
+                    const isMyPending = seat.status === "MY_PENDING";
+                    const isPending = seat.status === "PENDING";
+                    const isHeldByOthers = seat.heldByOthers;
                     const isSelected = selectedSeatIds.has(seat.id);
+                    
+                    // Logic: 
+                    // - PAID: Red (booked)
+                    // - MY_PENDING: Treat as 'Selected' or specialized 'Pending' (Yellow). For now, if it's mine, I might proceed to pay, so don't block.
+                    // - PENDING: Someone else is paying. Treat potentially as booked (Grey/Yellow).
+                    
+                    const isUnavailable = isPurchased || (isPending && !isMyPending) || isHeldByOthers;
+                    
+                    let statusClass = "";
+                    if (isPurchased) statusClass = "booked";
+                    else if (isPending) statusClass = "booked"; // Treat other's pending as booked/unavailable
+                    else if (isHeldByOthers) statusClass = "held-others";
+                    // MY_PENDING -> default to available visually or selected logic handles it. 
+                    // If user is returning to page, MY_PENDING should ideally auto-select or show 'Waiting Payment'.
+                    // For simplicity, let's treat MY_PENDING as available/neutral so user can re-select or see it if they are in payment flow.
+
                     return (
                       <label
                         key={seat.id}
-                        className={`seat-btn ${isBooked ? "booked" : ""} ${isSelected ? "selected" : ""} ${seat.seatType === "VIP" ? "seat-type-vip" : "seat-type-standard"}`}
+                        className={`seat-btn ${statusClass} ${isSelected ? "selected" : ""} ${getSeatClass(seat)}`}
                       >
                         <input
                           type="checkbox"
-                          disabled={isBooked}
+                          disabled={isUnavailable}
                           checked={isSelected}
                           onChange={async (e) => {
-                            if (!showtimeId || isBooked) return;
+                            if (!showtimeId || isPurchased) return;
                             try {
                               if (e.target.checked) {
                                 // Holding seat for booking
-                                await bookingApi.holdSeat(showtimeId, seat.id);
-                                // Seat held successfully
-                                setSelectedSeatIds((prev) =>
-                                  new Set(prev).add(seat.id)
-                                );
+                                const res = await bookingApi.holdSeat(showtimeId, seat.id);
+                                if (res.data && res.data.success) {
+                                  setSelectedSeatIds((prev) =>
+                                    new Set(prev).add(seat.id)
+                                  );
+                                } else {
+                                  setError(res.data?.message || "Ghế này đã có người giữ. Vui lòng chọn ghế khác.");
+                                  e.target.checked = false;
+                                  refetchSeats(); // Force refresh to show the hold from others
+                                }
                               } else {
                                 // Releasing seat
                                 if (bookingApi.releaseSeat) {
-                                  await bookingApi.releaseSeat(
+                                  const res = await bookingApi.releaseSeat(
                                     showtimeId,
                                     seat.id
                                   );
+                                  if (res.data && res.data.success) {
+                                    setSelectedSeatIds((prev) => {
+                                      const next = new Set(prev);
+                                      next.delete(seat.id);
+                                      return next;
+                                    });
+                                  } else {
+                                     refetchSeats();
+                                  }
                                 }
-                                setSelectedSeatIds((prev) => {
-                                  const next = new Set(prev);
-                                  next.delete(seat.id);
-                                  return next;
-                                });
                               }
                             } catch (err) {
                               // Handle seat operation error
@@ -676,7 +937,7 @@ export default function BookingFlow({
             </div>
 
             {/* Seat Legend - ở dưới ghế như flow cũ */}
-            <div className="seat-legend">
+            <div className="seat-legend" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px" }}>
               <div className="legend-item">
                 <span className="legend-box legend-standard"></span>
                 <span>Ghế thường</span>
@@ -686,8 +947,16 @@ export default function BookingFlow({
                 <span>Ghế VIP</span>
               </div>
               <div className="legend-item">
+                <span className="legend-box legend-couple"></span>
+                <span>Ghế Couple</span>
+              </div>
+              <div className="legend-item">
                 <span className="legend-box legend-selected"></span>
                 <span>Ghế đang chọn</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-box legend-held"></span>
+                <span>Giao dịch tại quầy/nơi khác</span>
               </div>
               <div className="legend-item">
                 <span className="legend-box legend-booked"></span>
@@ -734,19 +1003,16 @@ export default function BookingFlow({
                 );
                 if (!seat || !selectedShowtime) return total;
 
-                // Calculate price based on seat type and weekend multiplier
-                const isWeekend =
-                  selectedShowtime.showDate &&
-                  (new Date(selectedShowtime.showDate).getDay() === 6 ||
-                    new Date(selectedShowtime.showDate).getDay() === 0);
-                const multiplier = isWeekend ? 1.15 : 1.0;
+                // Calculate price based on seat type
+                const seatType = (seat.seatType || "").toUpperCase();
+                const typeMultiplier = seatType === "COUPLE" ? 2 : 1;
 
                 const basePrice =
-                  seat.seatType === "VIP"
+                  seatType === "VIP"
                     ? selectedShowtime.priceVip || 0
                     : selectedShowtime.priceStandard || 0;
 
-                return total + Math.round(Number(basePrice) * multiplier);
+                return total + Math.round(Number(basePrice) * typeMultiplier);
               }, 0)
               .toLocaleString("vi-VN")}{" "}
             VND
@@ -765,6 +1031,18 @@ export default function BookingFlow({
           ) : (
             <div className="payment-form">
               <h4>Thông tin khách hàng</h4>
+              {userProfile && (
+                <div style={{ 
+                  padding: "12px", 
+                  background: "#e8f5e9", 
+                  borderRadius: "8px", 
+                  marginBottom: "16px",
+                  fontSize: "14px",
+                  color: "#2e7d32"
+                }}>
+                  ✓ Thông tin được lấy từ hồ sơ của bạn
+                </div>
+              )}
               <div className="form-group">
                 <label>Họ tên:</label>
                 <input
@@ -774,6 +1052,8 @@ export default function BookingFlow({
                   placeholder="Nhập họ tên"
                   required
                   className={customerName ? "valid" : ""}
+                  readOnly={!!userProfile}
+                  style={userProfile ? { background: "#f5f5f5", cursor: "not-allowed" } : {}}
                 />
                 {!customerName && showPaymentForm && (
                   <small className="error-message">Vui lòng nhập họ tên</small>
@@ -788,6 +1068,8 @@ export default function BookingFlow({
                   placeholder="Nhập số điện thoại"
                   required
                   className={customerPhone ? "valid" : ""}
+                  readOnly={!!userProfile}
+                  style={userProfile ? { background: "#f5f5f5", cursor: "not-allowed" } : {}}
                 />
                 {!customerPhone && showPaymentForm && (
                   <small className="error-message">
@@ -795,20 +1077,300 @@ export default function BookingFlow({
                   </small>
                 )}
               </div>
+              <div className="form-group">
+                <label>Email:</label>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder="Nhập email"
+                  required
+                  className={customerEmail ? "valid" : ""}
+                  readOnly={!!userProfile}
+                  style={userProfile ? { background: "#f5f5f5", cursor: "not-allowed" } : {}}
+                />
+                {!customerEmail && showPaymentForm && (
+                  <small className="error-message">
+                    Vui lòng nhập email
+                  </small>
+                )}
+              </div>
               <div className="payment-actions">
                 <button
                   type="button"
-                  className={`fd-btn ${!customerName || !customerPhone || isProcessingPayment ? "disabled" : ""}`}
+                  className={`fd-btn ${!customerName || !customerPhone || !customerEmail || isProcessingPayment ? "disabled" : ""}`}
                   disabled={
-                    !customerName || !customerPhone || isProcessingPayment
+                    !customerName || !customerPhone || !customerEmail || isProcessingPayment
                   }
                   onClick={handlePayment}
                 >
-                  {isProcessingPayment ? "Đang xử lý..." : "Thanh toán VNPay"}
+                  {isProcessingPayment ? "Đang xử lý..." : "Thanh toán VietQR (SePay)"}
                 </button>
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      <ErrorModal
+        isOpen={errorModal.show}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ show: false, message: "", title: "Lỗi" })}
+      />
+
+      {/* SePay QR Modal */}
+      {/* SePay QR Modal - Premium Design */}
+      {showQRModal && (
+        <div 
+          className="custom-modal-overlay" 
+          style={{ 
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(8px)", 
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000
+          }}
+        >
+          <div 
+            className="custom-modal" 
+            style={{ 
+              width: "90%",
+              maxWidth: "420px",
+              background: "#ffffff",
+              borderRadius: "8px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              overflow: "hidden",
+              animation: "slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
+            }}
+          >
+            {/* Header */}
+            <div className="modal-header" style={{ 
+              padding: "24px 24px 0", 
+              background: "transparent",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <div>
+                <h2 style={{ fontSize: "1.25rem", margin: 0, color: "#1a1a1a", fontWeight: 700 }}>Thanh Toán</h2>
+                <span style={{ fontSize: "0.85rem", color: "#666" }}>Quét mã QR để hoàn tất</span>
+              </div>
+              <button 
+                onClick={async () => {
+                  try {
+                    if (currentPaymentCode) {
+                       await bookingApi.cancelByPaymentCode(currentPaymentCode);
+                    }
+                  } catch (e) {
+                    console.error("Failed to cancel", e);
+                  } finally {
+                    setShowQRModal(false);
+                    setSelectedSeatIds(new Set()); 
+                    setShowPaymentForm(false);
+                    refetchSeats(); // Refresh immediately to show seats as available
+                  }
+                }}
+                className="close-btn-modern"
+                style={{ 
+                  background: "transparent", 
+                  border: "1px solid #ff4d4f", 
+                  padding: "6px 14px", 
+                  borderRadius: "20px", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  cursor: "pointer", 
+                  color: "#ff4d4f", 
+                  fontSize: "13px", 
+                  fontWeight: 600, 
+                  transition: "all 0.2s" 
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.background = "#fff1f0";
+                }}
+                onMouseOut={(e) => {
+                   e.currentTarget.style.background = "transparent";
+                }}
+              >
+                Hủy thanh toán
+              </button>
+            </div>
+
+            <div className="modal-body" style={{ padding: "24px" }}>
+              {!paymentTimedOut ? (
+                <>
+                  {/* Amount Card */}
+                  <div style={{ 
+                    background: "linear-gradient(135deg, #FFB800 0%, #FF9900 100%)", 
+                    padding: "8px", 
+                    marginBottom: "24px",
+                    color: "white",
+                    textAlign: "center",
+                    boxShadow: "0 8px 16px rgba(255, 153, 0, 0.25)"
+                  }}>
+                    <div style={{ fontSize: "13px", fontWeight: 500, opacity: 0.9, marginBottom: "4px", textTransform: "uppercase", letterSpacing: "1px" }}>Tổng thanh toán</div>
+                    <div style={{ fontSize: "24px", fontWeight: "800", letterSpacing: "-0.5px" }}>
+                      {paymentAmount.toLocaleString("vi-VN")} <span style={{ fontSize: "20px", fontWeight: 600 }}>đ</span>
+                    </div>
+                  </div>
+                  
+                  {/* QR Code Container */}
+                  <div style={{ 
+                    background: "#ffffff", 
+                    padding: "16px", 
+                    borderRadius: "16px", 
+                    border: "2px dashed #e0e0e0",
+                    marginBottom: "24px",
+                    textAlign: "center",
+                    position: "relative"
+                  }}>
+                    <div style={{
+                       position: "absolute",
+                       top: "-12px",
+                       left: "50%",
+                       transform: "translateX(-50%)",
+                       background: "#fff",
+                       padding: "0 12px",
+                       color: "#666",
+                       fontSize: "12px",
+                       fontWeight: 600
+                    }}>
+                      VietQR
+                    </div>
+                    <img 
+                      src={qrUrl} 
+                      alt="SePay QR" 
+                      style={{ 
+                        width: "100%", 
+                        maxWidth: "240px", 
+                        borderRadius: "8px",
+                        display: "block",
+                        margin: "0 auto"
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Transaction Info */}
+                  <div style={{ 
+                    background: "#f8f9fa", 
+                    padding: "16px", 
+                    marginBottom: "20px",
+                    border: "1px solid #edf2f7"
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "13px", color: "#666" }}>Nội dung chuyển khoản</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ 
+                        fontSize: "16px", 
+                        fontWeight: "700", 
+                        color: "#2d3748", 
+                        flex: 1,
+                        fontFamily: "monospace",
+                        letterSpacing: "0.5px"
+                      }}>
+                        {currentPaymentCode}
+                      </div>
+                      <button
+                        onClick={copyPaymentCode}
+                        style={{
+                          background: "white",
+                          color: "#4a5568",
+                          border: "1px solid #e2e8f0",
+                          padding: "6px 14px",
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
+                          transition: "all 0.2s"
+                        }}
+                        onMouseOver={(e) => {
+                           e.currentTarget.style.borderColor = "#cbd5e0";
+                           e.currentTarget.style.transform = "translateY(-1px)";
+                        }}
+                        onMouseOut={(e) => {
+                           e.currentTarget.style.borderColor = "#e2e8f0";
+                           e.currentTarget.style.transform = "translateY(0)";
+                        }}
+                      >
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Status & Timer */}
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ 
+                      display: "inline-flex", 
+                      alignItems: "center", 
+                      gap: "8px",
+                      marginBottom: "8px"
+                    }}>
+                      <div className="spinner-border" style={{ width: "16px", height: "16px", borderWidth: "2px", borderColor: "#FFB800", borderRightColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+                      <span style={{ fontSize: "14px", fontWeight: "600", color: "#4a5568" }}>Đang chờ thanh toán...</span>
+                    </div>
+                    <div style={{ fontSize: "13px", color: "#a0aec0" }}>
+                      Hết hạn trong <strong style={{ color: "#e53e3e" }}>
+                        {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, '0')}
+                      </strong>
+                    </div>
+                  </div>
+                  
+                  <style>{`
+                    @keyframes slideUpFade {
+                      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+                      to { opacity: 1; transform: translateY(0) scale(1); }
+                    }
+                    @keyframes spin {
+                      from { transform: rotate(0deg); }
+                      to { transform: rotate(360deg); }
+                    }
+                  `}</style>
+                </>
+              ) : (
+                /* Timeout State */
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <div style={{ fontSize: "56px", marginBottom: "20px", display: "block" }}>⏰</div>
+                  <h3 style={{ color: "#2d3748", marginBottom: "12px", fontSize: "1.5rem" }}>Đã hết thời gian</h3>
+                  <p style={{ color: "#718096", marginBottom: "32px", lineHeight: "1.6" }}>
+                    Giao dịch đã bị hủy do quá thời hạn thanh toán.<br/>Vui lòng thực hiện lại yêu cầu đặt vé.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowQRModal(false);
+                      setPaymentTimedOut(false);
+                      setSelectedSeatIds(new Set());
+                      setShowPaymentForm(false);
+                    }}
+                    className="fd-btn"
+                    style={{ 
+                      width: "100%", 
+                      maxWidth: "200px",
+                      margin: "0 auto",
+                      background: "#edf2f7",
+                      color: "#4a5568",
+                      border: "none"
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = "#e2e8f0"}
+                    onMouseOut={(e) => e.currentTarget.style.background = "#edf2f7"}
+                  >
+                    Đóng cửa sổ
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

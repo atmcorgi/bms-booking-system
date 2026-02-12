@@ -19,8 +19,16 @@ public class Booking {
     @JoinColumn(name = "seat_id")
     private Seat seat;
 
+    @ManyToOne
+    @JoinColumn(name = "account_id")
+    private Account account;
+
     private String customerName;
     private String customerPhone;
+    private String email;
+    
+    @Column(name = "booking_time")
     private Instant bookingTime;
     private String status;
-} 
+    private String paymentCode;
+}

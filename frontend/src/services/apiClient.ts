@@ -11,14 +11,30 @@ function isPublicEndpoint(url?: string): boolean {
   try {
     // Normalize to path only
     const path = url.startsWith("http") ? new URL(url).pathname : url;
+
+    // Exception: /api/booking/my-history requires auth
+    if (path.includes("/booking/my-history")) return false;
+    // Exception: /api/booking/booking (create booking) should imply auth if available
+    if (path.includes("/booking/booking")) return false;
+    // Exception: /booking/api/seats should use auth if available to detect "My Pending" and "My Holds"
+    if (path.includes("/booking/api/seats")) return false;
+    if (path.includes("/booking/api/showtimes")) return false; 
+    
     return (
       path.startsWith("/api/movies/") ||
       path === "/api/movies/now-showing" ||
       path === "/api/movies/coming-soon" ||
+      path === "/api/genres" ||
+      path.startsWith("/api/booking/") ||
       path.startsWith("/booking/api/") ||
       path.startsWith("/movies/") ||
       path.startsWith("/vnpay/") ||
-      path === "/auth/login"
+      path === "/api/auth/login" ||
+      path === "/api/auth/google" ||
+      path === "/api/auth/signup" ||
+      path === "/api/auth/forgot-password" ||
+      path === "/api/auth/reset-password" ||
+      path.startsWith("/api/auth/reset-password/validate")
       // Note: /auth/me removed - needs token
     );
   } catch {
@@ -32,6 +48,19 @@ api.interceptors.request.use((config) => {
   if (token && !isPublicEndpoint(config.url)) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // X-Guest-ID injection for consistent guest identification
+  if (typeof window !== "undefined") {
+      let guestId = sessionStorage.getItem("guest_id");
+      if (!guestId) {
+          guestId = crypto.randomUUID();
+          sessionStorage.setItem("guest_id", guestId);
+      }
+      if (guestId) {
+          config.headers["X-Guest-ID"] = guestId;
+      }
+  }
+  
   return config;
 });
 

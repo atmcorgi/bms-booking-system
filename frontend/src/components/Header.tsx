@@ -1,99 +1,74 @@
 import Navbar from "./Navbar";
+import UserDropdown from "./UserDropdown";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "../services/authApi";
+import { profileApi } from "../services/profileApi";
 
-export default function Header() {
+export default function Header({ isSticky }: { isSticky: boolean }) {
   const navigate = useNavigate();
   const token =
     typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
   const { data: user } = useQuery({
-    queryKey: ["auth/me"],
-    queryFn: async () => (await authApi.me()).data,
+    queryKey: ["profile"], // Shared key with Profile page for sync
+    queryFn: async () => (await profileApi.getProfile()).data,
     enabled: !!token,
-    retry: 0,
+    retry: 1,
   });
-
-  // Notification bell removed from global header; lives in StaffLayout
 
   const handleLogout = () => {
     authApi.logout();
     navigate("/", { replace: true });
-    // Reload to clear any cached data
     window.location.reload();
   };
 
   return (
     <>
-      <div className="top-header">
-        <div className="container">
-          <div className="top-header-left">
-            <a href="#" className="app-link">
-              <span className="app-icon">📱</span>
-              My Cinema APP
-            </a>
-            <a href="#" className="facebook-link">
-              <span className="facebook-icon">f</span>
-              My Cinema Facebook
-            </a>
-          </div>
-          <div
-            className="top-header-right"
-            style={{ display: "flex", alignItems: "center", gap: 12 }}
-          >
-            {token && user ? (
-              <>
-                <span>Xin chào, {user.username}</span>
-                {user.roles.includes("ADMIN") && (
-                  <Link to="/admin" style={{ marginLeft: 8 }}>
-                    Admin Panel
-                  </Link>
-                )}
-                {user.roles.includes("STAFF") && (
-                  <Link to="/staff" style={{ marginLeft: 8 }}>
-                    Staff Panel
-                  </Link>
-                )}
-                {/* Notification bell moved to StaffLayout */}
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    marginLeft: 8,
-                    background: "none",
-                    border: "none",
-                    color: "inherit",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                  }}
-                >
-                  Đăng xuất
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">Đăng nhập</Link>
-                <Link to="/register">Đăng ký</Link>
-              </>
-            )}
-            <a href="#">Hỗ trợ khách hàng</a>
-            <button className="language-btn">
-              ENGLISH <span className="arrow-down">▼</span>
-            </button>
+      {!isSticky && (
+        <div className="top-header">
+          <div className="container">
+            <div className="top-header-left">
+              <a href="#" className="app-link">
+                <span className="app-icon">📱</span>
+                My Cinema APP
+              </a>
+              <a href="#" className="facebook-link">
+                <span className="facebook-icon">f</span>
+                My Cinema Facebook
+              </a>
+            </div>
+            <div
+              className="top-header-right"
+              style={{ display: "flex", alignItems: "center", gap: 12 }}
+            >
+              <a href="#" style={{ marginRight: 8, fontSize: "14px", color: "#4b5563", textDecoration: "none" }}>Hỗ trợ khách hàng</a>
+              
+              {token && user ? (
+                <UserDropdown user={user} onLogout={handleLogout} />
+              ) : (
+                <div style={{ display: "flex", gap: "16px", fontSize: "14px" }}>
+                  <Link to="/login" className="auth-link">Đăng nhập</Link>
+                  <Link to="/register" className="auth-link">Đăng ký</Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      <header className="main-header">
+      <header className={`main-header ${isSticky ? "sticky" : ""}`}>
         <div className="container">
-          <div className="logo">
-            <Link to="/">
-              <div className="logo-text">
-                <div className="logo-circle"></div>
-                <span>MY CINEMA</span>
-              </div>
-            </Link>
-          </div>
+          {!isSticky && (
+            <div className="logo">
+              <Link to="/">
+                <div className="logo-text">
+                  <div className="logo-circle"></div>
+                  <span>MY CINEMA</span>
+                </div>
+              </Link>
+            </div>
+          )}
           <Navbar />
         </div>
       </header>

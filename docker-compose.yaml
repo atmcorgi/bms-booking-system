@@ -1,8 +1,8 @@
 services:
   db:
     image: mysql:8.0
-    # ports:
-    #   - "3306:3306"
+    ports:
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     environment:
@@ -40,9 +40,21 @@ services:
       VNPAY_RETURN_URL: ${VNPAY_RETURN_URL}
       VNPAY_IPN_URL: ${VNPAY_IPN_URL}
       SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      SEPAY_BANK_ACC: ${SEPAY_BANK_ACC}
+      SEPAY_BANK_NAME: ${SEPAY_BANK_NAME}
+      SEPAY_API_KEY: ${SEPAY_API_KEY}
+      SEPAY_MERCHANT_ID: ${SEPAY_MERCHANT_ID}
+      SEPAY_SECRET_KEY: ${SEPAY_SECRET_KEY}
       SPRING_DATASOURCE_HIKARI_INITIALIZATION_FAIL_TIMEOUT: "60000"
     ports:
       - "8080:8080"
@@ -58,6 +70,17 @@ services:
       - backend
     ports:
       - "5173:80"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command: "http backend:8080 --host-header=rewrite"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - 4040:4040
+    depends_on:
+      - backend
 
 volumes:
   mysql_data:
