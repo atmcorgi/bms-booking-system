@@ -122,7 +122,7 @@ frontend/dist
 
 # Gatsby files
 frontend/.cache/
-frontend/public
+
 
 # Storybook build outputs
 frontend/.out
