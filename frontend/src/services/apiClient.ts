@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  // Use Vite proxy: keep baseURL empty so requests like '/api/...' are proxied to 8080
-  baseURL: "",
+  // Use environment variable for baseURL, fallback to empty string (relative)
+  baseURL: import.meta.env.VITE_API_BASE_URL || "",
   withCredentials: true,
 });
 
