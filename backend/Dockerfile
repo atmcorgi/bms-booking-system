@@ -6,11 +6,11 @@ WORKDIR /app
 
 # Leverage Docker layer caching for dependencies
 COPY pom.xml .
-RUN --mount=type=cache,target=/root/.m2 mvn -q -e -DskipTests dependency:go-offline
+RUN mvn -q -e -DskipTests dependency:go-offline
 
 # Copy source and build
 COPY src ./src
-RUN --mount=type=cache,target=/root/.m2 mvn -q -e -DskipTests clean package
+RUN mvn -q -e -DskipTests clean package
 
 # Run stage
 ############################

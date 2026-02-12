@@ -4,6 +4,11 @@ Tài liệu này hướng dẫn deploy hệ thống BMS theo mô hình:
 - **Backend & Database**: Deploy trên VPS/Server riêng (Docker Compose).
 - **Frontend**: Deploy trên Vercel.
 
+## Phần 0: Lựa chọn nền tảng Backend
+Bạn có thể chọn 1 trong 2 cách deploy Backend dưới đây:
+1. **VPS (Docker Compose)**: Dùng cho production, kiểm soát toàn quyền. (Xem Phần 1)
+2. **Railway (PaaS)**: Dùng cho dev/test hoặc production nhỏ, dễ cấu hình, không cần quản lý server. (Xem Phần 1B)
+
 ## Phần 1: Deploy Backend & Database (trên VPS)
 
 ### 1. Chuẩn bị VPS
@@ -28,6 +33,34 @@ Sử dụng file `docker-compose.prod.yaml` (đã loại bỏ frontend):
 docker-compose -f docker-compose.prod.yaml up -d --build
 ```
 Backend sẽ chạy ở port `8080`. Đảm bảo Firewall của VPS cho phép truy cập port này.
+
+Backend sẽ chạy ở port `8080`. Đảm bảo Firewall của VPS cho phép truy cập port này.
+
+## Phần 1B: Deploy Backend lên Railway (Khuyên dùng nếu chưa có VPS)
+
+Railway là nền tảng PaaS rất tốt hỗ trợ Java và MySQL, có gói Hobby (miễn phí dùng thử).
+
+### 1. Tạo Project và Database
+- Đăng nhập [railway.app](https://railway.app).
+- **New Project** -> **Provision MySQL**.
+- Sau khi tạo xong MySQL, vào tab **Variables** của nó để xem thông tin (`MYSQL_URL`, `MYSQLUSER`, `MYSQLPASSWORD`...).
+
+### 2. Deploy Backend
+- Trong project đó, bấm **New** -> **GitHub Repo**.
+- Chọn repo `bms-booking-system`.
+- **Cấu hình Service Backend**:
+    - Vào **Settings** -> **Root Directory**: Nhập `/backend`. (Quan trọng!)
+    - Vào **Variables**:
+        - Thêm các biến môi trường giống file `.env` (nhưng dùng thông tin từ MySQL service của Railway).
+        - `SPRING_DATASOURCE_URL`: Lấy từ MySQL service (thường là `jdbc:mysql://...`).
+        - `SEPAY_...`, `CLOUDINARY_...`: Thêm vào đây.
+        - `FRONTEND_BASE_URL`: URL của Vercel Frontend.
+        - `PORT`: Railway mặc định nhận diện port 8080, nhưng nên set `PORT=8080` cho chắc chắn.
+
+### 3. Build & Deploy
+- Railway sẽ tự động phát hiện Dockerfile trong folder `backend` và build.
+- Sau khi deploy thành công, vào **Settings** -> **Networking** -> **Generate Domain**.
+- Copy domain này (ví dụ: `bms-backend.up.railway.app`) để dán vào biến `VITE_API_BASE_URL` bên Vercel.
 
 ## Phần 2: Deploy Frontend (trên Vercel)
 
