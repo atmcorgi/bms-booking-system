@@ -65,6 +65,7 @@ public class SecurityConfig {
 						.requestMatchers("/api/test/cloudinary/**").permitAll()
 						.requestMatchers("/api/admin/**").hasAuthority("ADMIN")
 						.requestMatchers("/api/staff/**").hasAuthority("STAFF")
+                        .requestMatchers("/api/statistics/**").hasAnyAuthority("ADMIN", "STAFF")
 						.requestMatchers("/api/**").authenticated()
 						// Static resources
 						.requestMatchers("/resources/**", "/css/**", "/js/**", "/imgs/**", "/webjars/**").permitAll()
