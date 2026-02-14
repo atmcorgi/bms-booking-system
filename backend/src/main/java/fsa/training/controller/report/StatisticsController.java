@@ -41,8 +41,22 @@ public class StatisticsController {
 
     private Long getTheaterIdForCurrentUser() {
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof org.springframework.security.core.userdetails.UserDetails) {
-            String username = ((org.springframework.security.core.userdetails.UserDetails) auth.getPrincipal()).getUsername();
+        
+        if (auth != null && auth.isAuthenticated()) {
+            String username = null;
+            Object principal = auth.getPrincipal();
+            
+            // Handle both UserDetails and String principals (common in JWT auth)
+            if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                username = ((org.springframework.security.core.userdetails.UserDetails) principal).getUsername();
+            } else if (principal instanceof String) {
+                username = (String) principal;
+            }
+            
+            if (username == null) {
+                 return null;
+            }
+            
             fsa.training.entity.Account account = accountRepository.findByUsername(username).orElse(null);
             
             if (account != null && account.getAccountPermissions() != null) {
@@ -73,12 +87,6 @@ public class StatisticsController {
                 return theaterId;
             }
         }
-        return null; // Fallback (likely guest or unauthorized, effectively global if not secured, but method is used in protected context)
-                     // Actually, if auth is null, returning null implies global? 
-                     // Statistics endpoints usually public? No, usually secured.
-                     // If secured, auth won't be null.
-                     // Ideally, if auth is null, we should probably return -1 too to be safe?
-                     // But controller uses PreAuthorize usually.
-                     // Let's stick to null for now, assuming SecurityConfig handles access.
+        return null; // Fallback
     }
 }
