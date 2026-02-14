@@ -254,8 +254,8 @@ export default function Statistics() {
                      <div className="flex-1 overflow-y-auto pr-2 space-y-5 custom-scrollbar">
                         {(topMovies || []).map((movie: any, index: number) => (
                              <div key={index} className="group cursor-default">
-                                <div className="flex items-center gap-4 !gap-6 mb-2">
-                                    <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold shadow-sm ${
+                                <div className="flex items-center mb-2">
+                                    <div className={`flex-shrink-0 w-8 h-8 mr-6 rounded-lg flex items-center justify-center text-sm font-bold shadow-sm ${
                                         index === 0 ? 'bg-amber-100 text-amber-600' :
                                         index === 1 ? 'bg-slate-100 text-slate-600' :
                                         index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-400'

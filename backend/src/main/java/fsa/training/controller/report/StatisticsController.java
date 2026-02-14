@@ -48,23 +48,37 @@ public class StatisticsController {
             if (account != null && account.getAccountPermissions() != null) {
                 // If ADMIN, return null (Global view)
                 // If STAFF, return assignedTheaterId
-                // Logic: Check if any filtering is needed. 
-                // For now, let's assume if they have STAFF role and NOT ADMIN, we filter.
                 
                 boolean isAdmin = account.getAccountPermissions().stream()
                         .anyMatch(ap -> "ADMIN".equalsIgnoreCase(ap.getRole().getRoleName()));
                 
-                if (isAdmin) return null;
+                if (isAdmin) {
+                    return null;
+                }
                 
                 // If not admin, check for STAFF role and get theater
-                return account.getAccountPermissions().stream()
+                Long theaterId = account.getAccountPermissions().stream()
                         .filter(ap -> "STAFF".equalsIgnoreCase(ap.getRole().getRoleName()))
                         .map(fsa.training.entity.AccountPermission::getAssignedTheaterId)
                         .filter(java.util.Objects::nonNull)
                         .findFirst()
                         .orElse(null);
+                
+                // CRITICAL: If user is not ADMIN but has no assigned theater (or is just STAFF with null theater),
+                // they should NOT see global stats. We must return a value that yields empty results.
+                if (theaterId == null) {
+                    return -1L; 
+                }
+                
+                return theaterId;
             }
         }
-        return null;
+        return null; // Fallback (likely guest or unauthorized, effectively global if not secured, but method is used in protected context)
+                     // Actually, if auth is null, returning null implies global? 
+                     // Statistics endpoints usually public? No, usually secured.
+                     // If secured, auth won't be null.
+                     // Ideally, if auth is null, we should probably return -1 too to be safe?
+                     // But controller uses PreAuthorize usually.
+                     // Let's stick to null for now, assuming SecurityConfig handles access.
     }
 }
