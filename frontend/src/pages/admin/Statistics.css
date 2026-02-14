@@ -1,5 +1,23 @@
+@import "tailwindcss";
 
+/* Force overrides for global reset issues */
+.stats-layout-padding {
+  padding: 24px !important;
+}
 
+.stats-grid-gap {
+  gap: 24px !important;
+}
+
+.stats-card-padding {
+  padding: 24px !important;
+}
+
+.stats-header-gap {
+  gap: 24px !important;
+}
+
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
