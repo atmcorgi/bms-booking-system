@@ -46,8 +46,8 @@ export default function Statistics() {
   }
 
   return (
-      <div className="w-full" style={{ boxSizing: 'border-box' }}>
-        <div className="space-y-6">
+      <div className="w-full bg-gray-50 min-h-screen p-6" style={{ boxSizing: 'border-box' }}>
+        <div className="max-w-[1600px] mx-auto space-y-8">
             
             {/* Header section with Date Pickers */}
             <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
@@ -79,7 +79,7 @@ export default function Statistics() {
             </div>
 
             {/* Top Cards Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                  {/* Revenue Card */}
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col justify-between h-44 relative overflow-hidden group hover:shadow-md transition-shadow">
                     <div className="relative z-10">
@@ -159,7 +159,7 @@ export default function Statistics() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Main Revenue Chart */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
