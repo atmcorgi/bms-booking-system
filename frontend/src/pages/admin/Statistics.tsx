@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "./Statistics.css";
 import { useQuery } from "@tanstack/react-query";
 import { statisticsApi } from "../../services/statisticsApi";
 import {
