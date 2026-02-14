@@ -46,7 +46,6 @@
 }
 
 .stats-rank-badge {
-  margin-right: 24px !important;
   width: 32px !important; /* Ensure width is maintained */
   height: 32px !important;
   flex-shrink: 0 !important;

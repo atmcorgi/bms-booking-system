@@ -262,6 +262,7 @@ export default function Statistics() {
                                     }`}>
                                         {index + 1}
                                     </div>
+                                    <div className="w-6 shrink-0"></div> 
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-baseline">
                                             <h4 className="text-sm font-bold text-gray-700 truncate mr-2 group-hover:text-indigo-600 transition-colors" title={movie.title}>{movie.title}</h4>
@@ -269,7 +270,7 @@ export default function Statistics() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="w-full h-2 bg-gray-50 rounded-full overflow-hidden ml-12 w-[calc(100%-3rem)]">
+                                <div className="w-full h-2 bg-gray-50 rounded-full overflow-hidden ml-14 w-[calc(100%-3.5rem)]">
                                     <div 
                                         className={`h-full rounded-full transition-all duration-1000 ease-out ${
                                             index === 0 ? 'bg-gradient-to-r from-amber-400 to-amber-300' : 
