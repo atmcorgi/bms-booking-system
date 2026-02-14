@@ -45,11 +45,11 @@ public class StatisticsService {
             current = current.plusDays(1);
         }
 
-        return Map.of(
-            "totalRevenue", totalRevenue,
-            "totalBookings", bookings.size(),
-            "dailyRevenue", dailyRevenue
-        );
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalRevenue", totalRevenue);
+        result.put("totalBookings", bookings.size());
+        result.put("dailyRevenue", dailyRevenue);
+        return result;
     }
 
     public List<Map<String, Object>> getTopMovies(int limit) {
@@ -57,12 +57,12 @@ public class StatisticsService {
         return results.stream().map(row -> {
             Movie movie = (Movie) row[0];
             Long count = (Long) row[1];
-            return Map.of(
-                "movieCode", movie.getCode(),
-                "title", movie.getTitle(),
-                "posterUrl", movie.getPosterUrl(),
-                "bookings", count
-            );
+            Map<String, Object> map = new HashMap<>();
+            map.put("movieCode", movie.getCode());
+            map.put("title", movie.getTitle());
+            map.put("posterUrl", movie.getPosterUrl());
+            map.put("bookings", count);
+            return map;
         }).collect(Collectors.toList());
     }
     
