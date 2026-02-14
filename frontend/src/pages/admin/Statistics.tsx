@@ -105,12 +105,12 @@ export default function Statistics() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
           {/* Revenue Chart */}
-          <div className="bg-white p-6 shadow-sm">
+          <div className="bg-white p-6 shadow-sm rounded-lg">
             <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <FontAwesomeIcon icon={faChartLine} className="text-blue-500" />
                 Revenue Trend
             </h3>
-            <div className="h-[300px]">
+            <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -125,18 +125,18 @@ export default function Statistics() {
           </div>
 
           {/* Top Movies Chart */}
-          <div className="bg-white p-6 shadow-sm">
+          <div className="bg-white p-6 shadow-sm rounded-lg">
             <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <FontAwesomeIcon icon={faTicketAlt} className="text-red-500" />
                 Top 5 Movies
             </h3>
-            <div className="h-[300px]">
+            <div style={{ width: '100%', height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                  {/* Layout: YAxis is movie title (category) */}
-                <BarChart data={topMovies} layout="vertical" margin={{ left: 40 }}>
+                <BarChart data={topMovies || []} layout="vertical" margin={{ left: 10 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                   <XAxis type="number" />
-                  <YAxis dataKey="title" type="category" width={100} tick={{fontSize: 11}} />
+                  <YAxis dataKey="title" type="category" width={120} tick={{fontSize: 11}} />
                   <Tooltip />
                    <Legend />
                   <Bar dataKey="bookings" name="Tickets Sold" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={20} />
