@@ -19,13 +19,23 @@ public class StatisticsService {
     @Autowired
     private BookingRepository bookingRepository;
 
-    public Map<String, Object> getRevenueStats(LocalDate from, LocalDate to) {
+    public Map<String, Object> getRevenueStats(LocalDate from, LocalDate to, Long theaterId) {
         // Fetch all PAID bookings in range
-        List<Booking> bookings = bookingRepository.findByStatusAndBookingTimeBetween(
+        List<Booking> bookings;
+        if (theaterId != null) {
+            bookings = bookingRepository.findByStatusAndBookingTimeBetweenAndTheaterId(
+                "PAID",
+                from.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                to.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant(),
+                theaterId
+            );
+        } else {
+            bookings = bookingRepository.findByStatusAndBookingTimeBetween(
                 "PAID",
                 from.atStartOfDay(ZoneId.systemDefault()).toInstant(),
                 to.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
-        );
+            );
+        }
 
         // Calculate total revenue
         double totalRevenue = bookings.stream().mapToDouble(this::calculateBookingPrice).sum();
@@ -52,8 +62,14 @@ public class StatisticsService {
         return result;
     }
 
-    public List<Map<String, Object>> getTopMovies(int limit) {
-        List<Object[]> results = bookingRepository.findTopMoviesByBookingCount(PageRequest.of(0, limit));
+    public List<Map<String, Object>> getTopMovies(int limit, Long theaterId) {
+        List<Object[]> results;
+        if (theaterId != null) {
+            results = bookingRepository.findTopMoviesByBookingCountAndTheater(theaterId, PageRequest.of(0, limit));
+        } else {
+            results = bookingRepository.findTopMoviesByBookingCount(PageRequest.of(0, limit));
+        }
+        
         return results.stream().map(row -> {
             Movie movie = (Movie) row[0];
             Long count = (Long) row[1];
@@ -66,13 +82,13 @@ public class StatisticsService {
         }).collect(Collectors.toList());
     }
     
-    public Map<String, Object> getSummary() {
+    public Map<String, Object> getSummary(Long theaterId) {
         // Simple summary for cards
         // For efficiency, could use count() queries, but reusing existing logic for now
         LocalDate today = LocalDate.now();
         LocalDate startOfMonth = today.withDayOfMonth(1);
         
-        Map<String, Object> monthStats = getRevenueStats(startOfMonth, today);
+        Map<String, Object> monthStats = getRevenueStats(startOfMonth, today, theaterId);
         
         return Map.of(
             "monthRevenue", monthStats.get("totalRevenue"),

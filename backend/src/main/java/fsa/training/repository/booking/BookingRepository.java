@@ -66,4 +66,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT s.movie, COUNT(b.id) FROM Booking b JOIN b.showtime s WHERE b.status = 'PAID' GROUP BY s.movie ORDER BY COUNT(b.id) DESC")
     List<Object[]> findTopMoviesByBookingCount(org.springframework.data.domain.Pageable pageable);
+
+    // Statistics with filter
+    @Query("SELECT b FROM Booking b " +
+           "LEFT JOIN FETCH b.showtime s " +
+           "LEFT JOIN FETCH s.movie m " +
+           "LEFT JOIN FETCH b.seat seat " +
+           "LEFT JOIN FETCH s.theater t " +
+           "WHERE b.status = :status AND b.bookingTime BETWEEN :start AND :end AND t.id = :theaterId")
+    List<Booking> findByStatusAndBookingTimeBetweenAndTheaterId(@Param("status") String status, 
+                                                               @Param("start") java.time.Instant start, 
+                                                               @Param("end") java.time.Instant end,
+                                                               @Param("theaterId") Long theaterId);
+
+    @Query("SELECT s.movie, COUNT(b.id) FROM Booking b JOIN b.showtime s JOIN s.theater t " +
+           "WHERE b.status = 'PAID' AND t.id = :theaterId " +
+           "GROUP BY s.movie ORDER BY COUNT(b.id) DESC")
+    List<Object[]> findTopMoviesByBookingCountAndTheater(@Param("theaterId") Long theaterId, org.springframework.data.domain.Pageable pageable);
 } 
