@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/statistics")
-@PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+@PreAuthorize("hasAnyAuthority('ADMIN', 'STAFF')")
 public class StatisticsController {
 
     @Autowired
