@@ -54,3 +54,7 @@
 .stats-movie-title {
   margin-right: 8px !important;
 }
+
+.group.cursor-default {
+    margin-bottom: 20px !important;
+}
