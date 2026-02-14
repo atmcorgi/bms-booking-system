@@ -57,7 +57,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     org.springframework.data.domain.Page<Booking> findByAccountIdAndStatusWithDetails(@Param("accountId") Long accountId, @Param("status") String status, org.springframework.data.domain.Pageable pageable);
 
     // Statistics
-    List<Booking> findByStatusAndBookingTimeBetween(String status, java.time.Instant start, java.time.Instant end);
+    @Query("SELECT b FROM Booking b " +
+           "JOIN FETCH b.showtime s " +
+           "JOIN FETCH s.movie m " +
+           "JOIN FETCH b.seat seat " +
+           "WHERE b.status = :status AND b.bookingTime BETWEEN :start AND :end")
+    List<Booking> findByStatusAndBookingTimeBetween(@Param("status") String status, @Param("start") java.time.Instant start, @Param("end") java.time.Instant end);
 
     @Query("SELECT s.movie, COUNT(b) FROM Booking b JOIN b.showtime s WHERE b.status = 'PAID' GROUP BY s.movie ORDER BY COUNT(b) DESC")
     List<Object[]> findTopMoviesByBookingCount(org.springframework.data.domain.Pageable pageable);
