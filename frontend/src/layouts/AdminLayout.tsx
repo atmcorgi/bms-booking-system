@@ -10,6 +10,7 @@ import { authApi } from "../services/authApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartBar,
+  faChartLine,
   faTags,
   faBuilding,
   faFilm,
@@ -130,6 +131,24 @@ export default function AdminLayout() {
           >
             <FontAwesomeIcon icon={faChartBar} />
             {!collapsed && <span>Dashboard</span>}
+          </NavLink>
+          <NavLink
+            to="/admin/statistics"
+            style={({ isActive }) => ({
+              color: "#333",
+              textDecoration: "none",
+              padding: "8px 10px",
+              borderLeft: isActive
+                ? "3px solid #d9d2b7"
+                : "3px solid transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            })}
+          >
+            <FontAwesomeIcon icon={faChartLine} />
+            {!collapsed && <span>Thống kê</span>}
           </NavLink>
           <NavLink
             to="/admin/genres"

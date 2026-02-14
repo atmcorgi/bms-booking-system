@@ -14,6 +14,7 @@ import UserDropdown from "../components/UserDropdown";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChartBar,
+  faChartLine,
   faCalendarAlt,
   faFilm,
   faClock,
@@ -148,6 +149,24 @@ export default function StaffLayout() {
           >
             <FontAwesomeIcon icon={faChartBar} />
             {!collapsed && <span>Dashboard</span>}
+          </NavLink>
+          <NavLink
+            to="/staff/statistics"
+            style={({ isActive }) => ({
+              color: "#333",
+              textDecoration: "none",
+              padding: "8px 10px",
+              borderLeft: isActive
+                ? "3px solid #d9d2b7"
+                : "3px solid transparent",
+              background: isActive ? "#f5f3ef" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            })}
+          >
+            <FontAwesomeIcon icon={faChartLine} />
+            {!collapsed && <span>Thống kê</span>}
           </NavLink>
           <NavLink
             to="/staff/scheduling"

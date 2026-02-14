@@ -30,6 +30,7 @@ import TheaterDetail from "./pages/admin/TheaterDetail";
 import RoomForm from "./pages/admin/RoomForm";
 import MovieIntakeList from "./pages/admin/MovieIntakeList";
 import Dashboard from "./pages/admin/Dashboard";
+import Statistics from "./pages/admin/Statistics";
 import StaffScheduling from "./pages/staff/Scheduling";
 import StaffLayout from "./layouts/StaffLayout";
 import StaffDashboard from "./pages/staff/Dashboard";
@@ -395,7 +396,9 @@ export default function App() {
           <Route path="movies" element={<StaffMovieManagement />} />
           <Route path="showtimes" element={<ShowtimeManagement />} />
           <Route path="bookings" element={<BookingManagement />} />
+          <Route path="bookings" element={<BookingManagement />} />
           <Route path="profile" element={<StaffProfile />} />
+          <Route path="statistics" element={<Statistics />} />
         </Route>
         {/* Admin layout with nested routes */}
         <Route
@@ -430,7 +433,9 @@ export default function App() {
           <Route path="accounts" element={<AccountManagement />} />
           <Route path="movie-assignments" element={<MovieAssignmentList />} />
           <Route path="movie-requests" element={<MovieRequestList />} />
+          <Route path="movie-requests" element={<MovieRequestList />} />
           <Route path="profile" element={<AdminProfile />} />
+          <Route path="statistics" element={<Statistics />} />
         </Route>
         {/* Examples for protected routes (uncomment when pages exist) */}
         {/* <Route path="/admin/*" element={<ProtectedRoute roles={["ADMIN"]}><AdminApp/></ProtectedRoute>} /> */}
