@@ -57,7 +57,7 @@ export default function Statistics() {
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-4 !gap-4">
-                    <div className="group flex items-center gap-3 !gap-3 bg-gray-50 hover:bg-white px-4 py-2.5 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all duration-300 hover:shadow-md hover:shadow-indigo-500/10">
+                    <div className="group stats-date-input-container bg-gray-50 hover:bg-white rounded-xl border border-gray-200 hover:border-indigo-300 transition-all duration-300 hover:shadow-md hover:shadow-indigo-500/10">
                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-indigo-500 transition-colors">From</span>
                         <input 
                             type="date" 
@@ -66,7 +66,7 @@ export default function Statistics() {
                             className="bg-transparent border-none text-gray-700 text-sm font-semibold focus:ring-0 p-0 outline-none cursor-pointer"
                         />
                     </div>
-                    <div className="group flex items-center gap-3 !gap-3 bg-gray-50 hover:bg-white px-4 py-2.5 rounded-xl border border-gray-200 hover:border-indigo-300 transition-all duration-300 hover:shadow-md hover:shadow-indigo-500/10">
+                    <div className="group stats-date-input-container bg-gray-50 hover:bg-white rounded-xl border border-gray-200 hover:border-indigo-300 transition-all duration-300 hover:shadow-md hover:shadow-indigo-500/10">
                          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-indigo-500 transition-colors">To</span>
                          <input 
                             type="date" 
@@ -174,10 +174,10 @@ export default function Statistics() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 h-auto lg:h-[420px] stats-grid-gap !gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 h-auto lg:h-[420px] stats-grid-gap !gap-6">
                 
                 {/* Main Revenue Chart */}
-                <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col stats-card-padding !p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col stats-card-padding !p-6">
                     <div className="flex justify-between items-start mb-6">
                          <div>
                             <h3 className="text-lg font-bold text-gray-900">Revenue Analytics</h3>
@@ -246,7 +246,7 @@ export default function Statistics() {
                 </div>
 
                 {/* Top Movies */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden stats-card-padding !p-6">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden stats-card-padding !p-6">
                      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 !gap-2">
                         Top Performing
                         <span className="text-xs font-normal text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">Movies</span>
@@ -255,7 +255,7 @@ export default function Statistics() {
                         {(topMovies || []).map((movie: any, index: number) => (
                              <div key={index} className="group cursor-default">
                                 <div className="flex items-center mb-2">
-                                    <div className={`flex-shrink-0 w-8 h-8 mr-6 rounded-lg flex items-center justify-center text-sm font-bold shadow-sm ${
+                                    <div className={`stats-rank-badge rounded-lg flex items-center justify-center text-sm font-bold shadow-sm ${
                                         index === 0 ? 'bg-amber-100 text-amber-600' :
                                         index === 1 ? 'bg-slate-100 text-slate-600' :
                                         index === 2 ? 'bg-orange-100 text-orange-600' : 'bg-gray-50 text-gray-400'

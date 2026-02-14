@@ -32,6 +32,26 @@
   border-radius: 100vh;
 }
 
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Force specific element spacing */
+.stats-date-input-container {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 16px !important;
+}
+
+.stats-rank-badge {
+  margin-right: 24px !important;
+  width: 32px !important; /* Ensure width is maintained */
+  height: 32px !important;
+  flex-shrink: 0 !important;
+}
+
+.stats-movie-title {
+  margin-right: 8px !important;
 }
