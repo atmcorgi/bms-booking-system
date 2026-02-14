@@ -47,137 +47,113 @@ export default function Statistics() {
   }
 
   return (
-      <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard Statistics</h1>
-            
-            {/* Date Filter */}
-            <div className="bg-white p-4 shadow-sm rounded-lg border border-gray-200 flex flex-col sm:flex-row gap-4 items-end">
-                <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">From Date</label>
+      <div className="admin-content">
+        <div className="admin-header">
+           <h3 style={{ margin: 0 }}>Dashboard Statistics</h3>
+           {/* Date Filter */}
+           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>From Date</label>
                     <input 
                         type="date" 
                         value={dateRange.from}
                         onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                        style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none' }}
                     />
                 </div>
-                <div>
-                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">To Date</label>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <label style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>To Date</label>
                     <input 
                         type="date" 
                         value={dateRange.to}
                         onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border"
+                         style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none' }}
                     />
                 </div>
+           </div>
+        </div>
+
+        {/* Summary Info Row */}
+        <div className="info-row">
+            {/* Revenue */}
+             <div className="info-box bg-success">
+                <div className="info-box-icon">
+                    <FontAwesomeIcon icon={faMoneyBillWave} />
+                </div>
+                <div className="info-box-content">
+                    <span className="info-box-text">Doanh thu tháng này</span>
+                    <span className="info-box-number">
+                        {summary?.monthRevenue?.toLocaleString() || 0} VND
+                    </span>
+                 </div>
+            </div>
+
+            {/* Bookings */}
+             <div className="info-box bg-primary">
+                <div className="info-box-icon">
+                    <FontAwesomeIcon icon={faTicketAlt} />
+                </div>
+                <div className="info-box-content">
+                    <span className="info-box-text">Vé bán ra tháng này</span>
+                    <span className="info-box-number">
+                         {summary?.monthBookings || 0}
+                    </span>
+                 </div>
             </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Revenue Card */}
-          <div className="bg-white overflow-hidden rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
-                  <FontAwesomeIcon icon={faMoneyBillWave} className="h-6 w-6 text-green-600" />
+        {/* Widgets Grid for Charts */}
+        <div className="widgets-grid" style={{ marginTop: '20px' }}>
+            
+            {/* Revenue Chart */}
+            <div className="widget-card">
+                <div className="widget-header">
+                    <div>
+                        <h4 style={{ margin: 0, fontSize: '16px' }}>Biểu đồ doanh thu</h4>
+                    </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue (This Month)</dt>
-                    <dd>
-                      <div className="text-2xl font-bold text-gray-900">{summary?.monthRevenue?.toLocaleString() || 0} VND</div>
-                    </dd>
-                  </dl>
+                <div className="widget-body">
+                    <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={chartData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                            <XAxis dataKey="date" tick={{fontSize: 12, fill: '#6B7280'}} axisLine={false} tickLine={false} />
+                            <YAxis tick={{fontSize: 12, fill: '#6B7280'}} tickFormatter={(val) => `${val/1000}k`} axisLine={false} tickLine={false} />
+                            <Tooltip 
+                                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                formatter={(val: any) => [`${val?.toLocaleString() || 0} VND`, 'Doanh thu']} 
+                            />
+                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                            <Line type="monotone" dataKey="amount" name="Doanh thu" stroke="#22c55e" strokeWidth={3} dot={{r: 4, fill: '#22c55e', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6}} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
-              </div>
             </div>
-            <div className="bg-green-50 px-6 py-3">
-              <div className="text-sm">
-                <span className="text-green-600 font-medium">Verified Revenue</span>
-              </div>
-            </div>
-          </div>
 
-          {/* Bookings Card */}
-          <div className="bg-white overflow-hidden rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                  <FontAwesomeIcon icon={faTicketAlt} className="h-6 w-6 text-blue-600" />
+            {/* Top Movies Chart */}
+             <div className="widget-card">
+                <div className="widget-header">
+                    <div>
+                         <h4 style={{ margin: 0, fontSize: '16px' }}>Top 5 Phim hot</h4>
+                    </div>
                 </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Bookings (This Month)</dt>
-                    <dd>
-                      <div className="text-2xl font-bold text-gray-900">{summary?.monthBookings || 0}</div>
-                    </dd>
-                  </dl>
+                <div className="widget-body">
+                     <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={topMovies || []} layout="vertical" margin={{ left: 10, right: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E7EB" />
+                            <XAxis type="number" tick={{fontSize: 12, fill: '#6B7280'}} axisLine={false} tickLine={false} />
+                            <YAxis dataKey="title" type="category" width={100} tick={{fontSize: 11, fill: '#374151'}} tickLine={false} />
+                            <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+                            <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                            <Bar dataKey="bookings" name="Vé đã bán" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={24} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
-              </div>
             </div>
-            <div className="bg-blue-50 px-6 py-3">
-              <div className="text-sm">
-                 <span className="text-blue-600 font-medium">Successful Bookings</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* Revenue Chart */}
-          <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <div className="bg-blue-100 p-2 rounded-lg">
-                    <FontAwesomeIcon icon={faChartLine} className="text-blue-600" />
-                </div>
-                Revenue Trend
-            </h3>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                  <XAxis dataKey="date" tick={{fontSize: 12, fill: '#6B7280'}} axisLine={false} tickLine={false} />
-                  <YAxis tick={{fontSize: 12, fill: '#6B7280'}} tickFormatter={(val) => `${val/1000}k`} axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                    formatter={(val: any) => [`${val?.toLocaleString() || 0} VND`, 'Revenue']} 
-                  />
-                  <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                  <Line type="monotone" dataKey="amount" name="Revenue" stroke="#4F46E5" strokeWidth={3} dot={{r: 4, fill: '#4F46E5', strokeWidth: 2, stroke: '#fff'}} activeDot={{r: 6}} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Top Movies Chart */}
-          <div className="bg-white p-6 shadow-sm rounded-xl border border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <div className="bg-pink-100 p-2 rounded-lg">
-                    <FontAwesomeIcon icon={faTicketAlt} className="text-pink-600" />
-                </div>
-                Top 5 Movies
-            </h3>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                 {/* Layout: YAxis is movie title (category) */}
-                <BarChart data={topMovies || []} layout="vertical" margin={{ left: 10, right: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#E5E7EB" />
-                  <XAxis type="number" tick={{fontSize: 12, fill: '#6B7280'}} axisLine={false} tickLine={false} />
-                  <YAxis dataKey="title" type="category" width={100} tick={{fontSize: 11, fill: '#374151'}} tickLine={false} />
-                  <Tooltip cursor={{fill: 'transparent'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
-                   <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                  <Bar dataKey="bookings" name="Tickets Sold" fill="#EC4899" radius={[0, 4, 4, 0]} barSize={24} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
         </div>
       </div>
   );
