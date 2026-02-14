@@ -174,10 +174,10 @@ export default function Statistics() {
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 h-auto lg:h-[420px] stats-grid-gap !gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-5 h-auto lg:h-[420px] stats-grid-gap !gap-6">
                 
                 {/* Main Revenue Chart */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col stats-card-padding !p-6">
+                <div className="lg:col-span-3 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col stats-card-padding !p-6">
                     <div className="flex justify-between items-start mb-6">
                          <div>
                             <h3 className="text-lg font-bold text-gray-900">Revenue Analytics</h3>
@@ -217,6 +217,10 @@ export default function Statistics() {
                                     tickMargin={15}
                                 />
                                 <Tooltip 
+                                    formatter={(value: number | string | Array<number | string> | undefined) => [
+                                        typeof value === 'number' ? `${value.toLocaleString()} VND` : `${value}`, 
+                                        "Revenue"
+                                    ]}
                                     contentStyle={{ 
                                         borderRadius: '16px', 
                                         border: 'none', 
@@ -242,7 +246,7 @@ export default function Statistics() {
                 </div>
 
                 {/* Top Movies */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden stats-card-padding !p-6">
+                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-full overflow-hidden stats-card-padding !p-6">
                      <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2 !gap-2">
                         Top Performing
                         <span className="text-xs font-normal text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">Movies</span>
