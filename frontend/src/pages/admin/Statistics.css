@@ -58,3 +58,7 @@
 .group.cursor-default {
     margin-bottom: 20px !important;
 }
+
+.stats-info-row {
+  margin-bottom: 8px !important;
+}

@@ -258,3 +258,7 @@ coverage/
 *.crt
 *.p12
 *.jks
+
+# Render ENV
+.env.render
+

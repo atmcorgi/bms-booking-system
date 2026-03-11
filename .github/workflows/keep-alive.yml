@@ -1,0 +1,19 @@
+name: Keep Render Backend Alive
+
+on:
+  schedule:
+    # Chạy mỗi 10 phút một lần để chống ngủ đông (Render tắt server sau 15p)
+    - cron: "*/10 * * * *"
+  workflow_dispatch: # Cho phép bạn chạy bằng tay (Manual trigger) trên web GitHub nếu cần
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render API
+        # Lệnh curl gọi thẳng vào cái link API lấy danh sách phim backend.
+        # Ném kết quả trả về vào hư vô (/dev/null) để log không bị rối
+        run: curl -s https://bms-backend-api.onrender.com/api/movies/now-showing > /dev/null
+        
+      - name: Report Status
+        run: echo "Đã gõ cửa Server Backend Render thành công!"
