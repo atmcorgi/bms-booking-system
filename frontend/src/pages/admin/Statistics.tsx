@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "./Statistics.css";
 import { useQuery } from "@tanstack/react-query";
 import { statisticsApi } from "../../services/statisticsApi";
@@ -10,9 +10,10 @@ import { faMoneyBillWave, faTicketAlt, faSpinner, faTrophy, faCrown } from "@for
 
 export default function Statistics() {
   const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0], // Start of month
+    from: new Date(new Date().getFullYear(), new Date().getMonth() - 2, 1).toISOString().split("T")[0], // 3 months ago
     to: new Date().toISOString().split("T")[0] // Today
   });
+  const [timeGroup, setTimeGroup] = useState<"daily" | "weekly" | "monthly">("daily");
 
   // Fetch Summary
   const { data: summary, isLoading: loadingSummary } = useQuery({
@@ -33,9 +34,38 @@ export default function Statistics() {
   });
 
   // Transform dailyRevenue map to array for Recharts
-  const chartData = revenueData?.dailyRevenue 
+  const rawChartData = revenueData?.dailyRevenue 
     ? Object.entries(revenueData.dailyRevenue).map(([date, amount]) => ({ date, amount }))
     : [];
+
+  // Group chart data based on selected time interval
+  const chartData = useMemo(() => {
+    if (!rawChartData.length) return [];
+    if (timeGroup === "daily") return rawChartData;
+
+    const grouped = new Map<string, number>();
+    
+    rawChartData.forEach(item => {
+        const dateObj = new Date(item.date);
+        let key = "";
+        
+        if (timeGroup === "weekly") {
+            // Get week number
+            const d = new Date(Date.UTC(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+            key = `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+        } else if (timeGroup === "monthly") {
+            key = item.date.substring(0, 7); // yyyy-MM
+        }
+        
+        grouped.set(key, (grouped.get(key) || 0) + item.amount);
+    });
+
+    return Array.from(grouped.entries()).map(([date, amount]) => ({ date, amount }));
+  }, [rawChartData, timeGroup]);
 
   if (loadingSummary || loadingRevenue || loadingTopMovies) {
     return (
@@ -189,9 +219,14 @@ export default function Statistics() {
                              <p className="text-xs text-gray-500 font-medium mt-1">Daily revenue performance over time</p>
                         </div>
                         <div className="flex gap-2 !gap-2">
-                            <select className="bg-gray-50 border-none text-xs font-bold text-gray-600 rounded-lg py-1.5 px-3 cursor-pointer hover:bg-gray-100 transition-colors">
-                                <option>Daily</option>
-                                <option>Weekly</option>
+                            <select 
+                                value={timeGroup}
+                                onChange={(e) => setTimeGroup(e.target.value as "daily" | "weekly" | "monthly")}
+                                className="bg-gray-50 border-none text-xs font-bold text-gray-600 rounded-lg py-1.5 px-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                            >
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
                             </select>
                         </div>
                     </div>
