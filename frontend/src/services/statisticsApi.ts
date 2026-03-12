@@ -16,8 +16,11 @@ export interface TopMovie {
 export interface SummaryStats {
   monthRevenue: number;
   monthBookings: number;
+  bestMonth?: string;
+  bestMonthRevenue?: number;
+  bestMovie?: string;
+  bestMovieBookings?: number;
 }
-
 export const statisticsApi = {
   getRevenue: (from: string, to: string) => 
     api.get<RevenueStats>("/api/statistics/revenue", { params: { from, to } }),

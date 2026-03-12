@@ -84,16 +84,59 @@ public class StatisticsService {
     
     public Map<String, Object> getSummary(Long theaterId) {
         // Simple summary for cards
-        // For efficiency, could use count() queries, but reusing existing logic for now
         LocalDate today = LocalDate.now();
         LocalDate startOfMonth = today.withDayOfMonth(1);
         
         Map<String, Object> monthStats = getRevenueStats(startOfMonth, today, theaterId);
         
-        return Map.of(
-            "monthRevenue", monthStats.get("totalRevenue"),
-            "monthBookings", monthStats.get("totalBookings")
-        );
+        // Calculate best month of the year
+        LocalDate startOfYear = today.withDayOfYear(1);
+        Map<String, Object> yearStats = getRevenueStats(startOfYear, today, theaterId);
+        @SuppressWarnings("unchecked")
+        Map<String, Double> dailyRevenue = (Map<String, Double>) yearStats.get("dailyRevenue");
+        
+        // Group by month
+        Map<String, Double> monthlyRevenue = new HashMap<>();
+        dailyRevenue.forEach((dateStr, amount) -> {
+            String month = dateStr.substring(0, 7); // yyyy-MM
+            monthlyRevenue.merge(month, amount, Double::sum);
+        });
+        
+        // Find best month
+        String bestMonth = "N/A";
+        double bestMonthRevenue = 0;
+        for (Map.Entry<String, Double> entry : monthlyRevenue.entrySet()) {
+            if (entry.getValue() > bestMonthRevenue) {
+                bestMonthRevenue = entry.getValue();
+                bestMonth = entry.getKey(); // yyyy-MM format
+            }
+        }
+        
+        // Find best selling movie
+        List<Map<String, Object>> topMovies = getTopMovies(1, theaterId);
+        String bestMovieTitle = "N/A";
+        long bestMovieBookings = 0;
+        
+        if (!topMovies.isEmpty()) {
+            bestMovieTitle = (String) topMovies.get(0).get("title");
+            bestMovieBookings = (Long) topMovies.get(0).get("bookings");
+        }
+        
+        // Format bestMonth for display (e.g., "10/2023")
+        if (!bestMonth.equals("N/A")) {
+            String[] parts = bestMonth.split("-");
+            bestMonth = parts[1] + "/" + parts[0];
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("monthRevenue", monthStats.get("totalRevenue"));
+        result.put("monthBookings", monthStats.get("totalBookings"));
+        result.put("bestMonth", bestMonth);
+        result.put("bestMonthRevenue", bestMonthRevenue);
+        result.put("bestMovie", bestMovieTitle);
+        result.put("bestMovieBookings", bestMovieBookings);
+        
+        return result;
     }
 
     private double calculateBookingPrice(Booking b) {

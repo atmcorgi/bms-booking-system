@@ -6,7 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChartLine, faMoneyBillWave, faTicketAlt, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faMoneyBillWave, faTicketAlt, faSpinner, faTrophy, faCrown } from "@fortawesome/free-solid-svg-icons";
 
 export default function Statistics() {
   const [dateRange, setDateRange] = useState({
@@ -127,47 +127,52 @@ export default function Statistics() {
                      </div>
                 </div>
                 
-                 {/* System Status */}
+                {/* Best Month Card */}
                 <div className="bg-slate-900 rounded-2xl shadow-xl shadow-slate-200 border border-slate-800 flex flex-col justify-between h-48 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 stats-card-padding !p-6">
-                     <div className="relative z-10">
+                     <div className="relative z-10 flex flex-col h-full justify-between">
                         <div className="flex items-center gap-2 !gap-2 mb-1">
-                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">System Status</span>
+                            <span className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                <FontAwesomeIcon icon={faTrophy} className="text-amber-400 text-sm" />
+                            </span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Best Month (Year)</span>
                         </div>
-                         <h3 className="text-2xl font-bold text-white mt-1">Operational</h3>
-                     </div>
-                     <div className="relative z-10">
-                         <div className="flex justify-between text-xs font-medium text-slate-400 mb-2">
-                             <span>Uptime</span>
-                             <span className="text-emerald-400 font-bold">99.9%</span>
-                         </div>
-                         <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                             <div className="w-[99.9%] h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.5)]"></div>
+                         
+                         <div>
+                            <h3 className="text-2xl font-bold text-white mt-1 uppercase tracking-wider">
+                                {summary?.bestMonth || "N/A"}
+                            </h3>
+                            <div className="text-emerald-400 font-bold flex items-baseline gap-1 mt-2">
+                                <span className="text-xl">{(summary?.bestMonthRevenue || 0).toLocaleString()}</span>
+                                <span className="text-xs text-slate-400">VND</span>
+                            </div>
                          </div>
                      </div>
                      {/* Abstract shape */}
-                     <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
+                     <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-amber-500/20 transition-colors duration-500"></div>
                 </div>
 
-                {/* Avg Ticket */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-48 relative overflow-hidden group hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 stats-card-padding !p-6">
+                {/* Best Selling Movie Card */}
+                <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl shadow-xl shadow-blue-500/20 border border-indigo-500 flex flex-col justify-between h-48 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 stats-card-padding !p-6">
                      <div className="relative z-10 flex flex-col h-full justify-between">
-                         <div className="flex items-center gap-4 !gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform duration-300">
-                                <FontAwesomeIcon icon={faChartLine} className="text-lg" />
-                            </div>
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Avg. Ticket Value</span>
+                         <div className="flex items-center gap-2 !gap-2">
+                            <span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                                <FontAwesomeIcon icon={faCrown} className="text-yellow-300 text-sm" />
+                            </span>
+                            <span className="text-xs font-bold text-indigo-200 uppercase tracking-wider">Top Movie</span>
                         </div>
                         <div>
-                             <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                                ~65k
-                                <span className="text-sm text-gray-400 font-medium ml-1.5">VND</span>
+                             <h3 className="text-xl font-bold text-white tracking-tight line-clamp-2 leading-tight">
+                                {summary?.bestMovie || "N/A"}
                             </h3>
-                             <div className="text-xs text-gray-400 mt-2 font-medium">Based on current monthly sales</div>
+                             <div className="text-xs text-indigo-200 mt-2 font-medium flex items-center gap-1.5">
+                                 <span className="bg-white/20 px-2 py-0.5 rounded-md text-white font-bold">{summary?.bestMovieBookings?.toLocaleString() || 0}</span>
+                                 tickets sold
+                             </div>
                         </div>
                     </div>
-                    <div className="absolute -right-4 top-1/2 -translate-y-1/2 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-500">
-                        <FontAwesomeIcon icon={faChartLine} className="text-9xl text-purple-900" />
+                    {/* Background decoration */}
+                    <div className="absolute -right-6 -bottom-6 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                        <FontAwesomeIcon icon={faCrown} className="text-[8rem] text-white transform -rotate-12" />
                     </div>
                 </div>
 
