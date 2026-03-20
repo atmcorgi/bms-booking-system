@@ -11,13 +11,6 @@ import fsa.training.entity.Showtime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.util.ByteArrayDataSource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -28,22 +21,15 @@ import java.util.Map;
 @Service
 public class TicketEmailService {
 
-    private final JavaMailSender mailSender;
-    
-    @Value("${mail.from.address}")
-    private String fromAddress;
-    
-    @Value("${mail.from.name:CineManager}")
-    private String fromName;
+    private final MailService mailService;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
 
-    public TicketEmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public TicketEmailService(MailService mailService) {
+        this.mailService = mailService;
     }
 
-    @Async
     public void sendTicketEmail(Booking booking) {
         if (booking.getEmail() == null || booking.getEmail().isBlank()) {
             System.out.println("No email for booking " + booking.getId() + ", skipping ticket email");
@@ -54,7 +40,7 @@ public class TicketEmailService {
             String qrCodeBase64 = generateQRCode(booking.getPaymentCode());
             String html = buildTicketEmailHtml(booking, qrCodeBase64);
             
-            sendHtmlEmail(booking.getEmail(), "Vé xem phim - MyCinema", html);
+            mailService.sendMail(booking.getEmail(), "Vé xem phim - MyCinema", html);
             System.out.println("Ticket email sent to: " + booking.getEmail() + " for booking: " + booking.getId());
         } catch (Exception e) {
             System.err.println("Failed to send ticket email: " + e.getMessage());
@@ -62,7 +48,6 @@ public class TicketEmailService {
         }
     }
 
-    @Async
     public void sendTicketEmailsForPaymentCode(String paymentCode, List<Booking> bookings) {
         if (bookings == null || bookings.isEmpty()) {
             return;
@@ -79,7 +64,7 @@ public class TicketEmailService {
             String qrCodeBase64 = generateQRCode(paymentCode);
             String html = buildTicketEmailHtmlMultiple(bookings, paymentCode, qrCodeBase64);
             
-            sendHtmlEmail(email, "Vé xem phim - MyCinema", html);
+            mailService.sendMail(email, "Vé xem phim - MyCinema", html);
             System.out.println("Ticket email sent to: " + email + " for " + bookings.size() + " bookings with payment code: " + paymentCode);
         } catch (Exception e) {
             System.err.println("Failed to send ticket emails: " + e.getMessage());
@@ -111,8 +96,8 @@ public class TicketEmailService {
         String dateStr = showtime.getShowDate() != null ? showtime.getShowDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "N/A";
         String timeStr = showtime.getShowTime() != null ? showtime.getShowTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "N/A";
         String seatName = booking.getSeat() != null ? booking.getSeat().getSeatNumber() : "N/A";
-        String seatType = booking.getSeat() != null && booking.getSeat().getSeatType() != null ? booking.getSeat().getSeatType().name() : "";
-        
+        String seatType = booking.getSeat() != null && booking.getSeat().getSeatType() != null ? " (" + booking.getSeat().getSeatType().name() + ")" : "";
+
         return """
             <table bgcolor="#F4F5F6" border="0" cellpadding="0" cellspacing="0" width="100%%">
                 <tbody>
@@ -265,7 +250,7 @@ public class TicketEmailService {
                                                                                     <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Phòng: <span style="color:#333">%s</span></p>
                                                                                     <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Ngày: <span style="color:#333">%s</span></p>
                                                                                     <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Giờ chiếu: <span style="color:#333">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Ghế: <span style="color:#333">%d ghế</span></p>
+                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Số ghế: <span style="color:#333">%d ghế</span></p>
                                                                                     %s
                                                                                     <hr style="border:none;border-top:1px solid #eee;margin:16px 0" />
                                                                                     <p style="font-family:Arial,Helvetica,sans-serif;color:#777;font-size:12px;line-height:18px;padding:0;margin:0">Quý khách vui lòng đến trước giờ chiếu 15 phút. Mang theo email này hoặc mã QR để nhận vé tại quầy.</p>
@@ -304,17 +289,5 @@ public class TicketEmailService {
                 </tbody>
             </table>
             """.formatted(qrCodeBase64, paymentCode, movieName, theaterName, roomName, dateStr, timeStr, bookings.size(), seatsHtml.toString());
-    }
-
-    private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException, java.io.UnsupportedEncodingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-        
-        helper.setFrom(fromAddress, fromName);
-        helper.setTo(to);
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true);
-        
-        mailSender.send(message);
     }
 }
