@@ -1,5 +1,6 @@
 package fsa.training.controller;
 
+import fsa.training.service.mail.MailService;
 import fsa.training.service.mail.TicketEmailService;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,9 +9,11 @@ import org.springframework.web.bind.annotation.*;
 public class TestEmailController {
 
     private final TicketEmailService ticketEmailService;
+    private final MailService mailService;
 
-    public TestEmailController(TicketEmailService ticketEmailService) {
+    public TestEmailController(TicketEmailService ticketEmailService, MailService mailService) {
         this.ticketEmailService = ticketEmailService;
+        this.mailService = mailService;
     }
 
     @GetMapping("/send-test-email")
@@ -19,6 +22,11 @@ public class TestEmailController {
         System.out.println("Email: " + email);
         
         try {
+            // Test gửi email đơn giản trước (không có attachment)
+            mailService.sendMail(email, "Test Simple Email", "<h1>Test</h1><p>This is a test email without attachment.</p>");
+            System.out.println("Simple email sent");
+            
+            // Sau đó test với QR code
             if (ticketEmailService == null) {
                 System.err.println("ERROR: TicketEmailService is NULL!");
                 return "Error: TicketEmailService is null";
@@ -58,7 +66,7 @@ public class TestEmailController {
             ticketEmailService.sendTicketEmail(testBooking);
             System.out.println("ticketEmailService.sendTicketEmail() completed");
             
-            return "Test email sent to: " + email + ". Check your inbox!";
+            return "Test emails sent to: " + email + ". Check your inbox (including spam)!";
         } catch (Exception e) {
             e.printStackTrace();
             return "Error: " + e.getMessage();
