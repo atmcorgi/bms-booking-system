@@ -590,10 +590,13 @@ public class BookingController {
             String email = null;
             if (request.containsKey("email") && request.get("email") != null) {
                 email = request.get("email").toString();
+                System.out.println("DEBUG: Email from request: " + email);
             }
             if ((email == null || email.trim().isEmpty()) && currentAccount != null) {
                 email = currentAccount.getEmail();
+                System.out.println("DEBUG: Email from account: " + email);
             }
+            System.out.println("DEBUG: Final email for booking: " + email);
 
             for (Seat seat : selectedSeats) {
                 Booking b = Booking.builder()
@@ -693,7 +696,22 @@ public class BookingController {
                     
                     // Send ticket email after successful payment
                     if (anyNewlyPaid) {
-                        ticketEmailService.sendTicketEmailsForPaymentCode(paymentCode, bookings);
+                        String emailForTicket = bookings.get(0).getEmail();
+                        System.out.println("=== TICKET EMAIL DEBUG ===");
+                        System.out.println("Payment code: " + paymentCode);
+                        System.out.println("Email in booking: " + emailForTicket);
+                        if (emailForTicket == null || emailForTicket.isBlank()) {
+                            System.err.println("WARNING: No email in booking! Email will not be sent.");
+                        } else {
+                            try {
+                                ticketEmailService.sendTicketEmailsForPaymentCode(paymentCode, bookings);
+                                System.out.println("Email sending initiated for: " + emailForTicket);
+                            } catch (Exception emailEx) {
+                                System.err.println("ERROR sending ticket email: " + emailEx.getMessage());
+                                emailEx.printStackTrace();
+                            }
+                        }
+                        System.out.println("========================");
                     }
                     
                     return ResponseEntity.ok("OK");
