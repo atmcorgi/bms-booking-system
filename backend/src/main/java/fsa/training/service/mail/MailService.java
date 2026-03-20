@@ -3,6 +3,7 @@ package fsa.training.service.mail;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -40,6 +41,29 @@ public class MailService {
             System.out.println("Email sent successfully to: " + toEmail);
         } catch (MessagingException | UnsupportedEncodingException e) {
             System.err.println("Failed to send email to " + toEmail + ": " + e.getMessage());
+        }
+    }
+
+    @Async
+    public void sendMailWithAttachment(String toEmail, String subject, String htmlContent, byte[] attachmentData, String attachmentName, String attachmentMimeType) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromAddress, fromName);
+            helper.setTo(toEmail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true); // true = html
+            
+            // Add QR code as inline attachment using CID reference
+            ByteArrayResource resource = new ByteArrayResource(attachmentData);
+            helper.addInline("qrcode", resource, attachmentMimeType);
+            
+            mailSender.send(message);
+            System.out.println("Email with QR attachment sent successfully to: " + toEmail);
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            System.err.println("Failed to send email to " + toEmail + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

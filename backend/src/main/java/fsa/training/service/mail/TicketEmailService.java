@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -37,10 +36,17 @@ public class TicketEmailService {
         }
 
         try {
-            String qrCodeBase64 = generateQRCode(booking.getPaymentCode());
-            String html = buildTicketEmailHtml(booking, qrCodeBase64);
+            byte[] qrCodeImage = generateQRCodeImage(booking.getPaymentCode());
+            String html = buildTicketEmailHtml(booking);
             
-            mailService.sendMail(booking.getEmail(), "Vé xem phim - MyCinema", html);
+            mailService.sendMailWithAttachment(
+                booking.getEmail(), 
+                "Vé xem phim - MyCinema", 
+                html, 
+                qrCodeImage, 
+                "qrcode.png",
+                "image/png"
+            );
             System.out.println("Ticket email sent to: " + booking.getEmail() + " for booking: " + booking.getId());
         } catch (Exception e) {
             System.err.println("Failed to send ticket email: " + e.getMessage());
@@ -61,10 +67,17 @@ public class TicketEmailService {
         }
 
         try {
-            String qrCodeBase64 = generateQRCode(paymentCode);
-            String html = buildTicketEmailHtmlMultiple(bookings, paymentCode, qrCodeBase64);
+            byte[] qrCodeImage = generateQRCodeImage(paymentCode);
+            String html = buildTicketEmailHtmlMultiple(bookings, paymentCode);
             
-            mailService.sendMail(email, "Vé xem phim - MyCinema", html);
+            mailService.sendMailWithAttachment(
+                email, 
+                "Vé xem phim - MyCinema", 
+                html, 
+                qrCodeImage, 
+                "qrcode.png",
+                "image/png"
+            );
             System.out.println("Ticket email sent to: " + email + " for " + bookings.size() + " bookings with payment code: " + paymentCode);
         } catch (Exception e) {
             System.err.println("Failed to send ticket emails: " + e.getMessage());
@@ -72,7 +85,7 @@ public class TicketEmailService {
         }
     }
 
-    private String generateQRCode(String content) throws WriterException, IOException {
+    private byte[] generateQRCodeImage(String content) throws WriterException, IOException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         Map<EncodeHintType, Object> hints = Map.of(
             EncodeHintType.CHARACTER_SET, "UTF-8",
@@ -83,12 +96,10 @@ public class TicketEmailService {
         
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         MatrixToImageWriter.writeToStream(bitMatrix, "PNG", outputStream);
-        byte[] imageBytes = outputStream.toByteArray();
-        
-        return Base64.getEncoder().encodeToString(imageBytes);
+        return outputStream.toByteArray();
     }
 
-    private String buildTicketEmailHtml(Booking booking, String qrCodeBase64) {
+    private String buildTicketEmailHtml(Booking booking) {
         Showtime showtime = booking.getShowtime();
         String movieName = showtime.getMovie() != null ? showtime.getMovie().getTitle() : "N/A";
         String theaterName = showtime.getTheater() != null ? showtime.getTheater().getName() : "N/A";
@@ -130,7 +141,7 @@ public class TicketEmailService {
                                                                 </tr>
                                                                 <tr>
                                                                     <td align="center" style="padding:0 16px" valign="top">
-                                                                        <img src="data:image/png;base64,%s" alt="QR Code" style="width:150px;height:150px;border:1px solid #ddd;border-radius:8px;margin:16px 0;" />
+                                                                        <img src="cid:qrcode" alt="QR Code" style="width:180px;height:180px;border:1px solid #ddd;border-radius:8px;margin:16px 0;" />
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
@@ -181,10 +192,10 @@ public class TicketEmailService {
                     </tr>
                 </tbody>
             </table>
-            """.formatted(qrCodeBase64, booking.getPaymentCode(), movieName, theaterName, roomName, dateStr, timeStr, seatName, seatType);
+            """.formatted(booking.getPaymentCode(), movieName, theaterName, roomName, dateStr, timeStr, seatName, seatType);
     }
 
-    private String buildTicketEmailHtmlMultiple(List<Booking> bookings, String paymentCode, String qrCodeBase64) {
+    private String buildTicketEmailHtmlMultiple(List<Booking> bookings, String paymentCode) {
         if (bookings.isEmpty()) {
             return "";
         }
@@ -236,7 +247,7 @@ public class TicketEmailService {
                                                                 </tr>
                                                                 <tr>
                                                                     <td align="center" style="padding:0 16px" valign="top">
-                                                                        <img src="data:image/png;base64,%s" alt="QR Code" style="width:150px;height:150px;border:1px solid #ddd;border-radius:8px;margin:16px 0;" />
+                                                                        <img src="cid:qrcode" alt="QR Code" style="width:180px;height:180px;border:1px solid #ddd;border-radius:8px;margin:16px 0;" />
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
@@ -288,6 +299,6 @@ public class TicketEmailService {
                     </tr>
                 </tbody>
             </table>
-            """.formatted(qrCodeBase64, paymentCode, movieName, theaterName, roomName, dateStr, timeStr, bookings.size(), seatsHtml.toString());
+            """.formatted(paymentCode, movieName, theaterName, roomName, dateStr, timeStr, bookings.size(), seatsHtml.toString());
     }
 }
