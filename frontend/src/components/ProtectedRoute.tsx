@@ -34,7 +34,7 @@ export default function ProtectedRoute({ children, roles }: Props) {
 
   if (roles && roles.length > 0) {
     const hasRole = data.roles?.some((r) => roles.includes(r));
-    if (!hasRole) return <Navigate to="/" replace />;
+    if (!hasRole) return <Navigate to="/403" replace />;
   }
 
   return children;

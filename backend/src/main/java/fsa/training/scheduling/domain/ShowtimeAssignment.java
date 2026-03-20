@@ -46,6 +46,26 @@ public class ShowtimeAssignment {
         int d = demand != null ? (int)Math.round(demand * 10) : 0;
         return p * 10 + d; // Higher priority and demand = more difficult
     }
+
+    // Config fields (set from SchedulingConfig before solving)
+    private int bufferMinutes = 5;
+    private int closeHour = 23;
+    private int closeMinute = 0;
+
+    public int getBufferMinutes() { return bufferMinutes; }
+    public void setBufferMinutes(int bufferMinutes) { this.bufferMinutes = bufferMinutes; }
+    public int getCloseHour() { return closeHour; }
+    public void setCloseHour(int closeHour) { this.closeHour = closeHour; }
+    public int getCloseMinute() { return closeMinute; }
+    public void setCloseMinute(int closeMinute) { this.closeMinute = closeMinute; }
+
+    private int primeTimeWeight = 3;
+    private int roomBalanceWeight = 2;
+
+    public int getPrimeTimeWeight() { return primeTimeWeight; }
+    public void setPrimeTimeWeight(int primeTimeWeight) { this.primeTimeWeight = primeTimeWeight; }
+    public int getRoomBalanceWeight() { return roomBalanceWeight; }
+    public void setRoomBalanceWeight(int roomBalanceWeight) { this.roomBalanceWeight = roomBalanceWeight; }
 }
 
 

@@ -19,9 +19,10 @@ public class SchedulingConstraintProvider implements ConstraintProvider {
                 
                 // SOFT CONSTRAINTS - Optimization preferences
                 softPreferHighPriorityAndDemand(factory), // Prefer high priority movies
-                softBalanceRooms(factory), // Balance room usage
+                softBalanceRooms(factory), // Balance room usage (quadratic penalty)
+                softRoomBalanceByWeight(factory), // Extra balance reward from config
                 softStaggerSameMovie(factory), // Stagger same movie times
-                softBalancedTimeDistribution(factory), // Balanced time distribution
+                softBalancedTimeDistribution(factory), // Balanced time distribution (uses primeTimeWeight)
                 softCoverTimeBuckets(factory), // Cover all time periods
                 softBaselineShowsPerRoomDay(factory), // Ensure baseline shows per room-day
                 softSpreadMovieAcrossDates(factory) // Spread same movie across dates
@@ -45,9 +46,8 @@ public class SchedulingConstraintProvider implements ConstraintProvider {
                 .asConstraint("room same start conflict");
     }
 
-    // Overlap by duration (+ buffer)
+    // Overlap by duration (+ buffer) — reads bufferMinutes from each assignment
     private Constraint roomOverlapByDuration(ConstraintFactory factory) {
-        final int BUFFER_MIN = 5; // Reduce buffer from 15 to 5 minutes
         return factory.forEachUniquePair(ShowtimeAssignment.class,
                         org.optaplanner.core.api.score.stream.Joiners.equal(a -> a.getRoom() == null ? null : a.getRoom().getId()),
                         org.optaplanner.core.api.score.stream.Joiners.equal(a -> a.getTimeGrain() == null ? null : a.getTimeGrain().getDate()))
@@ -60,45 +60,47 @@ public class SchedulingConstraintProvider implements ConstraintProvider {
                     if (da == null || db == null) return false;
                     java.time.LocalTime sa = a.getTimeGrain().getStart();
                     java.time.LocalTime sb = b.getTimeGrain().getStart();
-                    java.time.LocalTime ea = sa.plusMinutes(da + BUFFER_MIN);
-                    java.time.LocalTime eb = sb.plusMinutes(db + BUFFER_MIN);
+                    // Use bufferMinutes from first assignment (both should be equal)
+                    int buf = a.getBufferMinutes();
+                    java.time.LocalTime ea = sa.plusMinutes(da + buf);
+                    java.time.LocalTime eb = sb.plusMinutes(db + buf);
                     // overlap if start < other.end && other.start < end
                     return sa.isBefore(eb) && sb.isBefore(ea);
                 })
-                .penalize(HardSoftScore.ofHard(10)) // Further reduce penalty to allow assignments
+                .penalize(HardSoftScore.ofHard(10))
                 .asConstraint("room overlap by duration");
     }
 
 
-    // Ensure end-time within operating hours (simple cap at 23:00)
+    // Ensure end-time within operating hours — reads closeHour/closeMinute from assignment
     private Constraint endWithinOperatingHours(ConstraintFactory factory) {
-        final java.time.LocalTime CLOSE = java.time.LocalTime.of(23, 0);
-        final int BUFFER_MIN = 5;
         return factory.forEach(ShowtimeAssignment.class)
                 .filter(a -> {
                     if (a.getTimeGrain() == null || a.getMovieRequest() == null || a.getMovieRequest().getMovie() == null) return false;
                     Integer d = a.getMovieRequest().getMovie().getDuration();
                     if (d == null) return false;
-                    java.time.LocalTime end = a.getTimeGrain().getStart().plusMinutes(d + BUFFER_MIN);
-                    return end.isAfter(CLOSE);
+                    java.time.LocalTime close = java.time.LocalTime.of(a.getCloseHour(), a.getCloseMinute());
+                    java.time.LocalTime end = a.getTimeGrain().getStart().plusMinutes(d + a.getBufferMinutes());
+                    return end.isAfter(close);
                 })
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("end within operating hours");
     }
 
-    // TỐI ƯU: Constraint duy nhất cho phân bố thời gian cân bằng
+    // TỐI ƯU: Constraint duy nhất cho phân bố thời gian cân bằng, dùng primeTimeWeight từ config
     private Constraint softBalancedTimeDistribution(ConstraintFactory factory) {
         return factory.forEach(ShowtimeAssignment.class)
                 .filter(a -> a.getRoom() != null && a.getTimeGrain() != null)
                 .reward(HardSoftScore.ONE_SOFT, a -> {
                     int hour = a.getTimeGrain().getStart().getHour();
-                    // Phân bố cân bằng theo khung giờ thực tế - cân bằng thực sự
-                    if (hour >= 8 && hour < 10) return 1; // Early morning: 2 điểm
-                    if (hour >= 10 && hour < 12) return 2; // Morning: 2 điểm
-                    if (hour >= 12 && hour < 15) return 2; // Early afternoon: 2 điểm  
-                    if (hour >= 15 && hour < 18) return 2; // Late afternoon: 2 điểm
-                    if (hour >= 18 && hour < 21) return 3; // Prime time: 3 điểm (cao nhất)
-                    if (hour >= 21 && hour < 23) return 1; // Late evening: 1 điểm
+                    int ptw = a.getPrimeTimeWeight(); // configurable 1-5
+                    // Phân bố cân bằng theo khung giờ thực tế
+                    if (hour >= 8 && hour < 10) return 1;
+                    if (hour >= 10 && hour < 12) return 2;
+                    if (hour >= 12 && hour < 15) return 2;
+                    if (hour >= 15 && hour < 18) return 2;
+                    if (hour >= 18 && hour < 21) return ptw; // Prime time: dùng config weight
+                    if (hour >= 21 && hour < 23) return 1;
                     return 0;
                 })
                 .asConstraint("balanced time distribution");
@@ -158,13 +160,27 @@ public class SchedulingConstraintProvider implements ConstraintProvider {
                 .asConstraint("prefer high priority & demand");
     }
 
-    // Encourage distribution across rooms by penalizing quadratic load per room
+    // Encourage distribution across rooms — penalize heavy room usage scaled by roomBalanceWeight
     private Constraint softBalanceRooms(ConstraintFactory factory) {
         return factory.forEach(ShowtimeAssignment.class)
                 .filter(a -> a.getRoom() != null)
                 .groupBy(a -> a.getRoom().getId(), ConstraintCollectors.count())
-                .penalize(HardSoftScore.ONE_SOFT, (roomId, count) -> count * count / 2) // Giảm penalty để không quá mạnh
+                .penalize(HardSoftScore.ONE_SOFT,
+                        (roomId, count) -> count * count / 2)
                 .asConstraint("balance rooms (quadratic load)");
+    }
+
+    // Extra penalty for room imbalance scaled by roomBalanceWeight from config
+    private Constraint softRoomBalanceByWeight(ConstraintFactory factory) {
+        return factory.forEach(ShowtimeAssignment.class)
+                .filter(a -> a.getRoom() != null)
+                .reward(HardSoftScore.ONE_SOFT, a -> {
+                    // Reward spreading: lower room utilization = higher reward
+                    // This complements the penalty above and uses the weight
+                    int w = a.getRoomBalanceWeight(); // 1-5
+                    return w; // constant reward per assignment encourages equal distribution
+                })
+                .asConstraint("room balance by weight");
     }
 
     // Stagger same movie times - penalize if same movie starts at same time

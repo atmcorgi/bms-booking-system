@@ -226,7 +226,7 @@
 .auth-submit-btn {
   width: auto;
   min-width: 258px;
-  padding: 8px 10px;
+  padding: 12px 24px;
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
@@ -234,17 +234,20 @@
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-bottom: 12px;
   margin-top: 12px;
 }
 
-.auth-submit-btn:hover {
+.auth-submit-btn:hover:not(:disabled) {
   background: #f40612;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 9, 20, 0.3);
 }
 
-.auth-submit-btn:active {
+.auth-submit-btn:active:not(:disabled) {
   background: #dc143c;
+  transform: translateY(0);
 }
 
 .auth-submit-btn:disabled {
@@ -332,15 +335,27 @@
   }
 
   .auth-title {
-    font-size: 36px;
+    font-size: 32px;
+    letter-spacing: 2px;
   }
 
   .auth-subtitle {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .auth-right {
     display: none !important;
+  }
+
+  .auth-input,
+  .auth-error-box,
+  .auth-remember-forgot {
+    width: 100%;
+  }
+
+  .auth-submit-btn {
+    width: 100%;
+    min-width: unset;
   }
 }
 
@@ -349,16 +364,32 @@
     max-width: 100%;
   }
 
+  .auth-left {
+    padding: 24px 20px;
+  }
+
+  .auth-logo {
+    font-size: 28px;
+  }
+
   .auth-title {
-    font-size: 24px;
+    font-size: 22px;
+    letter-spacing: 1px;
   }
 
   .auth-subtitle {
     font-size: 14px;
+    margin-bottom: 32px;
   }
 
   .auth-form {
     padding: 24px 20px;
     border-radius: 12px;
+  }
+
+  .auth-remember-forgot {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
   }
 }

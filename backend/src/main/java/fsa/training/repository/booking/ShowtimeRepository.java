@@ -59,4 +59,46 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long>, JpaSp
                                  @Param("startDate") LocalDate startDate, 
                                  @Param("endDate") LocalDate endDate, 
                                  Pageable pageable);
+
+    // ============ OPTIMIZED QUERIES FOR BOOKING FLOW ============
+    
+    /**
+     * Find all showtimes for a theater (with optional movie filter)
+     */
+    @Query("SELECT DISTINCT s FROM Showtime s " +
+           "LEFT JOIN FETCH s.movie " +
+           "LEFT JOIN FETCH s.room " +
+           "WHERE s.theater.id = :theaterId " +
+           "AND (:movieId IS NULL OR s.movie.id = :movieId) " +
+           "AND s.showDate >= :startDate " +
+           "ORDER BY s.showDate, s.showTime")
+    List<Showtime> findByTheaterIdAndMovieIdFromDate(@Param("theaterId") Long theaterId,
+                                                      @Param("movieId") Long movieId,
+                                                      @Param("startDate") LocalDate startDate);
+
+    /**
+     * Find distinct showdates for a theater (with optional movie filter)
+     */
+    @Query("SELECT DISTINCT s.showDate FROM Showtime s " +
+           "WHERE s.theater.id = :theaterId " +
+           "AND (:movieId IS NULL OR s.movie.id = :movieId) " +
+           "AND s.showDate >= :startDate " +
+           "ORDER BY s.showDate")
+    List<LocalDate> findDistinctShowDatesByTheaterIdAndMovieIdFromDate(@Param("theaterId") Long theaterId,
+                                                                       @Param("movieId") Long movieId,
+                                                                       @Param("startDate") LocalDate startDate);
+
+    /**
+     * Find showtimes for a theater, movie, and date
+     */
+    @Query("SELECT DISTINCT s FROM Showtime s " +
+           "LEFT JOIN FETCH s.movie " +
+           "LEFT JOIN FETCH s.room " +
+           "WHERE s.theater.id = :theaterId " +
+           "AND s.movie.id = :movieId " +
+           "AND s.showDate = :showDate " +
+           "ORDER BY s.showTime")
+    List<Showtime> findByTheaterIdAndMovieIdAndShowDate(@Param("theaterId") Long theaterId,
+                                                          @Param("movieId") Long movieId,
+                                                          @Param("showDate") LocalDate showDate);
 }

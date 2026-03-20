@@ -148,7 +148,7 @@ export default function StaffLayout() {
             })}
           >
             <FontAwesomeIcon icon={faChartBar} />
-            {!collapsed && <span>Dashboard</span>}
+            {!collapsed && <span>Thông tin rạp</span>}
           </NavLink>
           <NavLink
             to="/staff/statistics"

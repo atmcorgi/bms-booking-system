@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { bannerApi, type Banner } from "../services/bannerApi";
 import LazyImage from "./LazyImage";
+import { getOptimizedImageUrl } from "../utils/imageOptimization";
 
 export default function MovieBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -12,8 +13,38 @@ export default function MovieBanner() {
       const response = await bannerApi.getActiveBanners();
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Preload first banner image for LCP optimization
+  useEffect(() => {
+    if (banners && banners.length > 0 && banners[0].mediaType !== "VIDEO") {
+      const firstBanner = banners[0];
+      // Use smaller size for faster LCP
+      const optimizedUrl = getOptimizedImageUrl(firstBanner.mediaUrl, {
+        width: 800,
+        height: 300,
+        quality: 80,
+      });
+      const img = new Image();
+      img.src = optimizedUrl;
+    }
+  }, [banners]);
+
+  // Auto-slide logic
+  useEffect(() => {
+    if (!banners || banners.length <= 1) return;
+
+    const currentBanner = banners[currentIndex];
+    const isVideo = currentBanner?.mediaType === "VIDEO";
+    const delay = isVideo ? 20000 : 5000;
+
+    const timer = setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [currentIndex, banners]);
 
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
@@ -81,62 +112,75 @@ export default function MovieBanner() {
         className="movie-banner"
         style={{
           position: "relative",
-          height: "450px",
+          height: "300px",
           padding: "0 20px",
           backgroundColor: "black",
         }}
       >
-        <div className="banner-carousel">
-          {banners.map((banner, index) => (
-            <div
-              key={banner.id}
-              className="banner-slide"
-              style={{
-                display: index === currentIndex ? "block" : "none",
-                cursor: banner.linkUrl ? "pointer" : "default",
-              }}
-              onClick={() => handleBannerClick(banner)}
-            >
+        <div
+          className="banner-carousel"
+          style={{ position: "relative", width: "100%", height: "300px" }}
+        >
+          {banners.map((banner, index) => {
+            const isActive = index === currentIndex;
+            return (
               <div
-                className="banner-image"
+                key={banner.id}
+                className="banner-slide"
                 style={{
-                  position: "relative",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
                   width: "100%",
-                  height: "450px",
-                  aspectRatio: "16 / 5",
-                  overflow: "hidden",
-                  backgroundColor: "#000",
+                  height: "100%",
+                  opacity: isActive ? 1 : 0,
+                  visibility: isActive ? "visible" : "hidden",
+                  zIndex: isActive ? 2 : 1,
+                  transition: "opacity 0.8s ease-in-out, visibility 0.8s ease-in-out",
+                  cursor: banner.linkUrl ? "pointer" : "default",
                 }}
+                onClick={() => handleBannerClick(banner)}
               >
-                {banner.mediaType === "VIDEO" ? (
-                  <video
-                    src={banner.mediaUrl}
-                    poster={banner.thumbnailUrl}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "contain",
-                    }}
-                  />
-                ) : (
-                  <LazyImage
-                    src={banner.mediaUrl}
-                    alt={banner.title}
-                    width={1920}
-                    height={600}
-                    quality={90}
-                  />
-                )}
+                <div
+                  className="banner-image"
+                  style={{
+                    position: "relative",
+                    width: "100%",
+                    height: "100%",
+                    backgroundColor: "#000",
+                  }}
+                >
+                  {banner.mediaType === "VIDEO" ? (
+                    <video
+                      src={banner.mediaUrl}
+                      poster={banner.thumbnailUrl}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                      }}
+                    />
+                  ) : (
+                    <LazyImage
+                      src={banner.mediaUrl}
+                      alt={banner.title}
+                      width={800}
+                      height={300}
+                      quality={80}
+                      priority={index === 0}
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Navigation Arrows */}

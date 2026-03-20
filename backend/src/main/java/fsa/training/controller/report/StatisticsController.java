@@ -34,9 +34,19 @@ public class StatisticsController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<?> getSummary() {
+    public ResponseEntity<?> getSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         Long theaterId = getTheaterIdForCurrentUser();
-        return ResponseEntity.ok(statisticsService.getSummary(theaterId));
+        return ResponseEntity.ok(statisticsService.getSummary(from, to, theaterId));
+    }
+
+    @GetMapping("/theaters")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getTheaterRevenue(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResponseEntity.ok(statisticsService.getTheaterRevenue(from, to));
     }
 
     private Long getTheaterIdForCurrentUser() {

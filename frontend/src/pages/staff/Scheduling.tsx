@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { staffSchedulingApi } from "../../services/staffSchedulingApi";
+import { staffSchedulingApi, type SchedulingConfig } from "../../services/staffSchedulingApi";
 import { staffDashboardApi } from "../../services/staffDashboardApi";
 import api from "../../services/apiClient";
 import "../../styles/staff-booking.css"; // Modern CSS
@@ -340,6 +340,16 @@ export default function StaffScheduling() {
   const [viewMode, setViewMode] = useState<"table" | "timeline">("timeline");
   const [progress, setProgress] = useState<number>(0);
   const [progressMessage, setProgressMessage] = useState<string>("");
+  const [showAdvancedConfig, setShowAdvancedConfig] = useState(false);
+  const [schedConfig, setSchedConfig] = useState<SchedulingConfig>({
+    openHour: 8, openMinute: 0,
+    closeHour: 23, closeMinute: 0,
+    bufferMinutes: 5,
+    timeGrainMinutes: 30,
+    maxShowsPerMoviePerDay: 8,
+    primeTimeWeight: 3,
+    roomBalanceWeight: 2,
+  });
 
   const dashboardQ = useQuery({
     queryKey: ["staff-dashboard"],
@@ -395,6 +405,7 @@ export default function StaffScheduling() {
       const payload: any = {
         startDate,
         endDate,
+        config: schedConfig,
       };
       if (selectedCodesCsv) {
         payload.codes = selectedCodesCsv;
@@ -632,6 +643,165 @@ export default function StaffScheduling() {
               onChange={(e) => setEndDate(e.target.value)}
               style={{ width: 140 }}
             />
+          </div>
+
+          {/* Advanced Config Panel */}
+          <div style={{ width: "100%", marginTop: 12 }}>
+            <button
+              className="staff-btn staff-btn-secondary"
+              type="button"
+              onClick={() => setShowAdvancedConfig(v => !v)}
+              style={{ fontSize: 13 }}
+            >
+              ⚙️ {showAdvancedConfig ? "Ẩn" : "Hiện"} Cấu hình Nâng cao
+            </button>
+
+            {showAdvancedConfig && (
+              <div style={{
+                marginTop: 12,
+                padding: "16px",
+                background: "#f8f9fc",
+                borderRadius: 8,
+                border: "1px solid #e5e7eb",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                gap: 16,
+              }}>
+                {/* Open Time */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    🕗 Giờ mở cửa
+                  </label>
+                  <input
+                    type="time"
+                    className="staff-input"
+                    value={`${String(schedConfig.openHour ?? 8).padStart(2,'0')}:${String(schedConfig.openMinute ?? 0).padStart(2,'0')}`}
+                    onChange={e => {
+                      const [h, m] = e.target.value.split(':').map(Number);
+                      setSchedConfig(prev => ({ ...prev, openHour: h, openMinute: m }));
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>Mặc định: 08:00</span>
+                </div>
+
+                {/* Close Time */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    🕦 Giờ đóng cửa
+                  </label>
+                  <input
+                    type="time"
+                    className="staff-input"
+                    value={`${String(schedConfig.closeHour ?? 23).padStart(2,'0')}:${String(schedConfig.closeMinute ?? 0).padStart(2,'0')}`}
+                    onChange={e => {
+                      const [h, m] = e.target.value.split(':').map(Number);
+                      setSchedConfig(prev => ({ ...prev, closeHour: h, closeMinute: m }));
+                    }}
+                  />
+                  <span style={{ fontSize: 11, color: "#9ca3af" }}>Mặc định: 23:00</span>
+                </div>
+
+                {/* Buffer Minutes */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    ⏱ Buffer giữa 2 suất (phút): <strong>{schedConfig.bufferMinutes}</strong>
+                  </label>
+                  <input
+                    type="range" min={0} max={30} step={5}
+                    value={schedConfig.bufferMinutes ?? 5}
+                    onChange={e => setSchedConfig(prev => ({ ...prev, bufferMinutes: Number(e.target.value) }))}
+                    style={{ width: "100%" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9ca3af" }}>
+                    <span>0</span><span>Mặc định: 5</span><span>30</span>
+                  </div>
+                </div>
+
+                {/* Time Grain */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    🔢 Độ phân giải (phút)
+                  </label>
+                  <select
+                    className="staff-input"
+                    value={schedConfig.timeGrainMinutes ?? 30}
+                    onChange={e => setSchedConfig(prev => ({ ...prev, timeGrainMinutes: Number(e.target.value) }))}
+                  >
+                    <option value={15}>15 phút (chi tiết hơn)</option>
+                    <option value={30}>30 phút (mặc định)</option>
+                    <option value={60}>60 phút (nhanh hơn)</option>
+                  </select>
+                </div>
+
+                {/* Max Shows Per Day */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    🎬 Tối đa suất/phim/ngày: <strong>{schedConfig.maxShowsPerMoviePerDay}</strong>
+                  </label>
+                  <input
+                    type="range" min={1} max={12} step={1}
+                    value={schedConfig.maxShowsPerMoviePerDay ?? 8}
+                    onChange={e => setSchedConfig(prev => ({ ...prev, maxShowsPerMoviePerDay: Number(e.target.value) }))}
+                    style={{ width: "100%" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9ca3af" }}>
+                    <span>1</span><span>Mặc định: 8</span><span>12</span>
+                  </div>
+                </div>
+
+                {/* Prime Time Weight */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    🌟 Ưu tiên giờ vàng (18-21h): <strong>{schedConfig.primeTimeWeight}/5</strong>
+                  </label>
+                  <input
+                    type="range" min={1} max={5} step={1}
+                    value={schedConfig.primeTimeWeight ?? 3}
+                    onChange={e => setSchedConfig(prev => ({ ...prev, primeTimeWeight: Number(e.target.value) }))}
+                    style={{ width: "100%" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9ca3af" }}>
+                    <span>Thấp</span><span>Mặc định: 3</span><span>Cao</span>
+                  </div>
+                </div>
+
+                {/* Room Balance */}
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 600, color: "#374151", display: "block", marginBottom: 4 }}>
+                    ⚖️ Cân bằng phòng chiếu: <strong>{schedConfig.roomBalanceWeight}/5</strong>
+                  </label>
+                  <input
+                    type="range" min={1} max={5} step={1}
+                    value={schedConfig.roomBalanceWeight ?? 2}
+                    onChange={e => setSchedConfig(prev => ({ ...prev, roomBalanceWeight: Number(e.target.value) }))}
+                    style={{ width: "100%" }}
+                  />
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#9ca3af" }}>
+                    <span>Thấp</span><span>Mặc định: 2</span><span>Cao</span>
+                  </div>
+                </div>
+
+                {/* Reset button */}
+                <div style={{ display: "flex", alignItems: "flex-end" }}>
+                  <button
+                    className="staff-btn staff-btn-secondary"
+                    type="button"
+                    onClick={() => setSchedConfig({
+                      openHour: 8, openMinute: 0,
+                      closeHour: 23, closeMinute: 0,
+                      bufferMinutes: 5,
+                      timeGrainMinutes: 30,
+                      maxShowsPerMoviePerDay: 8,
+                      primeTimeWeight: 3,
+                      roomBalanceWeight: 2,
+                    })}
+                    style={{ fontSize: 12 }}
+                  >
+                    ↺ Đặt lại mặc định
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <button

@@ -8,8 +8,10 @@ import fsa.training.repository.booking.ShowtimeRepository;
 import fsa.training.repository.booking.SeatRepository;
 import fsa.training.repository.booking.BookingRepository;
 import fsa.training.service.booking.SeatHoldService;
+import fsa.training.service.mail.TicketEmailService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.cache.annotation.Cacheable;
 
 import fsa.training.repository.movie.MovieRepository;
 import fsa.training.config.SepayConfig;
@@ -34,8 +36,9 @@ public class BookingController {
     private final SeatRepository seatRepository;
     private final BookingRepository bookingRepository;
     private final MovieRepository movieRepository;
-    private final AccountRepository accountRepository; // Added
+    private final AccountRepository accountRepository;
     private final SepayConfig sepayConfig;
+    private final TicketEmailService ticketEmailService;
 
     public BookingController(
             SeatHoldService seatHoldService,
@@ -46,8 +49,9 @@ public class BookingController {
             SeatRepository seatRepository,
             BookingRepository bookingRepository,
             MovieRepository movieRepository,
-            AccountRepository accountRepository, // Added
-            SepayConfig sepayConfig) {
+            AccountRepository accountRepository,
+            SepayConfig sepayConfig,
+            TicketEmailService ticketEmailService) {
         this.seatHoldService = seatHoldService;
         this.provinceRepository = provinceRepository;
         this.districtRepository = districtRepository;
@@ -56,8 +60,9 @@ public class BookingController {
         this.seatRepository = seatRepository;
         this.bookingRepository = bookingRepository;
         this.movieRepository = movieRepository;
-        this.accountRepository = accountRepository; // Added
+        this.accountRepository = accountRepository;
         this.sepayConfig = sepayConfig;
+        this.ticketEmailService = ticketEmailService;
     }
 
     private String getCurrentOwnerKey(jakarta.servlet.http.HttpSession session) {
@@ -116,6 +121,7 @@ public class BookingController {
 
     // GET /booking/api/locations - Lấy danh sách tỉnh/thành
     @GetMapping("/locations")
+    @Cacheable(value = "locations", key = "#movieId + '-' + #showDate")
     public ResponseEntity<List<Map<String, Object>>> getLocations(
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String showDate) {
@@ -146,6 +152,7 @@ public class BookingController {
     
     // GET /booking/api/districts - Lấy danh sách quận/huyện
     @GetMapping("/districts")
+    @Cacheable(value = "districts", key = "#provinceId + '-' + #movieId + '-' + #showDate")
     public ResponseEntity<List<Map<String, Object>>> getDistricts(
             @RequestParam Long provinceId,
             @RequestParam(required = false) Long movieId,
@@ -176,6 +183,7 @@ public class BookingController {
     
     // GET /booking/api/theaters - Lấy danh sách rạp
     @GetMapping("/theaters")
+    @Cacheable(value = "theaters", key = "#provinceId + '-' + #districtId + '-' + #movieId + '-' + #showDate")
     public ResponseEntity<List<Map<String, Object>>> getTheaters(
             @RequestParam Long provinceId,
             @RequestParam Long districtId,
@@ -209,29 +217,28 @@ public class BookingController {
     
     // GET /booking/api/showdates - Lấy danh sách ngày chiếu
     @GetMapping("/showdates")
+    @Cacheable(value = "showdates", key = "#theaterId + '-' + #movieId")
     public ResponseEntity<List<String>> getShowDates(
             @RequestParam Long theaterId,
             @RequestParam(required = false) Long movieId) {
         try {
-            List<Showtime> showtimes = showtimeRepository.findAll().stream()
-                    .filter(s -> {
-                        boolean match = s.getTheater().getId().equals(theaterId)
-                                && s.getShowDate().isAfter(LocalDate.now().minusDays(1));
-                        if (movieId != null) {
-                            match = match && s.getMovie().getId().equals(movieId);
-                        }
-                        return match;
-                    })
+            // Use optimized query instead of findAll().stream().filter()
+            LocalDate startDate = LocalDate.now().minusDays(1);
+            List<LocalDate> dates;
+            
+            if (movieId != null) {
+                dates = showtimeRepository.findDistinctShowDatesByTheaterIdAndMovieIdFromDate(theaterId, movieId, startDate);
+            } else {
+                dates = showtimeRepository.findDistinctShowDatesByTheaterIdAndMovieIdFromDate(theaterId, null, startDate);
+            }
+            
+            List<String> result = dates.stream()
+                    .map(LocalDate::toString)
                     .collect(Collectors.toList());
             
-            List<String> dates = showtimes.stream()
-                    .map(s -> s.getShowDate().toString())
-                    .distinct()
-                    .sorted()
-                    .collect(Collectors.toList());
-            
-            return ResponseEntity.ok(dates);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -243,17 +250,22 @@ public class BookingController {
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String showDate) {
         try {
-            List<Showtime> showtimes = showtimeRepository.findAll().stream()
-                    .filter(s -> {
-                        boolean match = s.getTheater().getId().equals(theaterId);
-                        if (movieId != null) {
-                            match = match && s.getMovie().getId().equals(movieId);
-                        }
-                        if (showDate != null) {
-                            match = match && s.getShowDate().toString().equals(showDate);
-                        }
-                        return match;
-                    })
+            // Use optimized query instead of findAll().stream().filter()
+            List<Showtime> showtimes;
+            
+            if (movieId != null && showDate != null) {
+                showtimes = showtimeRepository.findByTheaterIdAndMovieIdAndShowDate(
+                    theaterId, movieId, LocalDate.parse(showDate));
+            } else if (movieId != null) {
+                showtimes = showtimeRepository.findByTheaterIdAndMovieIdFromDate(
+                    theaterId, movieId, LocalDate.now().minusYears(1));
+            } else {
+                showtimes = showtimeRepository.findByTheaterIdAndMovieIdFromDate(
+                    theaterId, null, LocalDate.now().minusYears(1));
+            }
+            
+            // Sort by showTime
+            showtimes = showtimes.stream()
                     .sorted(Comparator.comparing(Showtime::getShowTime))
                     .collect(Collectors.toList());
             
@@ -278,6 +290,7 @@ public class BookingController {
             
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }
@@ -330,6 +343,7 @@ public class BookingController {
             jakarta.servlet.http.HttpServletRequest request) {
         try {
             List<Seat> seats;
+            Long roomId;
             
             // Nếu có showtimeId, lấy ghế theo room của showtime đó
             if (showtimeId != null) {
@@ -341,13 +355,13 @@ public class BookingController {
                 if (showtime.getRoom() == null) {
                     return ResponseEntity.badRequest().build();
                 }
-                Long roomId = showtime.getRoom().getId();
-                seats = seatRepository.findAll().stream()
-                        .filter(s -> s.getRoom() != null && s.getRoom().getId().equals(roomId))
-                        .toList();
+                roomId = showtime.getRoom().getId();
+                // Use optimized query
+                seats = seatRepository.findByRoomIdOrderBySeatNumberAsc(roomId);
             } else {
                 // Nếu không có showtimeId, lấy tất cả ghế của theater
                 seats = seatRepository.findByTheaterId(theaterId);
+                roomId = null;
             }
             
             // Lấy danh sách ghế đã được đặt/giữ cho showtime này
@@ -667,16 +681,21 @@ public class BookingController {
                 if (!bookings.isEmpty()) {
                     System.out.println("Found " + bookings.size() + " bookings for payment code: " + paymentCode);
                     
-                    // Verify amount (Optional but recommended)
-                    // long totalOrderAmount = bookings.stream()...
-                    
+                    boolean anyNewlyPaid = false;
                     for (Booking b : bookings) {
                         if (!"PAID".equals(b.getStatus())) {
                             b.setStatus("PAID");
                             bookingRepository.save(b);
+                            anyNewlyPaid = true;
                             System.out.println("Updated booking ID " + b.getId() + " to PAID");
                         }
                     }
+                    
+                    // Send ticket email after successful payment
+                    if (anyNewlyPaid) {
+                        ticketEmailService.sendTicketEmailsForPaymentCode(paymentCode, bookings);
+                    }
+                    
                     return ResponseEntity.ok("OK");
                 } else {
                     System.err.println("WARNING: No bookings found for payment code: " + paymentCode);

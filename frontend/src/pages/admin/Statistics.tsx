@@ -2,11 +2,12 @@ import { useState, useMemo } from "react";
 import "./Statistics.css";
 import { useQuery } from "@tanstack/react-query";
 import { statisticsApi } from "../../services/statisticsApi";
+import { authApi } from "../../services/authApi";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMoneyBillWave, faTicketAlt, faSpinner, faTrophy, faCrown } from "@fortawesome/free-solid-svg-icons";
+import { faMoneyBillWave, faTicketAlt, faSpinner, faTrophy, faCrown, faLightbulb, faBuilding, faFire, faSnowflake, faChartLine, faCalendarCheck } from "@fortawesome/free-solid-svg-icons";
 
 export default function Statistics() {
   const [dateRange, setDateRange] = useState({
@@ -17,8 +18,8 @@ export default function Statistics() {
 
   // Fetch Summary
   const { data: summary, isLoading: loadingSummary } = useQuery({
-    queryKey: ["stats-summary"],
-    queryFn: () => statisticsApi.getSummary().then(res => res.data)
+    queryKey: ["stats-summary", dateRange],
+    queryFn: () => statisticsApi.getSummary(dateRange.from, dateRange.to).then(res => res.data)
   });
 
   // Fetch Revenue Chart Data
@@ -31,6 +32,22 @@ export default function Statistics() {
   const { data: topMovies, isLoading: loadingTopMovies } = useQuery({
     queryKey: ["stats-top-movies"],
     queryFn: () => statisticsApi.getTopMovies(5).then(res => res.data)
+  });
+
+  // Fetch current user role
+  const { data: meData } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: () => authApi.me().then(res => res.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const isAdmin = meData?.roles?.some(r => r === "ADMIN" || r === "ROLE_ADMIN") ?? false;
+  const isStaff = meData?.roles?.some(r => r === "STAFF" || r === "ROLE_STAFF") ?? false;
+
+  // Fetch Theater Revenue - ADMIN only
+  const { data: theaterRevenue } = useQuery({
+    queryKey: ["stats-theaters", dateRange],
+    queryFn: () => statisticsApi.getTheaterRevenue(dateRange.from, dateRange.to).then(res => res.data),
+    enabled: isAdmin,
   });
 
   // Transform dailyRevenue map to array for Recharts
@@ -327,6 +344,178 @@ export default function Statistics() {
                 </div>
 
             </div>
+
+            {/* ===== BUSINESS INSIGHTS SECTION ===== */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 stats-card-padding !p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
+                  <FontAwesomeIcon icon={faLightbulb} className="text-lg" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Business Insights</h3>
+                  <p className="text-xs text-gray-400 font-medium mt-0.5">
+                    {isAdmin ? "Kết luận tổng quan toàn hệ thống" : "Gợi ý điều chỉnh suất chiếu cho rạp của bạn"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="insights-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 !gap-4">
+
+                {/* === ADMIN INSIGHTS === */}
+                {isAdmin && (
+                  <>
+                    {/* Top Theater Card */}
+                    {theaterRevenue && theaterRevenue.length > 0 && (
+                      <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2 text-indigo-600 font-bold text-xs uppercase tracking-wider">
+                          <FontAwesomeIcon icon={faBuilding} />
+                          Rạp doanh thu cao nhất
+                        </div>
+                        <p className="text-base font-extrabold text-gray-900">{theaterRevenue[0].theaterName}</p>
+                        <p className="text-sm text-gray-600">
+                          Doanh thu: <span className="font-bold text-indigo-700">{theaterRevenue[0].revenue.toLocaleString()} VND</span>
+                          <span className="ml-2 text-gray-400">({theaterRevenue[0].bookings} vé)</span>
+                        </p>
+                        {theaterRevenue.length > 1 && (
+                          <p className="insights-tip text-xs text-gray-500 bg-white rounded-lg border border-gray-100">
+                            💡 <strong>{theaterRevenue[0].theaterName}</strong> đang vượt trội.
+                            Xem xét áp dụng mô hình vận hành tương tự cho các rạp còn lại.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Nationwide Hot Movie */}
+                    {topMovies && topMovies.length > 0 && (
+                      <div className="rounded-xl border border-orange-100 bg-orange-50/60 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2 text-orange-500 font-bold text-xs uppercase tracking-wider">
+                          <FontAwesomeIcon icon={faFire} />
+                          Phim hot nhất toàn quốc
+                        </div>
+                        <p className="text-base font-extrabold text-gray-900">{topMovies[0].title}</p>
+                        <p className="text-sm text-gray-600">
+                          Tổng <span className="font-bold text-orange-600">{topMovies[0].bookings} vé</span> đã đặt
+                        </p>
+                        <p className="insights-tip text-xs text-gray-500 bg-white rounded-lg border border-gray-100">
+                          💡 Nên thông báo cho các rạp tăng suất chiếu <strong>{topMovies[0].title}</strong>,
+                          đặc biệt vào cuối tuần để tối đa hóa doanh thu.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Best Month Trend */}
+                    {summary?.bestMonth && summary.bestMonth !== "N/A" && (
+                      <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+                          <FontAwesomeIcon icon={faChartLine} />
+                          Xu hướng doanh thu năm
+                        </div>
+                        <p className="text-base font-extrabold text-gray-900">Tháng {summary.bestMonth}</p>
+                        <p className="text-sm text-gray-600">
+                          Doanh thu đỉnh: <span className="font-bold text-emerald-700">{(summary.bestMonthRevenue || 0).toLocaleString()} VND</span>
+                        </p>
+                        <p className="insights-tip text-xs text-gray-500 bg-white rounded-lg border border-gray-100">
+                          💡 Tháng {summary.bestMonth} là điểm doanh thu tốt nhất năm.
+                          Phân tích lịch chiếu và chiến dịch khuyến mãi tháng đó để nhân rộng.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* All Theaters Ranking */}
+                    {theaterRevenue && theaterRevenue.length > 1 && (
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/50 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow col-span-full">
+                        <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider mb-1">
+                          <FontAwesomeIcon icon={faBuilding} />
+                          Xếp hạng doanh thu các rạp trong kỳ
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {theaterRevenue.slice(0, 6).map((t, i) => (
+                            <div key={t.theaterId} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-100">
+                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                i === 0 ? 'bg-amber-100 text-amber-600' :
+                                i === 1 ? 'bg-slate-100 text-slate-500' :
+                                i === 2 ? 'bg-orange-100 text-orange-500' : 'bg-gray-100 text-gray-400'
+                              }`}>{i + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-gray-700 truncate">{t.theaterName}</p>
+                                <p className="text-xs text-gray-400">{t.revenue.toLocaleString()} VND · {t.bookings} vé</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* === STAFF INSIGHTS === */}
+                {isStaff && topMovies && topMovies.length > 0 && (
+                  <>
+                    {/* Hot Movies */}
+                    <div className="rounded-xl border border-red-100 bg-red-50/60 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-2 text-red-500 font-bold text-xs uppercase tracking-wider">
+                        <FontAwesomeIcon icon={faFire} />
+                        Phim đang hot — nên tăng suất
+                      </div>
+                      <div className="space-y-2">
+                        {topMovies.slice(0, Math.ceil(topMovies.length / 2)).map((m: any) => (
+                          <div key={m.movieCode} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                            <span className="text-sm font-semibold text-gray-700 truncate mr-2">{m.title}</span>
+                            <span className="text-xs font-bold text-red-500 shrink-0">{m.bookings} vé 🔥</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="insights-tip text-xs text-gray-500 bg-white rounded-lg border border-gray-100">
+                        💡 Tăng suất chiếu vào <strong>cuối tuần và buổi tối</strong> cho các phim trên để tăng doanh thu.
+                      </p>
+                    </div>
+
+                    {/* Cold Movies */}
+                    {topMovies.length > 1 && (
+                      <div className="rounded-xl border border-blue-100 bg-blue-50/50 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-2 text-blue-400 font-bold text-xs uppercase tracking-wider">
+                          <FontAwesomeIcon icon={faSnowflake} />
+                          Phim ít lượt đặt — cân nhắc điều chỉnh
+                        </div>
+                        <div className="space-y-2">
+                          {topMovies.slice(Math.ceil(topMovies.length / 2)).map((m: any) => (
+                            <div key={m.movieCode} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-gray-100">
+                              <span className="text-sm font-semibold text-gray-700 truncate mr-2">{m.title}</span>
+                              <span className="text-xs font-bold text-blue-400 shrink-0">{m.bookings} vé ❄️</span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="insights-tip text-xs text-gray-500 bg-white rounded-lg border border-gray-100">
+                          💡 Giảm suất chiếu hoặc xếp vào <strong>khung giờ thấp điểm</strong>. Có thể dùng ưu đãi giá để kéo khách.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Scheduling Tip */}
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 insights-card flex flex-col gap-2 hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-wider">
+                        <FontAwesomeIcon icon={faCalendarCheck} />
+                        Gợi ý lập lịch suất chiếu
+                      </div>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>Ưu tiên phim <strong>{topMovies[0]?.title}</strong> vào khung <strong>19:00 – 22:00</strong> cuối tuần</li>
+                        <li className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>Phân bổ phim ít người xem vào khung <strong>10:00 – 13:00</strong> ngày thường</li>
+                        <li className="flex items-start gap-2"><span className="text-emerald-500 mt-0.5">✓</span>Mỗi phim hot nên có ít nhất <strong>3–4 suất/ngày</strong> vào dịp cuối tuần</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
+
+                {/* Fallback */}
+                {!isAdmin && !isStaff && (
+                  <div className="col-span-full text-center text-gray-400 text-sm py-8">
+                    Không có quyền xem Business Insights
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* ===== END BUSINESS INSIGHTS ===== */}
+
         </div>
       </div>
   );

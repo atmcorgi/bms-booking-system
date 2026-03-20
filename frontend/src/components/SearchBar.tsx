@@ -56,7 +56,8 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
     <div className="search-section">
       <div className="container">
         <div className="search-container">
-          <div className="filter-side">
+          {/* Desktop filters - hidden on mobile */}
+          <div className="filter-side filter-side-desktop">
             <div className="filter-group">
               <div className="custom-dropdown">
                 <div
@@ -146,6 +147,51 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Mobile: Genre filter only - inline with search */}
+          <div className="filter-side filter-side-mobile">
+            <div className="custom-dropdown mobile-filter-dropdown">
+              <div
+                className="dropdown-trigger"
+                onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
+              >
+                <span className="dropdown-text">
+                  {selectedGenre || "Thể loại"}
+                </span>
+                <span className="dropdown-arrow">▼</span>
+              </div>
+              {isGenreDropdownOpen && (
+                <div className="dropdown-menu show">
+                  <div
+                    className="dropdown-item"
+                    onClick={() => handleGenreSelect("")}
+                  >
+                    Tất cả thể loại
+                  </div>
+                  {loadingGenres ? (
+                    <div
+                      className="dropdown-item"
+                      style={{ color: "#666", fontStyle: "italic" }}
+                    >
+                      Đang tải...
+                    </div>
+                  ) : (
+                    genres &&
+                    Array.isArray(genres) &&
+                    genres.map((genre: string, index: number) => (
+                      <div
+                        key={index}
+                        className="dropdown-item"
+                        onClick={() => handleGenreSelect(genre)}
+                      >
+                        {genre}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

@@ -62,3 +62,17 @@
 .stats-info-row {
   margin-bottom: 8px !important;
 }
+
+/* Business Insights section overrides */
+.insights-grid {
+  gap: 16px !important;
+}
+
+.insights-card {
+  padding: 16px !important;
+}
+
+.insights-tip {
+  padding: 6px 12px !important;
+  margin-top: 4px !important;
+}

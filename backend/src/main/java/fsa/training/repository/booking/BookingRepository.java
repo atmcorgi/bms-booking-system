@@ -83,4 +83,12 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "WHERE b.status = 'PAID' AND t.id = :theaterId " +
            "GROUP BY s.movie ORDER BY COUNT(b.id) DESC")
     List<Object[]> findTopMoviesByBookingCountAndTheater(@Param("theaterId") Long theaterId, org.springframework.data.domain.Pageable pageable);
+
+    // Theater revenue breakdown - for ADMIN insights
+    @Query("SELECT s.theater.id, s.theater.name, SUM(CASE WHEN seat.seatType = 'VIP' THEN s.priceVip WHEN seat.seatType = 'COUPLE' THEN s.priceStandard * 2 ELSE s.priceStandard END), COUNT(b.id) " +
+           "FROM Booking b JOIN b.showtime s JOIN b.seat seat " +
+           "WHERE b.status = 'PAID' AND b.bookingTime BETWEEN :start AND :end " +
+           "GROUP BY s.theater.id, s.theater.name " +
+           "ORDER BY SUM(CASE WHEN seat.seatType = 'VIP' THEN s.priceVip WHEN seat.seatType = 'COUPLE' THEN s.priceStandard * 2 ELSE s.priceStandard END) DESC")
+    List<Object[]> findTheaterRevenueBetween(@Param("start") java.time.Instant start, @Param("end") java.time.Instant end);
 } 

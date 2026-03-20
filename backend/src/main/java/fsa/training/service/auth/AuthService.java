@@ -58,7 +58,7 @@ public class AuthService {
             TokenProvider tokenProvider,
             @Value("${google.client-id}") String googleClientId,
             MailService mailService,
-            @Value("${app.frontend.base-url:https://localhost:5173}") String frontendBaseUrl) {
+            @Value("${app.frontend.base-url:http://localhost:5173}") String frontendBaseUrl) {
         this.accountRepository = accountRepository;
         this.roleRepository = roleRepository;
         this.accountPermissionRepository = accountPermissionRepository;

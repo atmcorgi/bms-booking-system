@@ -453,9 +453,54 @@ body {
   gap: 15px;
 }
 
+/* ============================================
+   PIXAR / DISNEY-STYLE LOGO ANIMATION
+   ============================================ */
+
+/* Keyframe: Pixar lamp style ball drop + bounce */
+@keyframes pixarBallDrop {
+  0%   { transform: translateY(-80px) scale(0.3); opacity: 0; }
+  40%  { transform: translateY(0px) scale(1.15); opacity: 1; }
+  55%  { transform: translateY(-18px) scale(0.92); }
+  70%  { transform: translateY(0px) scale(1.08); }
+  82%  { transform: translateY(-8px) scale(0.96); }
+  92%  { transform: translateY(0px) scale(1.03); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
+/* Keyframe: shadow grows as ball lands */
+@keyframes shadowPulse {
+  0%   { transform: scaleX(0.1); opacity: 0; }
+  40%  { transform: scaleX(0.9); opacity: 0.35; }
+  55%  { transform: scaleX(0.6); opacity: 0.25; }
+  70%  { transform: scaleX(0.85); opacity: 0.3; }
+  100% { transform: scaleX(0.7); opacity: 0.2; }
+}
+
+/* Keyframe: each letter drops in from top with elastic spring */
+@keyframes letterDrop {
+  0%   { transform: translateY(-40px) rotateX(90deg); opacity: 0; }
+  60%  { transform: translateY(4px) rotateX(-8deg); opacity: 1; }
+  80%  { transform: translateY(-3px) rotateX(4deg); }
+  100% { transform: translateY(0) rotateX(0deg); opacity: 1; }
+}
+
+/* Keyframe: shine sweep across logo text */
+@keyframes shineSweep {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Keyframe: subtle glow pulse on the circle after landing */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.0), 0 3px 8px rgba(229, 9, 20, 0.3); }
+  50%       { box-shadow: 0 0 0 8px rgba(229, 9, 20, 0.0), 0 3px 8px rgba(229, 9, 20, 0.5); }
+}
+
 .logo {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .logo-text {
@@ -466,13 +511,36 @@ body {
   font-weight: 800;
   color: #e50914;
   text-decoration: none;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  perspective: 400px;
+}
+
+.logo-circle-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-circle-shadow {
+  width: 30px;
+  height: 6px;
+  background: radial-gradient(ellipse, rgba(229,9,20,0.35) 0%, transparent 80%);
+  border-radius: 50%;
+  position: absolute;
+  bottom: -4px;
+  transform: scaleX(0.7);
+  animation: shadowPulse 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.logo:hover .logo-circle-shadow {
+  animation: shadowPulse 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .logo-circle {
   width: 40px;
   height: 40px;
-  background: #e50914;
+  background: radial-gradient(circle at 35% 35%, #ff3d3d, #c40812);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -482,7 +550,97 @@ body {
   font-size: 1.5rem;
   position: relative;
   z-index: 2;
+  /* Play bounce on load */
+  animation: pixarBallDrop 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  box-shadow: inset 0 -3px 6px rgba(0,0,0,0.25), inset 0 3px 6px rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
+
+.logo:hover .logo-circle {
+  /* Re-trigger bounce and pulse when parent logo is hovered */
+  animation: 
+    pixarBallDrop 1.1s cubic-bezier(0.22, 1, 0.36, 1) both,
+    glowPulse 2.4s ease-in-out 1.1s infinite;
+}
+
+.logo-letter {
+  display: inline-block;
+  opacity: 0;
+  /* Play letter drop on load */
+  animation: letterDrop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.logo:hover .logo-letter {
+  /* Re-trigger letter drop when parent logo is hovered */
+  animation: none; /* Reset first to allow re-trigger if needed, though typically hover restarts via other JS means, but let's stick to CSS simple hover for now */
+}
+/* A small CSS trick to restart animation on hover: */
+.logo:hover .logo-letter {
+    animation: letterDrop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.logo-name {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  color: #e50914;
+}
+
+.logo-name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: -200% center;
+  pointer-events: none;
+  /* Play shine once on load */
+  animation: shineSweep 1.0s ease-in-out 1.4s 1 forwards;
+}
+
+.logo:hover .logo-name::after {
+  /* Re-trigger shine when parent logo is hovered */
+  animation: none;
+}
+.logo:hover .logo-name::after {
+  animation: shineSweep 1.0s ease-in-out 1.4s 1 forwards;
+}
+
+/* --- FILM STRIP SCROLL BACKGROUND --- */
+.film-strip-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999; /* Overlay on top of everything */
+  opacity: 0.15; /* visible enough to see the effect */
+  
+  /* Create film edge perforations using radial/linear gradients */
+  background: 
+    /* left holes */
+    repeating-linear-gradient(to bottom, transparent 0, transparent 15px, #fff 15px, #fff 25px) 10px 0 / 15px 100% no-repeat,
+    /* left border dark */
+    linear-gradient(to right, #000 0%, #000 35px, transparent 35px) 0 0 / 100% 100% no-repeat,
+    /* right holes */
+    repeating-linear-gradient(to bottom, transparent 0, transparent 15px, #fff 15px, #fff 25px) calc(100% - 10px) 0 / 15px 100% no-repeat,
+    /* right border dark */
+    linear-gradient(to left, #000 0%, #000 35px, transparent 35px) 0 0 / 100% 100% no-repeat;
+    
+  background-color: transparent;
+  mix-blend-mode: overlay; /* blends into the background nicely */
+  will-change: background-position;
+}
+
+
+
 
 .main-nav {
   display: flex;

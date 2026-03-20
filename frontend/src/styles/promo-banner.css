@@ -115,8 +115,28 @@
 @media (max-width: 768px) {
     .promo-banner-grid {
         grid-template-columns: 1fr;
+        gap: 20px;
     }
     .promo-banner-section {
         padding: 40px 0;
+    }
+    .promo-title {
+        font-size: 1.4rem;
+        letter-spacing: 2px;
+    }
+    .promo-item {
+        aspect-ratio: 16 / 10;
+    }
+}
+
+@media (max-width: 480px) {
+    .promo-banner-section {
+        padding: 24px 0;
+    }
+    .promo-title {
+        font-size: 1.2rem;
+    }
+    .promo-banner-container {
+        padding: 0 12px;
     }
 }

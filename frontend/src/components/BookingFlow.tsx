@@ -44,6 +44,10 @@ export default function BookingFlow({
   const [paymentTimedOut, setPaymentTimedOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorModal, setErrorModal] = useState({ show: false, message: "", title: "Lỗi" });
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  // Check if user is logged in
+  const isLoggedIn = typeof window !== "undefined" && !!localStorage.getItem("access_token");
 
   // Refs để tránh dependency loop
   const prevProvinceId = useRef<string | number | undefined>(undefined);
@@ -851,9 +855,6 @@ export default function BookingFlow({
                 <div className="seat-row-label"></div>
                 <div
                   className="seat-row-seats"
-                  style={{
-                    gridTemplateColumns: "repeat(20, var(--seat-size))",
-                  }}
                 >
                   {sortedSeats.map((seat: any) => {
                     const isPurchased = seat.status === "PAID";
@@ -888,6 +889,11 @@ export default function BookingFlow({
                           checked={isSelected}
                           onChange={async (e) => {
                             if (!showtimeId || isPurchased) return;
+                            if (!isLoggedIn) {
+                              setShowLoginPrompt(true);
+                              e.target.checked = false;
+                              return;
+                            }
                             try {
                               if (e.target.checked) {
                                 // Holding seat for booking
@@ -967,7 +973,7 @@ export default function BookingFlow({
         </div>
       )}
 
-      {showtimeId && selectedSeatIds.size > 0 && (
+      {showtimeId && selectedSeatIds.size > 0 && isLoggedIn && (
         <div className="booking-summary">
           <h3>Thông tin đặt vé</h3>
           <p>
@@ -1023,7 +1029,13 @@ export default function BookingFlow({
               <button
                 type="button"
                 className="fd-btn"
-                onClick={() => setShowPaymentForm(true)}
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setShowLoginPrompt(true);
+                    return;
+                  }
+                  setShowPaymentForm(true);
+                }}
               >
                 Tiếp tục thanh toán
               </button>
@@ -1369,6 +1381,109 @@ export default function BookingFlow({
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+        )}
+        
+      {/* Login Required Modal */}
+      {!isLoggedIn && showLoginPrompt && (
+        <div 
+          className="custom-modal-overlay" 
+          style={{ 
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.6)",
+            backdropFilter: "blur(8px)", 
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000
+          }}
+          onClick={() => setShowLoginPrompt(false)}
+        >
+          <div 
+            style={{ 
+              width: "90%",
+              maxWidth: "360px",
+              background: "#ffffff",
+              borderRadius: "12px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              overflow: "hidden",
+              animation: "slideUpFade 0.3s ease"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ padding: "32px 24px", textAlign: "center" }}>
+              <div style={{ fontSize: "56px", marginBottom: "16px" }}>🔒</div>
+              <h3 style={{ marginBottom: "12px", color: "#1a202c", fontSize: "20px", fontWeight: 600 }}>
+                Vui lòng đăng nhập
+              </h3>
+              <p style={{ color: "#718096", marginBottom: "24px", lineHeight: 1.6 }}>
+                Bạn cần đăng nhập để đặt vé xem phim
+              </p>
+              <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }}>
+                <button
+                  onClick={() => {
+                    navigate("/login", { state: { from: window.location.pathname } });
+                    setShowLoginPrompt(false);
+                  }}
+                  style={{ 
+                    background: "#E50914", 
+                    color: "#fff", 
+                    border: "none", 
+                    borderRadius: "4px", 
+                    padding: "12px 24px", 
+                    fontSize: "14px", 
+                    fontWeight: 600, 
+                    cursor: "pointer",
+                    textTransform: "none",
+                    letterSpacing: "0",
+                    minWidth: "120px",
+                    height: "44px"
+                  }}
+                >
+                  Đăng nhập
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/register", { state: { from: window.location.pathname } });
+                    setShowLoginPrompt(false);
+                  }}
+                  style={{ 
+                    background: "#fff", 
+                    color: "#475569", 
+                    border: "1px solid #e2e8f0", 
+                    borderRadius: "4px", 
+                    padding: "12px 24px", 
+                    fontSize: "14px", 
+                    fontWeight: 500, 
+                    cursor: "pointer",
+                    textTransform: "none",
+                    letterSpacing: "0",
+                    minWidth: "120px",
+                    height: "44px"
+                  }}
+                >
+                  Đăng ký
+                </button>
+              </div>
+              <button
+                onClick={() => setShowLoginPrompt(false)}
+                style={{ 
+                  marginTop: "16px", 
+                  background: "none", 
+                  border: "none", 
+                  color: "#a0aec0", 
+                  cursor: "pointer",
+                  fontSize: "14px"
+                }}
+              >
+                Đóng
+              </button>
             </div>
           </div>
         </div>

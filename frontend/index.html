@@ -1,15 +1,94 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Meta Tags -->
+    <title>My Cinema - Đặt vé xem phim online</title>
+    <meta name="description" content="My Cinema - Hệ thống rạp chiếu phim hiện đại. Đặt vé xem phim online nhanh chóng, tiện lợi. Xem lịch chiếu phim mới nhất." />
+    <meta name="keywords" content="dat ve phim, lich chieu phim, rap chieu, phim hay, mua ve xem phim, movie booking, cinema" />
+    <meta name="author" content="My Cinema" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://mycinema.com/" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mycinema.com/" />
+    <meta property="og:title" content="My Cinema - Đặt vé xem phim online" />
+    <meta property="og:description" content="Hệ thống rạp chiếu phim hiện đại. Đặt vé xem phim online nhanh chóng, tiện lợi." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&h=630&fit=crop" />
+    <meta property="og:site_name" content="My Cinema" />
+    <meta property="og:locale" content="vi_VN" />
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://mycinema.com/" />
+    <meta name="twitter:title" content="My Cinema - Đặt vé xem phim online" />
+    <meta name="twitter:description" content="Hệ thống rạp chiếu phim hiện đại. Đặt vé xem phim online nhanh chóng, tiện lợi." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1200&h=630&fit=crop" />
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/logo_circle.png?v=2" />
     <link rel="apple-touch-icon" href="/logo_circle.png?v=2" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Performance: Preconnect to external domains -->
+    <link rel="preconnect" href="https://res.cloudinary.com" crossorigin />
+    <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#E50914" />
+    <meta name="msapplication-TileColor" content="#E50914" />
+    
+    <!-- PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="My Cinema" />
+    
+    <!-- Structured Data - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "My Cinema",
+      "url": "https://mycinema.com",
+      "logo": "https://mycinema.com/logo.png",
+      "description": "Hệ thống rạp chiếu phim hiện đại",
+      "sameAs": [
+        "https://facebook.com/mycinema",
+        "https://instagram.com/mycinema"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+84-123-456-789",
+        "contactType": "customer service"
+      }
+    }
+    </script>
+    
+    <!-- Structured Data - Movie Theater -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MovieTheater",
+      "name": "My Cinema",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "VN"
+      },
+      "telephone": "+84-123-456-789",
+      "url": "https://mycinema.com"
+    }
+    </script>
+    
     <link rel="stylesheet" href="/css/shared/style.css" />
     <link rel="stylesheet" href="/css/movie/movie-detail.css" />
     <link rel="stylesheet" href="/css/booking/booking.css" />
     <link rel="stylesheet" href="/css/shared/admin.css" />
     <title>My Cinema</title>
+    <!-- Defer Google Sign-In to not block initial render -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
   </head>
   <body>

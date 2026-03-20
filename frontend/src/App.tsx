@@ -1,7 +1,7 @@
 import { Toaster } from "react-hot-toast";
 import { Route, Routes, useParams, useSearchParams } from "react-router-dom";
 import "./styles/optimization.css";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import MainLayout from "./layouts/MainLayout";
 import api from "./services/apiClient";
@@ -10,44 +10,78 @@ import { type MovieItem } from "./types/movie";
 import QuickBooking from "./components/QuickBooking";
 import MovieBanner from "./components/MovieBanner";
 import SearchBar from "./components/SearchBar";
-import MovieDetail from "./pages/MovieDetail";
-import LoginPage from "./pages/Login";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import RegisterPage from "./pages/Register";
 import BookingFlow from "./components/BookingFlow";
-import BookingSuccess from "./pages/BookingSuccess";
-import BookingFailed from "./pages/BookingFailed";
-import Tickets from "./pages/Tickets";
+import Error403 from "./pages/Error403";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ScrollToHash from "./components/ScrollToHash";
-import GenreList from "./pages/admin/GenreList";
-import GenreForm from "./pages/admin/GenreForm";
-import AdminLayout from "./layouts/AdminLayout";
-import TheaterList from "./pages/admin/TheaterList";
-import TheaterForm from "./pages/admin/TheaterForm";
-import TheaterDetail from "./pages/admin/TheaterDetail";
-import RoomForm from "./pages/admin/RoomForm";
-import MovieIntakeList from "./pages/admin/MovieIntakeList";
-import Dashboard from "./pages/admin/Dashboard";
-import Statistics from "./pages/admin/Statistics";
-import StaffScheduling from "./pages/staff/Scheduling";
-import StaffLayout from "./layouts/StaffLayout";
-import StaffDashboard from "./pages/staff/Dashboard";
-import StaffMovieManagement from "./pages/staff/MovieManagement";
-import ShowtimeManagement from "./pages/staff/ShowtimeManagement";
-import BookingManagement from "./pages/staff/BookingManagement";
-import MovieIntakeForm from "./pages/admin/MovieIntakeForm";
-import NearbyTheaters from "./pages/NearbyTheaters";
-import BannerList from "./pages/admin/BannerList";
-import BannerForm from "./pages/admin/BannerForm";
-import AccountManagement from "./pages/admin/AccountManagement";
-import MovieAssignmentList from "./pages/admin/MovieAssignmentList";
-import MovieRequestList from "./pages/admin/MovieRequestList";
-import Profile from "./pages/Profile";
-import StaffProfile from "./pages/staff/StaffProfile";
-import AdminProfile from "./pages/admin/AdminProfile";
 import { BackgroundProvider } from "./contexts/BackgroundContext";
+
+// Lazy load pages for better performance
+const MovieDetail = lazy(() => import("./pages/MovieDetail"));
+const LoginPage = lazy(() => import("./pages/Login"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const RegisterPage = lazy(() => import("./pages/Register"));
+const BookingSuccess = lazy(() => import("./pages/BookingSuccess"));
+const BookingFailed = lazy(() => import("./pages/BookingFailed"));
+const Tickets = lazy(() => import("./pages/Tickets"));
+const NearbyTheaters = lazy(() => import("./pages/NearbyTheaters"));
+const Profile = lazy(() => import("./pages/Profile"));
+
+// Admin pages lazy load
+const GenreList = lazy(() => import("./pages/admin/GenreList"));
+const GenreForm = lazy(() => import("./pages/admin/GenreForm"));
+const TheaterList = lazy(() => import("./pages/admin/TheaterList"));
+const TheaterForm = lazy(() => import("./pages/admin/TheaterForm"));
+const TheaterDetail = lazy(() => import("./pages/admin/TheaterDetail"));
+const RoomForm = lazy(() => import("./pages/admin/RoomForm"));
+const MovieIntakeList = lazy(() => import("./pages/admin/MovieIntakeList"));
+const MovieIntakeForm = lazy(() => import("./pages/admin/MovieIntakeForm"));
+const BannerList = lazy(() => import("./pages/admin/BannerList"));
+const BannerForm = lazy(() => import("./pages/admin/BannerForm"));
+const AccountManagement = lazy(() => import("./pages/admin/AccountManagement"));
+const MovieAssignmentList = lazy(() => import("./pages/admin/MovieAssignmentList"));
+const MovieRequestList = lazy(() => import("./pages/admin/MovieRequestList"));
+const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
+const Statistics = lazy(() => import("./pages/admin/Statistics"));
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+
+// Staff pages lazy load
+const StaffLayout = lazy(() => import("./layouts/StaffLayout"));
+const StaffDashboard = lazy(() => import("./pages/staff/Dashboard"));
+const StaffScheduling = lazy(() => import("./pages/staff/Scheduling"));
+const StaffMovieManagement = lazy(() => import("./pages/staff/MovieManagement"));
+const ShowtimeManagement = lazy(() => import("./pages/staff/ShowtimeManagement"));
+const BookingManagement = lazy(() => import("./pages/staff/BookingManagement"));
+const StaffProfile = lazy(() => import("./pages/staff/StaffProfile"));
+
+// Loading component
+function PageLoader() {
+  return (
+    <div style={{ 
+      display: "flex", 
+      justifyContent: "center", 
+      alignItems: "center", 
+      minHeight: "50vh",
+      padding: "40px"
+    }}>
+      <div style={{ 
+        width: "40px", 
+        height: "40px", 
+        border: "3px solid #f3f3f3", 
+        borderTop: "3px solid #E50914", 
+        borderRadius: "50%", 
+        animation: "spin 1s linear infinite" 
+      }} />
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
 // import CloudinaryTest from "./components/CloudinaryTest";
 
 // App.tsx
@@ -356,7 +390,9 @@ function BookingPage() {
 function NearbyTheatersPage() {
   return (
     <MainLayout>
-      <NearbyTheaters />
+      <Suspense fallback={<PageLoader />}>
+        <NearbyTheaters />
+      </Suspense>
     </MainLayout>
   );
 }
@@ -366,80 +402,82 @@ export default function App() {
     <BackgroundProvider>
       <Toaster position="top-right" />
       <ScrollToHash />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/movies/:id" element={<MainLayout><MovieDetail /></MainLayout>} />
-        <Route path="/booking" element={<BookingPage />} />
-        <Route path="/booking/:movieId" element={<BookingPage />} />
-        <Route path="/booking/success" element={<MainLayout><BookingSuccess /></MainLayout>} />
-        <Route path="/booking/failed" element={<MainLayout><BookingFailed /></MainLayout>} />
-        <Route path="/booking/tickets" element={<Tickets />} />
-        <Route path="/theaters/nearby" element={<NearbyTheatersPage />} />
-        {/* <Route path="/test-cloudinary" element={<CloudinaryTest />} /> */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/register" element={<RegisterPage />} />
-        {/* Customer Profile */}
-        <Route path="/profile" element={<ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>} />
-        {/* Staff layout with nested routes */}
-        <Route
-          path="/staff"
-          element={
-            <ProtectedRoute roles={["STAFF"]}>
-              <StaffLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<StaffDashboard />} />
-          <Route path="scheduling" element={<StaffScheduling />} />
-          <Route path="movies" element={<StaffMovieManagement />} />
-          <Route path="showtimes" element={<ShowtimeManagement />} />
-          <Route path="bookings" element={<BookingManagement />} />
-          <Route path="bookings" element={<BookingManagement />} />
-          <Route path="profile" element={<StaffProfile />} />
-          <Route path="statistics" element={<Statistics />} />
-        </Route>
-        {/* Admin layout with nested routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute roles={["ADMIN"]}>
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Dashboard />} />
-          <Route path="genres" element={<GenreList />} />
-          <Route path="genres/create" element={<GenreForm />} />
-          <Route path="genres/:id/edit" element={<GenreForm />} />
-          <Route path="theaters" element={<TheaterList />} />
-          <Route path="theaters/create" element={<TheaterForm />} />
-          <Route path="theaters/:id/detail" element={<TheaterDetail />} />
-          <Route path="theaters/:id/edit" element={<TheaterForm />} />
-          <Route path="theaters/:id/view" element={<TheaterForm />} />
-          <Route path="theaters/:theaterId/rooms/create" element={<RoomForm />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/movies/:id" element={<MainLayout><MovieDetail /></MainLayout>} />
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/booking/:movieId" element={<BookingPage />} />
+          <Route path="/booking/success" element={<MainLayout><BookingSuccess /></MainLayout>} />
+          <Route path="/booking/failed" element={<MainLayout><BookingFailed /></MainLayout>} />
+          <Route path="/booking/tickets" element={<Tickets />} />
+          <Route path="/theaters/nearby" element={<NearbyTheatersPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/403" element={<Error403 />} />
+          {/* Customer Profile */}
+          <Route path="/profile" element={<ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>} />
+          {/* Staff layout with nested routes */}
           <Route
-            path="theaters/:theaterId/rooms/:roomId/edit"
-            element={<RoomForm />}
-          />
-          <Route path="movies" element={<MovieIntakeList />} />
-          <Route path="movies/create" element={<MovieIntakeForm />} />
-          <Route path="movies/:id/edit" element={<MovieIntakeForm />} />
-          <Route path="movies/:id/view" element={<MovieIntakeForm />} />
-          <Route path="banners" element={<BannerList />} />
-          <Route path="banners/new" element={<BannerForm />} />
-          <Route path="banners/:id/edit" element={<BannerForm />} />
-          <Route path="accounts" element={<AccountManagement />} />
-          <Route path="movie-assignments" element={<MovieAssignmentList />} />
-          <Route path="movie-requests" element={<MovieRequestList />} />
-          <Route path="movie-requests" element={<MovieRequestList />} />
-          <Route path="profile" element={<AdminProfile />} />
+            path="/staff"
+            element={
+              <ProtectedRoute roles={["STAFF"]}>
+                <StaffLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<StaffDashboard />} />
+            <Route path="scheduling" element={<StaffScheduling />} />
+            <Route path="movies" element={<StaffMovieManagement />} />
+            <Route path="showtimes" element={<ShowtimeManagement />} />
+            <Route path="bookings" element={<BookingManagement />} />
+            <Route path="bookings" element={<BookingManagement />} />
+            <Route path="profile" element={<StaffProfile />} />
+            <Route path="statistics" element={<Statistics />} />
+          </Route>
+          {/* Admin layout with nested routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute roles={["ADMIN"]}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Statistics />} />
+            <Route path="genres" element={<GenreList />} />
+            <Route path="genres/create" element={<GenreForm />} />
+            <Route path="genres/:id/edit" element={<GenreForm />} />
+            <Route path="theaters" element={<TheaterList />} />
+            <Route path="theaters/create" element={<TheaterForm />} />
+            <Route path="theaters/:id/detail" element={<TheaterDetail />} />
+            <Route path="theaters/:id/edit" element={<TheaterForm />} />
+            <Route path="theaters/:id/view" element={<TheaterForm />} />
+            <Route path="theaters/:theaterId/rooms/create" element={<RoomForm />} />
+            <Route
+              path="theaters/:theaterId/rooms/:roomId/edit"
+              element={<RoomForm />}
+            />
+            <Route path="movies" element={<MovieIntakeList />} />
+            <Route path="movies/create" element={<MovieIntakeForm />} />
+            <Route path="movies/:id/edit" element={<MovieIntakeForm />} />
+            <Route path="movies/:id/view" element={<MovieIntakeForm />} />
+            <Route path="banners" element={<BannerList />} />
+            <Route path="banners/new" element={<BannerForm />} />
+            <Route path="banners/:id/edit" element={<BannerForm />} />
+            <Route path="accounts" element={<AccountManagement />} />
+            <Route path="movie-assignments" element={<MovieAssignmentList />} />
+            <Route path="movie-requests" element={<MovieRequestList />} />
+            <Route path="movie-requests" element={<MovieRequestList />} />
+            <Route path="profile" element={<AdminProfile />} />
           <Route path="statistics" element={<Statistics />} />
         </Route>
         {/* Examples for protected routes (uncomment when pages exist) */}
         {/* <Route path="/admin/*" element={<ProtectedRoute roles={["ADMIN"]}><AdminApp/></ProtectedRoute>} /> */}
       </Routes>
+      </Suspense>
     </BackgroundProvider>
   );
 }

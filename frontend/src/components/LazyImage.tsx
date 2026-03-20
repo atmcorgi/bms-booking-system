@@ -12,6 +12,7 @@ interface LazyImageProps {
   width?: number;
   height?: number;
   quality?: number;
+  priority?: boolean;
 }
 
 export default function LazyImage({
@@ -25,6 +26,7 @@ export default function LazyImage({
   width = 300,
   height = 450,
   quality = 80,
+  priority = false,
 }: LazyImageProps) {
   // If no src provided, show placeholder immediately
   if (!src) {
@@ -40,7 +42,7 @@ export default function LazyImage({
             left: 0,
             width: "100%",
             height: "100%",
-                        objectFit: "contain",
+            objectFit: "contain",
             opacity: 0.3,
             ...style,
           }}
@@ -88,12 +90,13 @@ export default function LazyImage({
           left: 0,
           width: "100%",
           height: "100%",
-                      objectFit: "contain",
+          objectFit: "contain",
           transition: "opacity 0.3s ease-in-out",
           opacity: isLoaded ? 1 : 0.3,
           ...style,
         }}
-        loading="lazy"
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
         referrerPolicy={
           src && (src.includes("amazon") || src.includes("media-amazon"))
             ? "no-referrer"

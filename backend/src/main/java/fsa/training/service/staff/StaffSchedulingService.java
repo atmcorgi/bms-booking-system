@@ -81,9 +81,17 @@ public class StaffSchedulingService {
     }
 
     /**
-     * Validate và generate preview data
+     * Validate và generate preview data (backward compatible - uses default config)
      */
     public SchedulingPreviewResult generatePreview(String username, String startDate, String endDate, String codes) {
+        return generatePreview(username, startDate, endDate, codes, new fsa.training.scheduling.domain.SchedulingConfig());
+    }
+
+    /**
+     * Validate và generate preview data with custom scheduling config
+     */
+    public SchedulingPreviewResult generatePreview(String username, String startDate, String endDate, String codes,
+                                                    fsa.training.scheduling.domain.SchedulingConfig config) {
         Long theaterId = permissionEvaluator.getAssignedTheaterId(username);
         
         if (theaterId == null || !permissionEvaluator.canManageTheater(username, theaterId)) {
@@ -99,7 +107,7 @@ public class StaffSchedulingService {
         java.time.LocalDate s = java.time.LocalDate.parse(startDate);
         java.time.LocalDate e = java.time.LocalDate.parse(endDate);
         java.util.Set<String> filter = codesCsv == null ? null : new java.util.HashSet<>(java.util.Arrays.asList(codesCsv.split(",")));
-        var solution = optaSchedulingService.solve(theaterId, s, e, filter == null ? null : new java.util.ArrayList<>(filter));
+        var solution = optaSchedulingService.solve(theaterId, s, e, filter == null ? null : new java.util.ArrayList<>(filter), config);
 
         List<SchedulingUploadDto> rows = new java.util.ArrayList<>();
         for (var a : solution.getAssignments()) {

@@ -9,7 +9,6 @@ import { useState } from "react";
 import { authApi } from "../services/authApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faChartBar,
   faChartLine,
   faTags,
   faBuilding,
@@ -113,25 +112,6 @@ export default function AdminLayout() {
           </button>
         </div>
         <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <NavLink
-            to="/admin"
-            end
-            style={({ isActive }) => ({
-              color: "#333",
-              textDecoration: "none",
-              padding: "8px 10px",
-              borderLeft: isActive
-                ? "3px solid #d9d2b7"
-                : "3px solid transparent",
-              background: isActive ? "#f5f3ef" : "transparent",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            })}
-          >
-            <FontAwesomeIcon icon={faChartBar} />
-            {!collapsed && <span>Dashboard</span>}
-          </NavLink>
           <NavLink
             to="/admin/statistics"
             style={({ isActive }) => ({

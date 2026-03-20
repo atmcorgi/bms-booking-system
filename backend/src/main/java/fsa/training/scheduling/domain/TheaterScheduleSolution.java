@@ -24,6 +24,9 @@ public class TheaterScheduleSolution {
     @PlanningScore
     private HardSoftScore score;
 
+    // Config for constraints - passed as problem fact
+    private SchedulingConfig config = new SchedulingConfig();
+
     public TheaterScheduleSolution() {}
 
     public TheaterScheduleSolution(List<RoomResource> rooms, List<TimeGrain> times, List<ShowtimeAssignment> assignments) {
@@ -36,11 +39,13 @@ public class TheaterScheduleSolution {
     public List<TimeGrain> getTimes() { return times; }
     public List<ShowtimeAssignment> getAssignments() { return assignments; }
     public HardSoftScore getScore() { return score; }
+    public SchedulingConfig getConfig() { return config; }
 
     public void setRooms(List<RoomResource> rooms) { this.rooms = rooms; }
     public void setTimes(List<TimeGrain> times) { this.times = times; }
     public void setAssignments(List<ShowtimeAssignment> assignments) { this.assignments = assignments; }
     public void setScore(HardSoftScore score) { this.score = score; }
+    public void setConfig(SchedulingConfig config) { this.config = config; }
 }
 
 

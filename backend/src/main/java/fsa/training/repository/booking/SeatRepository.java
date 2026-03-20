@@ -11,4 +11,10 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     long countByRoomId(Long roomId);
     Page<Seat> findByRoomIdOrderBySeatNumberAsc(Long roomId, Pageable pageable);
     long countByTheaterId(Long theaterId);
+    
+    // ============ OPTIMIZED QUERIES FOR BOOKING FLOW ============
+    /**
+     * Find all seats for a room ordered by seat number
+     */
+    List<Seat> findByRoomIdOrderBySeatNumberAsc(Long roomId);
 } 

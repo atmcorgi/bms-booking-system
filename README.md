@@ -15,21 +15,46 @@ bms_springboot-react/
 
 ## 🚀 Quick Start
 
-### Development
+### 🖥️ Chạy Local (Không Docker) — Khuyên dùng khi phát triển
+
+Cách này không cần Docker, nhẹ máy, backend kết nối vào DB Aiven (giống môi trường production).
+
+**Yêu cầu:** Java 21, Maven, Node.js >= 18
+
+**Bước 1:** Cấp quyền chạy script (chỉ làm 1 lần):
+```bash
+chmod +x start-backend-local.sh start-frontend-local.sh
+```
+
+**Bước 2:** Mở Terminal 1 — Chạy backend:
+```bash
+./start-backend-local.sh
+# Đợi log "Started ... (xxx seconds)" là OK
+```
+
+**Bước 3:** Mở Terminal 2 — Chạy frontend:
+```bash
+./start-frontend-local.sh
+```
+
+**Truy cập:** http://localhost:5173
+
+> ⚠️ **Lưu ý:** Vì dùng chung DB với production, hạn chế XÓA dữ liệu thật khi test local.
+
+---
+
+### 🐳 Chạy bằng Docker (Production-like)
 ```bash
 # Clone repository
 git clone <your-repo-url>
 cd bms_springboot-react
 
 # Start development environment
-make dev
-
-# Hoặc sử dụng docker-compose
 docker-compose up -d
 ```
 
-### Truy cập ứng dụng
-- **Frontend**: http://localhost
+### Truy cập ứng dụng (Docker)
+- **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:8080
 - **Health Check**: http://localhost:8080/actuator/health
 

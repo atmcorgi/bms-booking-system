@@ -130,7 +130,7 @@ export default function MovieDetail() {
           {/* 2) Info */}
           <section className="detail-info section-box">
             <div className="detail-grid">
-              <div>
+              <div className="detail-poster-mobile-hide">
                 <img
                   src={movie.posterUrl}
                   alt="poster"

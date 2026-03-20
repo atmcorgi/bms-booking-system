@@ -81,13 +81,29 @@ public class StatisticsService {
             return map;
         }).collect(Collectors.toList());
     }
+
+    public List<Map<String, Object>> getTheaterRevenue(LocalDate from, LocalDate to) {
+        List<Object[]> results = bookingRepository.findTheaterRevenueBetween(
+            from.atStartOfDay(ZoneId.systemDefault()).toInstant(),
+            to.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+        );
+        return results.stream().map(row -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("theaterId", row[0]);
+            map.put("theaterName", row[1]);
+            map.put("revenue", row[2] != null ? ((Number) row[2]).doubleValue() : 0.0);
+            map.put("bookings", row[3] != null ? ((Number) row[3]).longValue() : 0L);
+            return map;
+        }).collect(Collectors.toList());
+    }
     
-    public Map<String, Object> getSummary(Long theaterId) {
-        // Simple summary for cards
+    public Map<String, Object> getSummary(LocalDate from, LocalDate to, Long theaterId) {
         LocalDate today = LocalDate.now();
-        LocalDate startOfMonth = today.withDayOfMonth(1);
-        
-        Map<String, Object> monthStats = getRevenueStats(startOfMonth, today, theaterId);
+        // Use provided date range for total summary, fall back to current month if not provided
+        LocalDate rangeFrom = (from != null) ? from : today.withDayOfMonth(1);
+        LocalDate rangeTo = (to != null) ? to : today;
+
+        Map<String, Object> rangeStats = getRevenueStats(rangeFrom, rangeTo, theaterId);
         
         // Calculate best month of the year
         LocalDate startOfYear = today.withDayOfYear(1);
@@ -129,8 +145,8 @@ public class StatisticsService {
         }
 
         Map<String, Object> result = new HashMap<>();
-        result.put("monthRevenue", monthStats.get("totalRevenue"));
-        result.put("monthBookings", monthStats.get("totalBookings"));
+        result.put("monthRevenue", rangeStats.get("totalRevenue"));
+        result.put("monthBookings", rangeStats.get("totalBookings"));
         result.put("bestMonth", bestMonth);
         result.put("bestMonthRevenue", bestMonthRevenue);
         result.put("bestMovie", bestMovieTitle);

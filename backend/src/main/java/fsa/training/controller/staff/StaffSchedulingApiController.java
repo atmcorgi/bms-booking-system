@@ -46,8 +46,26 @@ public class StaffSchedulingApiController {
             return ResponseEntity.status(403).body(Map.of("error", "No theater assigned"));
         }
 
+        // Parse optional scheduling config from request body
+        fsa.training.scheduling.domain.SchedulingConfig config = new fsa.training.scheduling.domain.SchedulingConfig();
+        Object configObj = body.get("config");
+        if (configObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> cfg = (Map<String, Object>) configObj;
+            if (cfg.containsKey("openHour")) config.setOpenHour(toInt(cfg.get("openHour"), 8));
+            if (cfg.containsKey("openMinute")) config.setOpenMinute(toInt(cfg.get("openMinute"), 0));
+            if (cfg.containsKey("closeHour")) config.setCloseHour(toInt(cfg.get("closeHour"), 23));
+            if (cfg.containsKey("closeMinute")) config.setCloseMinute(toInt(cfg.get("closeMinute"), 0));
+            if (cfg.containsKey("bufferMinutes")) config.setBufferMinutes(toInt(cfg.get("bufferMinutes"), 5));
+            if (cfg.containsKey("timeGrainMinutes")) config.setTimeGrainMinutes(toInt(cfg.get("timeGrainMinutes"), 30));
+            if (cfg.containsKey("maxShowsPerMoviePerDay")) config.setMaxShowsPerMoviePerDay(toInt(cfg.get("maxShowsPerMoviePerDay"), 8));
+            if (cfg.containsKey("primeTimeWeight")) config.setPrimeTimeWeight(toInt(cfg.get("primeTimeWeight"), 3));
+            if (cfg.containsKey("roomBalanceWeight")) config.setRoomBalanceWeight(toInt(cfg.get("roomBalanceWeight"), 2));
+        }
+        System.out.println("Preview config: " + config);
+
         // Use unified service (OptaPlanner + stats)
-        var result = staffSchedulingService.generatePreview(auth.getName(), startDate, endDate, codes);
+        var result = staffSchedulingService.generatePreview(auth.getName(), startDate, endDate, codes, config);
         if (result.hasError()) {
             return ResponseEntity.badRequest().body(Map.of("error", result.getError()));
         }
@@ -151,6 +169,12 @@ public class StaffSchedulingApiController {
         }
         
         return ResponseEntity.ok(progress);
+    }
+
+    private int toInt(Object val, int defaultVal) {
+        if (val == null) return defaultVal;
+        try { return Integer.parseInt(val.toString()); }
+        catch (NumberFormatException e) { return defaultVal; }
     }
 }
 

@@ -6,6 +6,7 @@ import fsa.training.security.jwt.TokenProvider;
 import fsa.training.security.jwt.authentication.JwtAuthenticationConverter;
 import fsa.training.security.jwt.authentication.JwtAuthenticationFilter;
 import fsa.training.security.jwt.authentication.JwtAuthenticationProvider;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,6 +77,26 @@ public class SecurityConfig {
 				.logout(logout -> logout.disable())
 				.userDetailsService(jpaUserDetailsService)
 				.addFilterAfter(jwtAuthenticationFilter, LogoutFilter.class)
+				.exceptionHandling(ex -> ex
+					.authenticationEntryPoint((request, response, authException) -> {
+						response.setContentType("application/json");
+						response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+						response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Vui lòng đăng nhập để truy cập\",\"code\":\"UNAUTHORIZED\"}");
+					})
+					.accessDeniedHandler((request, response, accessDeniedException) -> {
+						response.setContentType("application/json");
+						response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+						response.getWriter().write("{\"status\":403,\"error\":\"Forbidden\",\"message\":\"Bạn không có quyền truy cập trang này\",\"code\":\"FORBIDDEN\"}");
+					})
+				)
+				.headers(headers -> headers
+					.frameOptions(frame -> frame.deny())
+					.contentTypeOptions(contentType -> {})
+					.httpStrictTransportSecurity(hsts -> hsts
+						.includeSubDomains(true)
+						.maxAgeInSeconds(31536000)
+					)
+				)
 				.build();
 	}
 

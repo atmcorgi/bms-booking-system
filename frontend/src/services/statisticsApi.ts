@@ -21,6 +21,13 @@ export interface SummaryStats {
   bestMovie?: string;
   bestMovieBookings?: number;
 }
+export interface TheaterRevenue {
+  theaterId: number;
+  theaterName: string;
+  revenue: number;
+  bookings: number;
+}
+
 export const statisticsApi = {
   getRevenue: (from: string, to: string) => 
     api.get<RevenueStats>("/api/statistics/revenue", { params: { from, to } }),
@@ -28,6 +35,9 @@ export const statisticsApi = {
   getTopMovies: (limit: number = 5) => 
     api.get<TopMovie[]>("/api/statistics/top-movies", { params: { limit } }),
 
-  getSummary: () => 
-    api.get<SummaryStats>("/api/statistics/summary"),
+  getSummary: (from: string, to: string) => 
+    api.get<SummaryStats>("/api/statistics/summary", { params: { from, to } }),
+
+  getTheaterRevenue: (from: string, to: string) =>
+    api.get<TheaterRevenue[]>("/api/statistics/theaters", { params: { from, to } }),
 };

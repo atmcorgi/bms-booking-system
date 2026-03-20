@@ -44,7 +44,7 @@ export function useLazyImage({
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   const loadImage = useCallback(
     async (imageUrl: string) => {

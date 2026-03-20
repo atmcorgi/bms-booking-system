@@ -91,6 +91,26 @@ public class StaffDashboardApiController {
             t.put("name", theater.getName());
             t.put("code", theater.getCode());
             t.put("address", theater.getAddress());
+            
+            // District and Province info
+            if (theater.getDistrict() != null) {
+                java.util.Map<String, Object> dist = new java.util.HashMap<>();
+                dist.put("id", theater.getDistrict().getId());
+                dist.put("name", theater.getDistrict().getName());
+                t.put("district", dist);
+            }
+            if (theater.getProvince() != null) {
+                java.util.Map<String, Object> prov = new java.util.HashMap<>();
+                prov.put("id", theater.getProvince().getId());
+                prov.put("name", theater.getProvince().getName());
+                t.put("province", prov);
+            }
+            
+            t.put("phone", theater.getPhone());
+            t.put("roomCount", rooms.size());
+            int totalSeats = rooms.stream().mapToInt(r -> r.getSeats() != null ? r.getSeats().size() : 0).sum();
+            t.put("seatCount", totalSeats);
+            
             out.put("theater", t);
         }
         out.put("assignments", assignments);
