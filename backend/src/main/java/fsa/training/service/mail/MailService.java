@@ -44,9 +44,12 @@ public class MailService {
         }
     }
 
-    @Async
     public void sendMailWithAttachment(String toEmail, String subject, String htmlContent, byte[] attachmentData, String attachmentName, String attachmentMimeType) {
         try {
+            System.out.println("=== SENDING EMAIL WITH ATTACHMENT ===");
+            System.out.println("To: " + toEmail);
+            System.out.println("Subject: " + subject);
+            
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
@@ -61,7 +64,8 @@ public class MailService {
             
             mailSender.send(message);
             System.out.println("Email with QR attachment sent successfully to: " + toEmail);
-        } catch (MessagingException | UnsupportedEncodingException e) {
+            System.out.println("=== EMAIL SENT ===");
+        } catch (Exception e) {
             System.err.println("Failed to send email to " + toEmail + ": " + e.getMessage());
             e.printStackTrace();
         }
