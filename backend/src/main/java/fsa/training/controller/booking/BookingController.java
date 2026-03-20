@@ -502,8 +502,37 @@ public class BookingController {
                     .toList();
             
             String ownerKey = getCurrentOwnerKey(httpRequest);
-            String customerName = request.get("customerName").toString();
-            String customerPhone = request.get("customerPhone").toString();
+            
+            // Lấy account hiện tại nếu user đã đăng nhập
+            Account currentAccount = null;
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                Object principal = auth.getPrincipal();
+                String username;
+                if (principal instanceof UserDetails) {
+                    username = ((UserDetails) principal).getUsername();
+                } else {
+                    username = principal.toString();
+                }
+                currentAccount = accountRepository.findByUsername(username).orElse(null);
+            }
+            
+            // Lấy thông tin khách hàng - ưu tiên từ account, fallback sang request
+            String customerName;
+            String customerPhone;
+            String email;
+            
+            if (currentAccount != null) {
+                customerName = currentAccount.getFullName() != null ? currentAccount.getFullName() : currentAccount.getUsername();
+                customerPhone = currentAccount.getPhone();
+                email = currentAccount.getEmail();
+                System.out.println("DEBUG: Using account info - Name: " + customerName + ", Phone: " + customerPhone + ", Email: " + email);
+            } else {
+                customerName = request.get("customerName").toString();
+                customerPhone = request.get("customerPhone").toString();
+                email = request.get("email") != null ? request.get("email").toString() : null;
+                System.out.println("DEBUG: Using request info - Name: " + customerName + ", Phone: " + customerPhone + ", Email: " + email);
+            }
 
             // 1. Kiểm tra showtime
             Optional<Showtime> showtimeOpt = showtimeRepository.findById(showtimeId);
@@ -564,40 +593,6 @@ public class BookingController {
             String paymentCode = "BMS" + System.currentTimeMillis();
 
             // 5. Lưu booking vào DB
-            // Lấy account hiện tại nếu user đã đăng nhập
-            // Nếu không đăng nhập (guest), account sẽ là null
-            Account currentAccount = null;
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-                Object principal = auth.getPrincipal();
-                String username;
-                if (principal instanceof UserDetails) {
-                    username = ((UserDetails) principal).getUsername();
-                } else {
-                    username = principal.toString();
-                }
-                currentAccount = accountRepository.findByUsername(username).orElse(null);
-                if (currentAccount == null) {
-                     System.err.println("WARNING: Authenticated user '" + username + "' not found in Account repository.");
-                } else {
-                     System.out.println("DEBUG: Authenticated booking for user: " + username + " (ID: " + currentAccount.getId() + ")");
-                }
-            } else {
-                 System.out.println("DEBUG: Booking created by anonymous/guest user");
-            }
-
-            // Determine email
-            String email = null;
-            if (request.containsKey("email") && request.get("email") != null) {
-                email = request.get("email").toString();
-                System.out.println("DEBUG: Email from request: " + email);
-            }
-            if ((email == null || email.trim().isEmpty()) && currentAccount != null) {
-                email = currentAccount.getEmail();
-                System.out.println("DEBUG: Email from account: " + email);
-            }
-            System.out.println("DEBUG: Final email for booking: " + email);
-
             for (Seat seat : selectedSeats) {
                 Booking b = Booking.builder()
                         .showtime(showtime)
