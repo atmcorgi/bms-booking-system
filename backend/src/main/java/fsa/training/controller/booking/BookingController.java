@@ -594,6 +594,7 @@ public class BookingController {
             if ((email == null || email.trim().isEmpty()) && currentAccount != null) {
                 email = currentAccount.getEmail();
             }
+            System.out.println("DEBUG: Booking email set to: " + email);
 
             for (Seat seat : selectedSeats) {
                 Booking b = Booking.builder()
@@ -693,6 +694,8 @@ public class BookingController {
                     
                     // Send ticket email after successful payment
                     if (anyNewlyPaid) {
+                        String emailToSend = bookings.get(0).getEmail();
+                        System.out.println("DEBUG: Sending ticket email to: " + emailToSend);
                         ticketEmailService.sendTicketEmailsForPaymentCode(paymentCode, bookings);
                     }
                     
