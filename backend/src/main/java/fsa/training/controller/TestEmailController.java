@@ -15,10 +15,15 @@ public class TestEmailController {
 
     @GetMapping("/send-test-email")
     public String sendTestEmail(@RequestParam(defaultValue = "phamthanhtrung178@gmail.com") String email) {
-        System.out.println("=== TEST EMAIL ENDPOINT ===");
-        System.out.println("Sending test email to: " + email);
+        System.out.println("=== TEST EMAIL ENDPOINT CALLED ===");
+        System.out.println("Email: " + email);
         
         try {
+            if (ticketEmailService == null) {
+                System.err.println("ERROR: TicketEmailService is NULL!");
+                return "Error: TicketEmailService is null";
+            }
+            
             // Tạo một booking giả để test
             fsa.training.entity.Booking testBooking = new fsa.training.entity.Booking();
             testBooking.setPaymentCode("TEST" + System.currentTimeMillis());
@@ -49,7 +54,9 @@ public class TestEmailController {
             testSeat.setSeatType(fsa.training.entity.SeatType.STANDARD);
             testBooking.setSeat(testSeat);
             
+            System.out.println("Calling ticketEmailService.sendTicketEmail...");
             ticketEmailService.sendTicketEmail(testBooking);
+            System.out.println("ticketEmailService.sendTicketEmail() completed");
             
             return "Test email sent to: " + email + ". Check your inbox!";
         } catch (Exception e) {
