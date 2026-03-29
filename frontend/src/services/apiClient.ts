@@ -19,8 +19,9 @@ function isPublicEndpoint(url?: string): boolean {
     // Exception: /booking/api/seats should use auth if available to detect "My Pending" and "My Holds"
     if (path.includes("/booking/api/seats")) return false;
     if (path.includes("/booking/api/showtimes")) return false; 
-    // Exception: /api/booking/resend-ticket requires auth to verify ownership
+    // Exception: resend-ticket and cancel booking require auth to verify ownership
     if (path.includes("/booking/resend-ticket")) return false;
+    if (path.includes("/booking/cancel")) return false;
     
     return (
       path.startsWith("/api/movies/") ||

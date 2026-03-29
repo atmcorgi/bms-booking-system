@@ -760,7 +760,10 @@ public class BookingController {
         if (firstBooking.getAccount() != null) {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
-                 String username = ((UserDetails) auth.getPrincipal()).getUsername();
+                 Object principal = auth.getPrincipal();
+                 String username = (principal instanceof UserDetails) 
+                     ? ((UserDetails) principal).getUsername() 
+                     : principal.toString();
                  if (firstBooking.getAccount().getUsername().equals(username)) {
                      isOwner = true;
                  }
