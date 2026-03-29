@@ -1679,7 +1679,7 @@ import CustomSelect from "../../components/shared/CustomSelect";
                       opacity: clearExpiredMut.isPending ? 0.6 : 1,
                     }}
                   >
-                    🗑 Xóa hết hạn
+                    Xóa hết hạn
                   </button>
                 </div>
               </div>
