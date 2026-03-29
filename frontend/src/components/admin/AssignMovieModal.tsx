@@ -221,25 +221,50 @@ const AssignMovieModal: React.FC<AssignMovieModalProps> = ({
                 </span>
                 Chọn phim ({selectedMovieIds.size})
               </span>
-              {selectedMovieIds.size > 0 && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <button
-                   type="button"
-                   onClick={() => {
-                     setSelectedMovieIds(new Set());
-                     setSelectedMoviesMap(new Map());
-                   }}
-                   style={{
-                     fontSize: '13px',
-                     color: '#ef4444',
-                     background: 'none',
-                     border: 'none',
-                     cursor: 'pointer',
-                     textDecoration: 'underline'
-                   }}
+                  type="button"
+                  onClick={() => {
+                    const nextIds = new Set(selectedMovieIds);
+                    const nextMap = new Map(selectedMoviesMap);
+                    movies.forEach((m: any) => {
+                      nextIds.add(m.id);
+                      nextMap.set(m.id, m);
+                    });
+                    setSelectedMovieIds(nextIds);
+                    setSelectedMoviesMap(nextMap);
+                  }}
+                  style={{
+                    fontSize: '13px',
+                    color: '#6366f1',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textDecoration: 'underline'
+                  }}
                 >
-                  Bỏ chọn tất cả
+                  Chọn tất cả trang này
                 </button>
-              )}
+                {selectedMovieIds.size > 0 && (
+                  <button
+                     type="button"
+                     onClick={() => {
+                       setSelectedMovieIds(new Set());
+                       setSelectedMoviesMap(new Map());
+                     }}
+                     style={{
+                       fontSize: '13px',
+                       color: '#ef4444',
+                       background: 'none',
+                       border: 'none',
+                       cursor: 'pointer',
+                       textDecoration: 'underline'
+                     }}
+                  >
+                    Bỏ chọn tất cả
+                  </button>
+                )}
+              </div>
             </h4>
             <input
               type="text"

@@ -83,13 +83,23 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
 
   // Movie assignment mutations
   const unassignMovieMutation = useMutation({
-    mutationFn: async (movieCode: string) => {
-      if (!theaterId) throw new Error("Missing theaterId");
+    mutationFn: (movieCode: string) => {
       return adminMovieAssignmentApi.unassign(theaterId, movieCode);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["theater-movies", theaterId] });
     },
+  });
+
+  // Clear expired assignments for this theater only
+  const clearExpiredMut = useMutation({
+    mutationFn: () => adminMovieAssignmentApi.clearExpired(),
+    onSuccess: (res: any) => {
+      qc.invalidateQueries({ queryKey: ["theater-movies", theaterId] });
+      const count = res?.data?.deleted ?? 0;
+      alert(`Đã xóa ${count} gán phim hết hạn.`);
+    },
+    onError: () => alert("Lỗi khi xóa gán phim hết hạn."),
   });
 
   // Staff assignment mutations
@@ -1634,21 +1644,44 @@ import CustomSelect from "../../components/shared/CustomSelect";
                 >
                   Gán phim cho rạp
                 </h4>
-                <button
-                  onClick={() => setIsAssignMovieModalOpen(true)}
-                  style={{
-                    padding: "8px 16px",
-                    background: "#fff",
-                    color: "#059669",
-                    border: "1px solid #059669",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  + Gán phim mới
-                </button>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <button
+                    onClick={() => setIsAssignMovieModalOpen(true)}
+                    style={{
+                      padding: "8px 16px",
+                      background: "#fff",
+                      color: "#059669",
+                      border: "1px solid #059669",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    + Gán phim mới
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm("Xóa TẤT CẢ gán phim đã hết hạn (activeTo < hôm nay)? Không thể hoàn tác.")) {
+                        clearExpiredMut.mutate();
+                      }
+                    }}
+                    disabled={clearExpiredMut.isPending}
+                    style={{
+                      padding: "8px 16px",
+                      background: "#f59e0b",
+                      color: "#fff",
+                      border: "1px solid #f59e0b",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      opacity: clearExpiredMut.isPending ? 0.6 : 1,
+                    }}
+                  >
+                    🗑 Xóa hết hạn
+                  </button>
+                </div>
               </div>
 
               {isAssignMovieModalOpen && theaterId && (
