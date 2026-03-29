@@ -21,6 +21,9 @@ public interface MovieAssignmentRepository extends JpaRepository<MovieAssignment
     List<MovieAssignment> findAllWithMovieByTheater(@Param("theaterId") Long theaterId);
 
     Optional<MovieAssignment> findFirstByTheater_IdAndMovie_Id(Long theaterId, Long movieId);
+
+    @Query("SELECT ma FROM MovieAssignment ma WHERE ma.activeTo < :today")
+    List<MovieAssignment> findAllExpired(@Param("today") java.time.LocalDate today);
 }
 
 

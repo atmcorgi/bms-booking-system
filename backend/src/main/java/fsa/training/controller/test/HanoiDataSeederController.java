@@ -127,20 +127,22 @@ public class HanoiDataSeederController {
                 // Pick a random room for this movie in this theater
                 Room selectedRoom = rooms.get((int) (Math.random() * rooms.size()));
                 
+                // Fetch all existing showtimes for this room to avoid N+1 queries
+                Set<String> existingShowtimes = showtimeRepository.findAll().stream()
+                        .filter(s -> s.getRoom().getId().equals(selectedRoom.getId()) &&
+                                     !s.getShowDate().isBefore(startDate) &&
+                                     !s.getShowDate().isAfter(endDate))
+                        .map(s -> s.getShowDate().toString() + "_" + s.getShowTime().toString())
+                        .collect(Collectors.toSet());
+                
                 // Let's pick 2 random times for this movie every day
                 LocalTime[] times = {LocalTime.of(10, 0), LocalTime.of(14, 30), LocalTime.of(19, 0), LocalTime.of(21, 30)};
                 LocalTime t1 = times[(int) (Math.random() * 2)]; // Morning/Afternoon
                 LocalTime t2 = times[2 + (int) (Math.random() * 2)]; // Evening
 
                 for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-                    // Check if already exists to prevent duplicate constraint violation
-                    final LocalDate currentDate = date;
-                    boolean existsT1 = showtimeRepository.findAll().stream().anyMatch(s -> 
-                        s.getRoom().getId().equals(selectedRoom.getId()) && 
-                        s.getShowDate().equals(currentDate) && 
-                        s.getShowTime().equals(t1));
-                        
-                    if (!existsT1) {
+                    String key1 = date.toString() + "_" + t1.toString();
+                    if (!existingShowtimes.contains(key1)) {
                         Showtime s1 = new Showtime();
                         s1.setTheater(theater);
                         s1.setRoom(selectedRoom);
@@ -151,14 +153,11 @@ public class HanoiDataSeederController {
                         s1.setPriceStandard(65000);
                         s1.setPriceVip(85000);
                         newShowtimes.add(s1);
+                        existingShowtimes.add(key1);
                     }
 
-                    boolean existsT2 = showtimeRepository.findAll().stream().anyMatch(s -> 
-                        s.getRoom().getId().equals(selectedRoom.getId()) && 
-                        s.getShowDate().equals(currentDate) && 
-                        s.getShowTime().equals(t2));
-
-                    if (!existsT2) {
+                    String key2 = date.toString() + "_" + t2.toString();
+                    if (!existingShowtimes.contains(key2)) {
                         Showtime s2 = new Showtime();
                         s2.setTheater(theater);
                         s2.setRoom(selectedRoom);
@@ -169,6 +168,7 @@ public class HanoiDataSeederController {
                         s2.setPriceStandard(65000);
                         s2.setPriceVip(85000);
                         newShowtimes.add(s2);
+                        existingShowtimes.add(key2);
                     }
                 }
                 

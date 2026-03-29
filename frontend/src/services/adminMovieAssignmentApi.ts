@@ -74,4 +74,7 @@ export const adminMovieAssignmentApi = {
   // Unassign movie from theater (deletes both MovieAssignment and MovieRequest)
   unassign: (theaterId: number, movieCode: string) =>
     api.delete(`/api/admin/theaters/${theaterId}/movies/${movieCode}`),
+
+  // Delete all expired assignments (activeTo < today)
+  clearExpired: () => api.delete("/api/admin/movie-assignments/clear-expired"),
 };

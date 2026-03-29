@@ -68,6 +68,27 @@ export default function MovieAssignmentList() {
     }),
   });
 
+  // Clear expired mutation
+  const clearExpiredMut = useMutation({
+    mutationFn: () => adminMovieAssignmentApi.clearExpired(),
+    onSuccess: (res: any) => {
+      qc.invalidateQueries({ queryKey: ["admin-assignments"] });
+      const count = res?.data?.deleted ?? 0;
+      setErrorModal({
+        show: true,
+        title: "Thành công",
+        message: `Đã xóa ${count} gán phim hết hạn.`,
+      });
+    },
+    onError: (err: any) => setErrorModal({ 
+      show: true, 
+      title: "Lỗi", 
+      message: err.response?.data?.message || "Lỗi khi xóa gán phim hết hạn." 
+    }),
+  });
+
+  const [confirmClearExpired, setConfirmClearExpired] = useState(false);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString("vi-VN");
@@ -182,6 +203,16 @@ export default function MovieAssignmentList() {
               {/* Create button */}
               <button className="fd-btn" onClick={handleCreate}>
                 + Gán phim mới
+              </button>
+              {/* Clear Expired button */}
+              <button
+                className="fd-btn"
+                style={{ background: "#f59e0b", color: "#fff", border: "none" }}
+                onClick={() => setConfirmClearExpired(true)}
+                disabled={clearExpiredMut.isPending}
+                title="Xóa tất cả các gán phim đã hết hạn (activeTo < hôm nay)"
+              >
+                🗑 Xóa hết hạn
               </button>
             </div>
           </div>
@@ -329,6 +360,15 @@ export default function MovieAssignmentList() {
         message="Bạn có chắc muốn xóa gán phim này? Hành động này không thể hoàn tác."
         onConfirm={() => confirmDelete.id && deleteMut.mutate(confirmDelete.id)}
         onClose={() => setConfirmDelete({ show: false, id: null })}
+      />
+
+      {/* Clear Expired Confirmation */}
+      <ConfirmModal
+        isOpen={confirmClearExpired}
+        title="Xác nhận Xóa hết hạn"
+        message="Bạn có chắc muốn xóa TẤT CẢ các gán phim đã hết hạn (activeTo trước hôm nay)? Hành động này không thể hoàn tác."
+        onConfirm={() => { clearExpiredMut.mutate(); setConfirmClearExpired(false); }}
+        onClose={() => setConfirmClearExpired(false)}
       />
 
       <ErrorModal

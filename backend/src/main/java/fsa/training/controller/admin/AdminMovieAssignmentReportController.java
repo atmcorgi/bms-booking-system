@@ -223,6 +223,22 @@ public class AdminMovieAssignmentReportController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    /**
+     * Delete all expired movie assignments (activeTo < today)
+     */
+    @DeleteMapping("/clear-expired")
+    @Transactional
+    public ResponseEntity<?> clearExpired() {
+        List<MovieAssignment> expired = movieAssignmentRepository.findAllExpired(LocalDate.now());
+        int count = expired.size();
+        movieAssignmentRepository.deleteAll(expired);
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "deleted", count,
+            "message", "Đã xóa " + count + " gán phim hết hạn"
+        ));
+    }
+
     private Map<String, Object> toDto(MovieAssignment ma) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("id", ma.getId());
