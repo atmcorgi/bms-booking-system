@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import "../styles/booking-result.css";
+import Confetti from "../components/Confetti";
 
 export default function BookingSuccess() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingIds, setBookingIds] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const txnRef = searchParams.get("txnRef");
 
@@ -17,9 +19,11 @@ export default function BookingSuccess() {
     if (txnRef && bookingIdsParam) {
       setBookingIds(bookingIdsParam);
       setLoading(false);
+      setShowConfetti(true);
     } else if (txnRef) {
       // If we have txnRef but no bookingIds, show success but without ticket link
       setLoading(false);
+      setShowConfetti(true);
     } else {
       setError("Không tìm thấy thông tin giao dịch");
       setLoading(false);
@@ -64,6 +68,7 @@ export default function BookingSuccess() {
 
   return (
     <div className="booking-result-page">
+      <Confetti isActive={showConfetti} onComplete={() => setShowConfetti(false)} duration={4000} />
       <div className="booking-result-card">
         <div className="result-icon success">
           <i className="fas fa-check-circle"></i>

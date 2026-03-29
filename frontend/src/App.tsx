@@ -27,6 +27,9 @@ const BookingFailed = lazy(() => import("./pages/BookingFailed"));
 const Tickets = lazy(() => import("./pages/Tickets"));
 const NearbyTheaters = lazy(() => import("./pages/NearbyTheaters"));
 const Profile = lazy(() => import("./pages/Profile"));
+const GiftShop = lazy(() => import("./pages/GiftShop"));
+const NewsOffers = lazy(() => import("./pages/NewsOffers"));
+const Contact = lazy(() => import("./pages/Contact"));
 
 // Admin pages lazy load
 const GenreList = lazy(() => import("./pages/admin/GenreList"));
@@ -416,6 +419,9 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/gifts" element={<MainLayout><GiftShop /></MainLayout>} />
+          <Route path="/news" element={<MainLayout><NewsOffers /></MainLayout>} />
+          <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
           <Route path="/403" element={<Error403 />} />
           {/* Customer Profile */}
           <Route path="/profile" element={<ProtectedRoute><MainLayout><Profile /></MainLayout></ProtectedRoute>} />

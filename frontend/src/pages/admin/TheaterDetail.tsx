@@ -1560,6 +1560,19 @@ const MoviesTab: React.FC<{
     },
   });
 
+  const unassignAllMoviesMutation = useMutation({
+    mutationFn: async () => {
+      if (!theaterId) throw new Error("Missing theaterId");
+      const movies: any[] = assignedMovies || [];
+      for (const m of movies) {
+        await adminMovieAssignmentApi.unassign(theaterId, m.movieCode);
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["theater-movies", theaterId] });
+    },
+  });
+
   // Showtimes state
   const [showtimePage, setShowtimePage] = useState(0);
   const [showtimeFrom, setShowtimeFrom] = useState("");
@@ -1648,24 +1661,55 @@ const MoviesTab: React.FC<{
             Phân công phim cho rạp để Staff có thể tạo lịch chiếu
           </p>
         </div>
-        <button
-          onClick={onOpenAssignMovieModal}
-          className="fd-btn"
-          style={{
-            padding: "10px 20px",
-            background: "#059669",
-            color: "#fff",
-            border: "none",
-            fontSize: "14px",
-            fontWeight: "500",
-            cursor: "pointer",
-            transition: "all 0.2s ease",
-            borderRadius: "6px",
-            whiteSpace: "nowrap",
-          }}
-        >
-          + Gán phim mới
-        </button>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button
+            onClick={onOpenAssignMovieModal}
+            className="fd-btn"
+            style={{
+              padding: "10px 20px",
+              background: "#059669",
+              color: "#fff",
+              border: "none",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              borderRadius: "6px",
+              whiteSpace: "nowrap",
+            }}
+          >
+            + Gán phim mới
+          </button>
+          <button
+            onClick={() => {
+              const count = assignedMovies?.length || 0;
+              if (count === 0) return;
+              if (
+                window.confirm(
+                  `Bỏ gán TẤT CẢ ${count} phim khỏi rạp này? Không thể hoàn tác.`
+                )
+              ) {
+                unassignAllMoviesMutation.mutate();
+              }
+            }}
+            disabled={unassignAllMoviesMutation.isPending || !assignedMovies?.length}
+            style={{
+              padding: "10px 20px",
+              background: "#ef4444",
+              color: "#fff",
+              border: "none",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: unassignAllMoviesMutation.isPending || !assignedMovies?.length ? "not-allowed" : "pointer",
+              transition: "all 0.2s ease",
+              borderRadius: "6px",
+              whiteSpace: "nowrap",
+              opacity: unassignAllMoviesMutation.isPending || !assignedMovies?.length ? 0.6 : 1,
+            }}
+          >
+            {unassignAllMoviesMutation.isPending ? "Đang xóa..." : "Bỏ gán tất cả"}
+          </button>
+        </div>
       </div>
 
       {/* Assigned Movies List */}

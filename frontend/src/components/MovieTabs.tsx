@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import LazyImage from "./LazyImage";
 import type { MovieItem } from "../types/movie";
+import MovieCard from "./MovieCard";
+import Confetti from "./Confetti";
 
 export type MovieTabsProps = {
   nowShowing: MovieItem[];
@@ -27,7 +27,14 @@ export default function MovieTabs(props: MovieTabsProps) {
   } = props;
 
   const [activeTab, setActiveTab] = useState<"now" | "soon">("now");
+  const [showConfetti, setShowConfetti] = useState(false);
 
+  const handleTabChange = (tab: "now" | "soon") => {
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+      setShowConfetti(true);
+    }
+  };
   const normalizedNow = useMemo(
     () =>
       (nowShowing || [])
@@ -52,18 +59,20 @@ export default function MovieTabs(props: MovieTabsProps) {
 
   return (
     <div className="movie-tabs-container">
+      <Confetti isActive={showConfetti} onComplete={() => setShowConfetti(false)} duration={2500} />
+      
       <div className="movie-tabs" id="now-showing">
         <button
           className={`movie-tab ${activeTab === "now" ? "active" : ""}`}
           data-tab="now-showing"
-          onClick={() => setActiveTab("now")}
+          onClick={() => handleTabChange("now")}
         >
           Phim đang chiếu
         </button>
         <button
           className={`movie-tab ${activeTab === "soon" ? "active" : ""}`}
           data-tab="coming-soon"
-          onClick={() => setActiveTab("soon")}
+          onClick={() => handleTabChange("soon")}
         >
           Phim sắp chiếu
         </button>
@@ -89,72 +98,7 @@ export default function MovieTabs(props: MovieTabsProps) {
           )}
 
           {normalizedNow.map((movie, idx) => (
-            <div
-              className="lotte-movie-card"
-              key={`now-${movie.id ?? idx}`}
-              data-genre={movie.genres || ""}
-              data-director={movie.director || ""}
-              data-year={(movie.releaseDate || "").toString().slice(0, 4)}
-            >
-              <div className="lotte-movie-poster">
-                <LazyImage
-                  src={movie.posterUrl}
-                  alt={movie.title || "Movie poster"}
-                  width={300}
-                  height={450}
-                  quality={85}
-                  style={{ width: "100%", height: "auto" }}
-                />
-                <div className="lotte-movie-overlay">
-                  <div className="lotte-movie-buttons">
-                    <Link
-                      to={`/movies/${movie.id}?autoBook=true`}
-                      className="lotte-btn-book"
-                    >
-                      Đặt vé
-                    </Link>
-                    <Link
-                      to={`/movies/${movie.id}`}
-                      className="lotte-btn-detail"
-                    >
-                      Chi tiết
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div className="lotte-movie-info">
-                <div className="lotte-movie-rating">
-                  <span className="lotte-age-rating">
-                    {movie.ageRating && movie.ageRating !== ""
-                      ? movie.ageRating
-                      : movie.duration && movie.duration > 120
-                        ? "13"
-                        : "K"}
-                  </span>
-                  <span className="lotte-movie-title">{movie.title}</span>
-                </div>
-                <div className="lotte-movie-meta">
-                  <span className="lotte-movie-duration">
-                    {movie.duration ? `${movie.duration} Phút` : ""}
-                  </span>
-                  <span className="lotte-movie-date">
-                    {(movie.releaseDate || "").toString().slice(0, 10)}
-                  </span>
-                </div>
-                <span className="lotte-movie-genre" style={{ display: "none" }}>
-                  {movie.genres || ""}
-                </span>
-                <span
-                  className="lotte-movie-director"
-                  style={{ display: "none" }}
-                >
-                  {movie.director || ""}
-                </span>
-                <span className="lotte-movie-year" style={{ display: "none" }}>
-                  {(movie.releaseDate || "").toString().slice(0, 4)}
-                </span>
-              </div>
-            </div>
+            <MovieCard key={`now-${movie.id ?? idx}`} movie={movie} />
           ))}
         </div>
 
@@ -202,66 +146,7 @@ export default function MovieTabs(props: MovieTabsProps) {
           )}
 
           {normalizedSoon.map((movie, idx) => (
-            <div
-              className="lotte-movie-card"
-              key={`soon-${movie.id ?? idx}`}
-              data-genre={movie.genres || ""}
-              data-director={movie.director || ""}
-              data-year={(movie.releaseDate || "").toString().slice(0, 4)}
-            >
-              <div className="lotte-movie-poster">
-                <LazyImage
-                  src={movie.posterUrl}
-                  alt={movie.title || "Movie poster"}
-                  width={300}
-                  height={450}
-                  quality={85}
-                  style={{ width: "100%", height: "auto" }}
-                />
-                <div className="lotte-movie-overlay">
-                  <div className="lotte-movie-buttons">
-                    <Link
-                      to={`/movies/${movie.id}`}
-                      className="lotte-btn-detail"
-                    >
-                      Chi tiết
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              <div className="lotte-movie-info">
-                <div className="lotte-movie-rating">
-                  <span className="lotte-age-rating">
-                    {movie.ageRating && movie.ageRating !== ""
-                      ? movie.ageRating
-                      : movie.duration && movie.duration > 120
-                        ? "13"
-                        : "K"}
-                  </span>
-                  <span className="lotte-movie-title">{movie.title}</span>
-                </div>
-                <div className="lotte-movie-meta">
-                  <span className="lotte-movie-duration">
-                    {movie.duration ? `${movie.duration} Phút` : ""}
-                  </span>
-                  <span className="lotte-movie-date">
-                    {(movie.releaseDate || "").toString().slice(0, 10)}
-                  </span>
-                </div>
-                <span className="lotte-movie-genre" style={{ display: "none" }}>
-                  {movie.genres || ""}
-                </span>
-                <span
-                  className="lotte-movie-director"
-                  style={{ display: "none" }}
-                >
-                  {movie.director || ""}
-                </span>
-                <span className="lotte-movie-year" style={{ display: "none" }}>
-                  {(movie.releaseDate || "").toString().slice(0, 4)}
-                </span>
-              </div>
-            </div>
+            <MovieCard key={`soon-${movie.id ?? idx}`} movie={movie} />
           ))}
         </div>
 

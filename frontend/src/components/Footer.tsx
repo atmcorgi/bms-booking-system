@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
   return (
     <footer className="footer">
@@ -10,15 +12,15 @@ export default function Footer() {
             </div>
 
             <div className="footer-links">
-              <a href="#" className="footer-link">
-                Chính Sách Khách Hàng Thường Xuyên
-              </a>
-              <a href="#" className="footer-link">
-                Chính Sách Bảo Mật Thông Tin
-              </a>
-              <a href="#" className="footer-link">
-                Điều Khoản Sử Dụng
-              </a>
+              <Link to="/contact" className="footer-link">
+                Liên Hệ & Hỗ Trợ
+              </Link>
+              <Link to="/gifts" className="footer-link">
+                Shop Quà Tặng
+              </Link>
+              <Link to="/news" className="footer-link">
+                Tin Tức & Ưu Đãi
+              </Link>
             </div>
 
             <div className="footer-info">

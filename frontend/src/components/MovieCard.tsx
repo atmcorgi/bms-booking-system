@@ -18,78 +18,76 @@ export default function MovieCard({
   const release =
     (movie.releaseDate || "").toString().slice(0, 10) || "Đang cập nhật";
 
-  return (
-    <div
-      className="movie-card"
-      style={{
-        background: "#fff",
-        borderRadius: "8px",
-        overflow: "hidden",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        transition: "transform 0.2s ease-in-out",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-4px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-      }}
-    >
-      <Link
-        to={`/movies/${movie.id}`}
-        style={{ textDecoration: "none", color: "inherit" }}
-      >
-        <div
-          className="movie-poster"
-          style={{
-            position: "relative",
-            width: "100%",
-            paddingBottom: "150%",
-            overflow: "hidden",
-          }}
-        >
-          <LazyImage
-            src={movie.posterUrl}
-            alt={movie.title || "Movie poster"}
-            width={300}
-            height={450}
-            quality={85}
-          />
+  // Age badge colors
+  let ageColor = "#F44336"; // Default/Red for mature
+  if (age === "K" || age === "P") ageColor = "#4CAF50"; // Green for Kids/General
+  else if (age === "13" || age === "T13" || age === "C13") ageColor = "#FF9800"; // Orange for Teens
 
-          {/* Age rating badge */}
-          <div
-            style={{
-              position: "absolute",
-              top: "8px",
-              right: "8px",
-              background:
-                age === "P" ? "#4CAF50" : age === "T13" ? "#FF9800" : "#F44336",
-              color: "white",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "12px",
-              fontWeight: "bold",
-            }}
-          >
-            {age}
+  // Handle Genres mapping safely
+  const genres = movie.genres 
+    ? (Array.isArray(movie.genres) 
+        ? movie.genres.map(g => (typeof g === 'string' ? g : g.name)).join(', ') 
+        : movie.genres)
+    : "Thể loại chưa cập nhật";
+
+  return (
+    <Link
+      to={`/movies/${movie.id}`}
+      style={{ textDecoration: "none", color: "inherit", display: "block", height: "100%" }}
+    >
+      <div className="premium-movie-card">
+        
+        {/* Poster Wrapper */}
+        <div className="poster-wrapper">
+          {/* We wrap LazyImage in a standard img style to reuse the overlay magic, 
+              but since LazyImage renders an <img> internally, we use a div wrapper to cheat the CSS OR 
+              render a normal img with error fallback */}
+          <div className="poster-img">
+            <LazyImage
+              src={movie.posterUrl}
+              alt={movie.title || "Movie poster"}
+              width={400}
+              height={600}
+              quality={85}
+              style={{ objectFit: "cover", width: "100%", height: "100%" }}
+            />
           </div>
 
-          {/* Trailer play button */}
+          <div className="poster-overlay">
+            <button className="buy-ticket-btn">
+              🎟 Mua Vé / Xem Chi Tiết
+            </button>
+          </div>
+
+          {/* Age Rating - Absolute top right */}
+          <div
+            className="age-badge"
+            style={{
+              position: "absolute",
+              top: "12px",
+              right: "12px",
+              background: ageColor,
+            }}
+          >
+            {age === "K" ? "Mọi lứa tuổi" : `C${age}`}
+          </div>
+
+          {/* Trailer Button Overlay (if explicitly requested externally, though our overlay handles it) */}
           {showTrailer && trailerUrl && (
             <div
               style={{
                 position: "absolute",
-                bottom: "8px",
-                left: "8px",
-                background: "rgba(0,0,0,0.7)",
+                top: "12px",
+                left: "12px",
+                background: "rgba(0,0,0,0.6)",
                 color: "white",
                 padding: "8px",
                 borderRadius: "50%",
-                cursor: "pointer",
+                backdropFilter: "blur(4px)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.2)"
               }}
             >
               ▶
@@ -97,62 +95,28 @@ export default function MovieCard({
           )}
         </div>
 
-        <div className="movie-info" style={{ padding: "12px" }}>
-          <h3
-            style={{
-              margin: "0 0 8px 0",
-              fontSize: "16px",
-              fontWeight: "600",
-              lineHeight: "1.3",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
+        {/* Info Wrapper */}
+        <div className="card-info">
+          <h3 className="card-title" title={movie.title}>
             {movie.title}
           </h3>
-
-          <div
-            style={{
-              fontSize: "14px",
-              color: "#666",
-              marginBottom: "4px",
-            }}
-          >
-            {movie.director}
+          
+          <div className="genre-text" title={typeof genres === "string" ? genres : ""}>
+            {genres}
           </div>
 
-          <div
-            style={{
-              fontSize: "12px",
-              color: "#999",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span>{duration} phút</span>
-            <span>{release}</span>
-          </div>
-
-          {movie.genres && (
-            <div
-              style={{
-                fontSize: "12px",
-                color: "#666",
-                marginTop: "8px",
-                display: "-webkit-box",
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-              }}
-            >
-              {movie.genres}
+          <div className="card-meta">
+            <div className="duration-badge">
+              ⏱ {duration ? `${duration} Phút` : 'N/A'}
             </div>
-          )}
+            
+            <div style={{ fontSize: "13px", color: "#8b7355", fontWeight: "600" }}>
+              {release}
+            </div>
+          </div>
         </div>
-      </Link>
-    </div>
+
+      </div>
+    </Link>
   );
 }
