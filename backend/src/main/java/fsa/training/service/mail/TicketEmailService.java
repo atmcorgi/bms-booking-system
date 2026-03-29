@@ -10,6 +10,9 @@ import fsa.training.entity.Booking;
 import fsa.training.entity.Showtime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.scheduling.annotation.Async;
+import fsa.training.repository.booking.BookingRepository;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -21,15 +24,22 @@ import java.util.Map;
 public class TicketEmailService {
 
     private final MailService mailService;
+    private final BookingRepository bookingRepository;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
 
-    public TicketEmailService(MailService mailService) {
+    public TicketEmailService(MailService mailService, BookingRepository bookingRepository) {
         this.mailService = mailService;
+        this.bookingRepository = bookingRepository;
     }
 
-    public void sendTicketEmail(Booking booking) {
+    @Async
+    @Transactional(readOnly = true)
+    public void sendTicketEmail(Booking bookingParam) {
+        // Fetch to avoid lazy init exception
+        Booking booking = bookingRepository.findById(bookingParam.getId()).orElse(null);
+        if (booking == null) return;
         if (booking.getEmail() == null || booking.getEmail().isBlank()) {
             System.out.println("No email for booking " + booking.getId() + ", skipping ticket email");
             return;
@@ -54,7 +64,10 @@ public class TicketEmailService {
         }
     }
 
-    public void sendTicketEmailsForPaymentCode(String paymentCode, List<Booking> bookings) {
+    @Async
+    @Transactional(readOnly = true)
+    public void sendTicketEmailsForPaymentCodeAsync(String paymentCode) {
+        List<Booking> bookings = bookingRepository.findByPaymentCodeWithDetails(paymentCode);
         if (bookings == null || bookings.isEmpty()) {
             return;
         }
@@ -203,16 +216,30 @@ public class TicketEmailService {
         Booking firstBooking = bookings.get(0);
         Showtime showtime = firstBooking.getShowtime();
         String movieName = showtime.getMovie() != null ? showtime.getMovie().getTitle() : "N/A";
+        String posterUrl = showtime.getMovie() != null ? showtime.getMovie().getPosterUrl() : "";
         String theaterName = showtime.getTheater() != null ? showtime.getTheater().getName() : "N/A";
         String roomName = showtime.getRoom() != null ? showtime.getRoom().getName() : "N/A";
         String dateStr = showtime.getShowDate() != null ? showtime.getShowDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "N/A";
         String timeStr = showtime.getShowTime() != null ? showtime.getShowTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "N/A";
         
+        int totalAmount = 0;
         StringBuilder seatsHtml = new StringBuilder();
         for (Booking b : bookings) {
             String seatName = b.getSeat() != null ? b.getSeat().getSeatNumber() : "N/A";
             String seatType = b.getSeat() != null && b.getSeat().getSeatType() != null ? " (" + b.getSeat().getSeatType().name() + ")" : "";
-            seatsHtml.append("<p style=\"font-family:Arial,Helvetica,sans-serif;color:#333;font-size:14px;line-height:20px;padding:0;margin:0 0 4px 0\">").append(seatName).append(seatType).append("</p>");
+            seatsHtml.append("<span style=\"display:inline-block;background:#e50914;color:white;padding:2px 8px;border-radius:4px;margin-right:4px;margin-bottom:4px;font-size:12px;font-weight:bold;\">").append(seatName).append(seatType).append("</span>");
+            
+            // Calculate approximate amount if missing, but normally we just display seats.
+            double basePrice = showtime.getPriceStandard() != null ? showtime.getPriceStandard() : 0;
+            double typeMultiplier = 1.0;
+            if (b.getSeat() != null && b.getSeat().getSeatType() != null) {
+                if (b.getSeat().getSeatType().name().equals("VIP")) {
+                    basePrice = showtime.getPriceVip() != null ? showtime.getPriceVip() : 0;
+                } else if (b.getSeat().getSeatType().name().equals("COUPLE")) {
+                    typeMultiplier = 2.0;
+                }
+            }
+            totalAmount += Math.round(basePrice * typeMultiplier);
         }
 
         return """
@@ -254,15 +281,23 @@ public class TicketEmailService {
                                                                     <td align="left" style="padding:0 16px 24px 16px" valign="top">
                                                                         <table border="0" cellpadding="0" cellspacing="0" width="100%%">
                                                                             <tbody><tr>
-                                                                                <td align="left" valign="top">
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Mã đặt vé: <span style="color:#e50914">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Phim: <span style="color:#333">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Rạp: <span style="color:#333">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Phòng: <span style="color:#333">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Ngày: <span style="color:#333">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Giờ chiếu: <span style="color:#333">%s</span></p>
-                                                                                    <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Số ghế: <span style="color:#333">%d ghế</span></p>
-                                                                                    %s
+                                                                                <table border="0" cellpadding="0" cellspacing="0" width="100%%">
+                                                                                    <tbody><tr>
+                                                                                        <td width="120" valign="top">
+                                                                                            <img src="%s" alt="Poster" style="width:100px;border-radius:4px;object-fit:cover;" />
+                                                                                        </td>
+                                                                                        <td align="left" valign="top" style="padding-left:16px;">
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Mã đặt vé: <span style="color:#e50914">%s</span></p>
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Phim: <span style="color:#333">%s</span></p>
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Rạp: <span style="color:#333">%s</span></p>
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Phòng: <span style="color:#333">%s</span></p>
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Thời gian: <span style="color:#333">%s - %s</span></p>
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Số ghế: <span style="color:#333">%d ghế</span></p>
+                                                                                            <div style="margin-bottom:8px;">%s</div>
+                                                                                            <p style="font-family:Arial,Helvetica,sans-serif;color:#141416;font-size:14px;line-height:20px;padding:0;margin:0 0 8px 0;font-weight:bold">Tổng tiền: <span style="color:#e50914">%,d VND</span></p>
+                                                                                        </td>
+                                                                                    </tr></tbody>
+                                                                                </table>
                                                                                     <hr style="border:none;border-top:1px solid #eee;margin:16px 0" />
                                                                                     <p style="font-family:Arial,Helvetica,sans-serif;color:#777;font-size:12px;line-height:18px;padding:0;margin:0">Quý khách vui lòng đến trước giờ chiếu 15 phút. Mang theo email này hoặc mã QR để nhận vé tại quầy.</p>
                                                                                 </td>
@@ -299,6 +334,6 @@ public class TicketEmailService {
                     </tr>
                 </tbody>
             </table>
-            """.formatted(paymentCode, movieName, theaterName, roomName, dateStr, timeStr, bookings.size(), seatsHtml.toString());
+            """.formatted(posterUrl, paymentCode, movieName, theaterName, roomName, timeStr, dateStr, bookings.size(), seatsHtml.toString(), totalAmount);
     }
 }

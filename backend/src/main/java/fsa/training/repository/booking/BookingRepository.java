@@ -13,6 +13,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("select distinct b from Booking b " +
            "join fetch b.showtime s " +
+           "left join fetch s.movie m " +
+           "left join fetch s.room r " +
+           "left join fetch s.theater t " +
+           "join fetch b.seat seat " +
+           "where b.paymentCode = :paymentCode")
+    List<Booking> findByPaymentCodeWithDetails(@Param("paymentCode") String paymentCode);
+
+    @Query("select distinct b from Booking b " +
+           "join fetch b.showtime s " +
            "left join fetch s.room r " +
            "left join fetch s.theater t " +
            "join fetch b.seat seat " +

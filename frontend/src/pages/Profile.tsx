@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom"; // Added useSearchParams
 import { profileApi, type UpdateProfileDto } from "../services/profileApi";
+import { bookingApi } from "../services/bookingApi";
 import ProfileLayout from "../layouts/ProfileLayout";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import PasswordChangeModal from "../components/profile/PasswordChangeModal";
@@ -288,6 +289,23 @@ function BookingHistorySection() {
   const [status, setStatus] = useState<string>("ALL");
   const pageSize = 5;
 
+  const [sendingCode, setSendingCode] = useState<string | null>(null);
+  const [message, setMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
+
+  const handleResend = async (paymentCode: string) => {
+    try {
+      setSendingCode(paymentCode);
+      setMessage(null);
+      await bookingApi.resendTicketEmail(paymentCode);
+      setMessage({ type: 'success', text: `Email vé cho mã ${paymentCode} đã được gửi lại!` });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Có lỗi xảy ra khi gửi lại email.' });
+    } finally {
+      setSendingCode(null);
+      setTimeout(() => setMessage(null), 5000);
+    }
+  };
+
   const { data: pageData, isLoading, isError } = useQuery({
     queryKey: ["booking-history", page, status],
     queryFn: () => profileApi.getMyBookingHistory({ page, size: pageSize, status }).then((res) => res.data),
@@ -308,6 +326,12 @@ function BookingHistorySection() {
         {/* Custom Status Filter Dropdown */}
         <StatusFilter value={status} onChange={(val) => { setStatus(val); setPage(0); }} />
       </div>
+
+      {message && (
+        <div style={{ marginBottom: "16px", padding: "12px", borderRadius: "4px", backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da', color: message.type === 'success' ? '#155724' : '#721c24' }}>
+          {message.text}
+        </div>
+      )}
 
       {!history || history.length === 0 ? (
         <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8", background: "#f8fafc", borderRadius: "0px", border: "1px dashed #cbd5e1" }}>
@@ -376,8 +400,26 @@ function BookingHistorySection() {
                      </p>
                   </div>
                   
-                  <div style={{ marginTop: "12px", fontSize: "12px", color: "#94a3b8" }}>
-                     Transaction: {booking.paymentCode} • Booked on {new Date(booking.bookingTime).toLocaleString()}
+                  <div style={{ marginTop: "12px", fontSize: "12px", color: "#94a3b8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                     <span>Transaction: {booking.paymentCode} • Booked on {new Date(booking.bookingTime).toLocaleString()}</span>
+                     {booking.status === "PAID" && (
+                       <button
+                         onClick={() => handleResend(booking.paymentCode)}
+                         disabled={sendingCode === booking.paymentCode}
+                         style={{
+                           padding: "6px 12px",
+                           background: "white",
+                           border: "1px solid #cbd5e1",
+                           borderRadius: "4px",
+                           fontSize: "12px",
+                           cursor: sendingCode === booking.paymentCode ? "not-allowed" : "pointer",
+                           color: "#334155",
+                           opacity: sendingCode === booking.paymentCode ? 0.7 : 1
+                         }}
+                       >
+                         {sendingCode === booking.paymentCode ? 'Đang gửi...' : 'Gửi lại vé qua Email'}
+                       </button>
+                     )}
                   </div>
                </div>
             </div>

@@ -1,5 +1,6 @@
 import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { bookingApi } from "../services/bookingApi";
 
 interface BookingDetail {
@@ -8,6 +9,7 @@ interface BookingDetail {
   customerPhone: string;
   bookingTime: string;
   status: string;
+  paymentCode: string;
   showtime: {
     id: number;
     showDate: string;
@@ -37,6 +39,8 @@ interface BookingDetail {
 export default function Tickets() {
   const [searchParams] = useSearchParams();
   const bookingIds = searchParams.get("bookingIds");
+  const [isSending, setIsSending] = useState(false);
+  const [message, setMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
   const {
     data: bookings,
@@ -85,6 +89,19 @@ export default function Tickets() {
     );
   }
 
+  const handleResendEmail = async (paymentCode: string) => {
+    try {
+      setIsSending(true);
+      setMessage(null);
+      await bookingApi.resendTicketEmail(paymentCode);
+      setMessage({ type: 'success', text: 'Đã gửi lại email vé thành công!' });
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Có lỗi xảy ra khi gửi email' });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <main className="tickets-container" style={{ padding: "20px 0" }}>
       <section className="section-box">
@@ -101,6 +118,23 @@ export default function Tickets() {
             <p className="text-muted-sm">
               Cảm ơn bạn đã sử dụng My Cinema. Dưới đây là vé của bạn.
             </p>
+            {message && (
+              <div style={{ marginTop: "10px", padding: "10px", borderRadius: "4px", backgroundColor: message.type === 'success' ? '#d4edda' : '#f8d7da', color: message.type === 'success' ? '#155724' : '#721c24' }}>
+                {message.text}
+              </div>
+            )}
+          </div>
+          <div>
+            {bookings[0]?.paymentCode && (
+              <button 
+                className="fd-btn" 
+                onClick={() => handleResendEmail(bookings[0].paymentCode as string)}
+                disabled={isSending}
+                style={{ opacity: isSending ? 0.7 : 1 }}
+              >
+                {isSending ? 'Đang gửi...' : 'Gửi lại vé qua Email'}
+              </button>
+            )}
           </div>
         </div>
 

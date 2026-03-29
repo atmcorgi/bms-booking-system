@@ -69,4 +69,7 @@ export const bookingApi = {
   getBookingsByIds(bookingIds: string) {
     return api.get(`/api/booking/bookings?ids=${bookingIds}`);
   },
+  resendTicketEmail(paymentCode: string) {
+    return api.post(`/api/booking/resend-ticket/${paymentCode}`);
+  },
 };
