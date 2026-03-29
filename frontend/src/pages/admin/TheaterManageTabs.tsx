@@ -84,6 +84,7 @@ const TheaterManageTabs: React.FC<TheaterManageTabsProps> = ({ theater }) => {
   // Movie assignment mutations
   const unassignMovieMutation = useMutation({
     mutationFn: (movieCode: string) => {
+      if (!theaterId) throw new Error("Missing theaterId");
       return adminMovieAssignmentApi.unassign(theaterId, movieCode);
     },
     onSuccess: () => {
