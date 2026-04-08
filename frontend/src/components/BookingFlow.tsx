@@ -789,26 +789,32 @@ export default function BookingFlow({
       {theaterId && currentMovieId && (
         <div className="step-content date-navigation">
           <div className="date-nav-label">Chọn ngày:</div>
-          <div className="date-nav-grid">
-            {showdatesList.map((d: string) => {
-              const lb = getDateLabel(d);
-              return (
-                <button
-                  type="button"
-                  key={d}
-                  className={`date-nav-btn ${showDate === d ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowDate(d);
-                  }}
-                >
-                  <div className="st-date">{lb.dow}</div>
-                  <div className="st-date">{lb.dmy}</div>
-                </button>
-              );
-            })}
-          </div>
+          {showdatesList.length > 0 ? (
+            <div className="date-nav-grid">
+              {showdatesList.map((d: string) => {
+                const lb = getDateLabel(d);
+                return (
+                  <button
+                    type="button"
+                    key={d}
+                    className={`date-nav-btn ${showDate === d ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowDate(d);
+                    }}
+                  >
+                    <div className="st-date">{lb.dow}</div>
+                    <div className="st-date">{lb.dmy}</div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ padding: "12px 20px", color: "#c92a2a", fontSize: "14px", background: "#fff5f5", borderRadius: "8px", border: "1px solid #ffe3e3", marginTop: "12px", textAlign: "center" }}>
+              Rất tiếc, rạp này hiện chưa có suất chiếu hoặc chưa xếp lịch chiếu cho bộ phim bạn đã chọn. Vui lòng chọn rạp khác nhé!
+            </div>
+          )}
         </div>
       )}
 
