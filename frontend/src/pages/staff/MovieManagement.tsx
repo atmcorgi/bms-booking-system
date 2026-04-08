@@ -26,6 +26,7 @@ export default function MovieManagement() {
     priority: number;
     demandScore: number;
   } | null>(null);
+  const [selectedScheduledIds, setSelectedScheduledIds] = useState<number[]>([]);
 
   // Fetch theater info
   const { data: dashboardData } = useQuery({
@@ -118,6 +119,20 @@ export default function MovieManagement() {
       setNotice(`Lỗi: ${e?.response?.data?.error || e?.message || "Lỗi khi publish"}`),
   });
 
+  // Bulk Publish mutation
+  const bulkPublishMut = useMutation({
+    mutationFn: (requestIds: number[]) =>
+      Promise.all(requestIds.map(id => api.post(`/api/staff/movie-requests/${id}/publish`))),
+    onSuccess: () => {
+      setNotice(`Đã publish ${selectedScheduledIds.length} phim thành công`);
+      setSelectedScheduledIds([]);
+      refetchAll();
+      setTimeout(() => setNotice(""), 3000);
+    },
+    onError: (e: any) =>
+      setNotice(`Lỗi: ${e?.response?.data?.error || e?.message || "Lỗi khi publish hàng loạt"}`),
+  });
+
   // Unpublish mutation (PUBLISHED → SCHEDULED)
   const unpublishMut = useMutation({
     mutationFn: (requestId: number) =>
@@ -140,6 +155,22 @@ export default function MovieManagement() {
     }
   };
 
+  const handleSelectAllScheduled = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedScheduledIds(scheduledRequests.map((r: any) => r.id));
+    } else {
+      setSelectedScheduledIds([]);
+    }
+  };
+
+  const handleSelectOneScheduled = (checked: boolean, id: number) => {
+    if (checked) {
+      setSelectedScheduledIds(prev => [...prev, id]);
+    } else {
+      setSelectedScheduledIds(prev => prev.filter(item => item !== id));
+    }
+  };
+
   const renderRequestTable = (
     requests: any[],
     status: "PENDING" | "SCHEDULED" | "PUBLISHED",
@@ -149,11 +180,23 @@ export default function MovieManagement() {
     const isScheduled = status === "SCHEDULED";
     const isPublished = status === "PUBLISHED";
 
+    const colSpan = isPending ? 5 : (isScheduled ? 5 : 4);
+
     return (
       <div className="staff-table-wrap">
         <table className="staff-table">
           <thead>
             <tr>
+              {isScheduled && (
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={requests.length > 0 && selectedScheduledIds.length === requests.length}
+                    onChange={handleSelectAllScheduled}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </th>
+              )}
               <th>Mã phim</th>
               <th>Tiêu đề</th>
               {isPending && <th>Ưu tiên</th>}
@@ -165,13 +208,13 @@ export default function MovieManagement() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={isPending ? 5 : 4} style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                <td colSpan={colSpan} style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
                   <FontAwesomeIcon icon={faCircleCheck} spin={true} /> Đang tải...
                 </td>
               </tr>
             ) : requests.length === 0 ? (
               <tr>
-                <td colSpan={isPending ? 5 : 4} style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                <td colSpan={colSpan} style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
                   Chưa có yêu cầu nào
                 </td>
               </tr>
@@ -180,6 +223,16 @@ export default function MovieManagement() {
                 const isEditing = editRow?.id === r.id;
                 return (
                   <tr key={r.id}>
+                    {isScheduled && (
+                      <td style={{ textAlign: 'center' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedScheduledIds.includes(r.id)}
+                          onChange={(e) => handleSelectOneScheduled(e.target.checked, r.id)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
+                    )}
                     <td className="text-mono">{r.movieCode}</td>
                     <td><strong>{r.movieTitle || r.movie?.title}</strong></td>
                     
@@ -355,12 +408,25 @@ export default function MovieManagement() {
 
         {/* Block 2: SCHEDULED */}
         <div style={{ marginBottom: 32 }} className="staff-card">
-          <h4 style={{ margin: "0 0 12px 0", fontSize: "16px", fontWeight: 600, color: "#1e40af" }}>
-            <FontAwesomeIcon icon={faCalendarCheck} style={{ marginRight: "8px" }} />
-            Đã lập lịch (SCHEDULED)
-          </h4>
-          <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "16px" }}>
-            Các phim đã có suất chiếu nhưng chưa publish. Click "Publish" để customer có thể xem và đặt vé.
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+            <div>
+              <h4 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: 600, color: "#1e40af" }}>
+                <FontAwesomeIcon icon={faCalendarCheck} style={{ marginRight: "8px" }} />
+                Đã lập lịch (SCHEDULED)
+              </h4>
+              <div style={{ fontSize: "14px", color: "#6b7280" }}>
+                Các phim đã có suất chiếu nhưng chưa publish. Click "Publish" từng phim hoặc chọn nhiều phim để publish đồng loạt.
+              </div>
+            </div>
+            {selectedScheduledIds.length > 0 && (
+              <button
+                className="staff-btn staff-btn-success"
+                onClick={() => bulkPublishMut.mutate(selectedScheduledIds)}
+                disabled={bulkPublishMut.isPending}
+              >
+                <FontAwesomeIcon icon={faCheck} /> Publish ({selectedScheduledIds.length}) phim đã chọn
+              </button>
+            )}
           </div>
           {renderRequestTable(scheduledRequests, "SCHEDULED", loadingScheduled)}
         </div>
@@ -436,3 +502,4 @@ export default function MovieManagement() {
     </div>
   );
 }
+
