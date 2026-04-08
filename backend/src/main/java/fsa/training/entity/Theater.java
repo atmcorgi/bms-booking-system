@@ -47,7 +47,7 @@ public class Theater {
     @Column(name = "phone")
     private String phone; // Số điện thoại rạp
     
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description; // Mô tả rạp
     
     @Column(name = "open_time")

@@ -694,12 +694,7 @@
   align-items: center;
   gap: 6px;
 }
-.seat-row {
-  display: grid;
-  grid-template-columns: 40px 1fr;
-  align-items: start;
-  gap: 8px;
-}
+
 .seat-row-label {
   text-align: center;
   font-weight: 700;

@@ -345,13 +345,6 @@
   gap: 8px; /* Tighter gap */
 }
 
-.seat-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-}
-
 .seat-row-label {
   width: 25px;
   text-align: center;

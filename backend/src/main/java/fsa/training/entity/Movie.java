@@ -39,6 +39,8 @@ public class Movie {
     private String code; // external movie code for import/idempotency
 
     private String title;
+    
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "poster_url")

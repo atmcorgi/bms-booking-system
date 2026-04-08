@@ -26,6 +26,7 @@ public class Genre {
     @Column(unique = true, nullable = false)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false)
