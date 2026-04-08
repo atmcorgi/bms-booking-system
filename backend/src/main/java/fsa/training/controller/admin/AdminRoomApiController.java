@@ -79,6 +79,12 @@ public class AdminRoomApiController {
                         .body(Map.of("error", "Không thể xóa phòng có suất chiếu. Vui lòng xóa các suất chiếu trước."));
             }
             
+            // Delete all seats in this room first
+            List<Seat> seats = seatRepository.findByRoomIdOrderBySeatNumberAsc(roomId);
+            if (seats != null && !seats.isEmpty()) {
+                seatRepository.deleteAll(seats);
+            }
+            
             roomRepository.delete(room);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
