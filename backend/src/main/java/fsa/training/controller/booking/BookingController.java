@@ -126,8 +126,7 @@ public class BookingController {
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String showDate) {
         try {
-            // Lấy showtime từ 1 năm trước trở đi (để bao gồm cả dữ liệu test cũ)
-            LocalDate startDate = showDate != null ? LocalDate.parse(showDate) : LocalDate.now().minusYears(1);
+            LocalDate startDate = showDate != null ? LocalDate.parse(showDate) : LocalDate.now();
             List<Province> provinces;
             
             if (movieId != null) {
@@ -158,7 +157,7 @@ public class BookingController {
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String showDate) {
         try {
-            LocalDate startDate = showDate != null ? LocalDate.parse(showDate) : LocalDate.now().minusYears(1);
+            LocalDate startDate = showDate != null ? LocalDate.parse(showDate) : LocalDate.now();
             List<District> districts;
             
             if (movieId != null) {
@@ -190,7 +189,7 @@ public class BookingController {
             @RequestParam(required = false) Long movieId,
             @RequestParam(required = false) String showDate) {
         try {
-            LocalDate startDate = showDate != null ? LocalDate.parse(showDate) : LocalDate.now().minusYears(1);
+            LocalDate startDate = showDate != null ? LocalDate.parse(showDate) : LocalDate.now();
             List<Theater> theaters;
             
             if (movieId != null) {
@@ -222,8 +221,8 @@ public class BookingController {
             @RequestParam Long theaterId,
             @RequestParam(required = false) Long movieId) {
         try {
-            // Use optimized query instead of findAll().stream().filter()
-            LocalDate startDate = LocalDate.now().minusDays(1);
+            // Sử dụng startDate là ngày hôm nay để bỏ qua showdates cũ
+            LocalDate startDate = LocalDate.now();
             List<LocalDate> dates;
             
             if (movieId != null) {
@@ -258,10 +257,10 @@ public class BookingController {
                     theaterId, movieId, LocalDate.parse(showDate));
             } else if (movieId != null) {
                 showtimes = showtimeRepository.findByTheaterIdAndMovieIdFromDate(
-                    theaterId, movieId, LocalDate.now().minusYears(1));
+                    theaterId, movieId, LocalDate.now());
             } else {
                 showtimes = showtimeRepository.findByTheaterIdAndMovieIdFromDate(
-                    theaterId, null, LocalDate.now().minusYears(1));
+                    theaterId, null, LocalDate.now());
             }
             
             // Sort by showTime
