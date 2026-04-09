@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class SeatHoldService {
-    private static final long DEFAULT_TTL_MS = 2 * 60 * 1000; // 2 minutes
+    private static final long DEFAULT_TTL_MS = 5 * 60 * 1000; // 5 minutes (for bank transfer payment)
 
     private final long ttlMs;
     private final ConcurrentMap<Long, ConcurrentMap<Long, SeatHold>> holdsByShowtime = new ConcurrentHashMap<>();
