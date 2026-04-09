@@ -31,4 +31,15 @@ public class Booking {
     private Instant bookingTime;
     private String status;
     private String paymentCode;
+    
+    // Self-scan fields
+    @Column(name = "used")
+    private Boolean used = false;
+    
+    @Column(name = "used_at")
+    private Instant usedAt;
+    
+    // QR Token for self-scan (generated once when paid)
+    @Column(name = "qr_token", length = 500)
+    private String qrToken;
 }

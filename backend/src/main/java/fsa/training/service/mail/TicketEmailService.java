@@ -8,6 +8,7 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import fsa.training.entity.Booking;
 import fsa.training.entity.Showtime;
+import fsa.training.service.booking.QRTokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,19 +26,20 @@ public class TicketEmailService {
 
     private final MailService mailService;
     private final BookingRepository bookingRepository;
+    private final QRTokenService qrTokenService;
 
     @Value("${app.base-url:http://localhost:5173}")
     private String baseUrl;
 
-    public TicketEmailService(MailService mailService, BookingRepository bookingRepository) {
+    public TicketEmailService(MailService mailService, BookingRepository bookingRepository, QRTokenService qrTokenService) {
         this.mailService = mailService;
         this.bookingRepository = bookingRepository;
+        this.qrTokenService = qrTokenService;
     }
 
     @Async
-    @Transactional(readOnly = true)
+    @Transactional
     public void sendTicketEmail(Booking bookingParam) {
-        // Fetch to avoid lazy init exception
         Booking booking = bookingRepository.findById(bookingParam.getId()).orElse(null);
         if (booking == null) return;
         if (booking.getEmail() == null || booking.getEmail().isBlank()) {
@@ -46,7 +48,14 @@ public class TicketEmailService {
         }
 
         try {
-            byte[] qrCodeImage = generateQRCodeImage(booking.getPaymentCode());
+            // Generate signed QR token
+            String qrToken = qrTokenService.generateQRToken(booking);
+            
+            // Save QR token to booking
+            booking.setQrToken(qrToken);
+            bookingRepository.save(booking);
+            
+            byte[] qrCodeImage = generateQRCodeImage(qrToken);
             String html = buildTicketEmailHtml(booking);
             
             mailService.sendMailWithAttachment(
@@ -65,7 +74,7 @@ public class TicketEmailService {
     }
 
     @Async
-    @Transactional(readOnly = true)
+    @Transactional
     public void sendTicketEmailsForPaymentCodeAsync(String paymentCode) {
         List<Booking> bookings = bookingRepository.findByPaymentCodeWithDetails(paymentCode);
         if (bookings == null || bookings.isEmpty()) {
@@ -80,7 +89,18 @@ public class TicketEmailService {
         }
 
         try {
-            byte[] qrCodeImage = generateQRCodeImage(paymentCode);
+            // Generate signed QR token for each booking
+            for (Booking booking : bookings) {
+                if (booking.getQrToken() == null) {
+                    String qrToken = qrTokenService.generateQRToken(booking);
+                    booking.setQrToken(qrToken);
+                }
+            }
+            bookingRepository.saveAll(bookings);
+            
+            // Use first booking's QR token for the email QR code
+            String qrToken = firstBooking.getQrToken();
+            byte[] qrCodeImage = generateQRCodeImage(qrToken);
             String html = buildTicketEmailHtmlMultiple(bookings, paymentCode);
             
             mailService.sendMailWithAttachment(
